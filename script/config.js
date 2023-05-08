@@ -12,7 +12,7 @@ const config = {
      * @type {boolean}
      * @default false
      */
-    isBeta: true,
+    isBeta: false,
     /**
      * 地图管理员
      */
