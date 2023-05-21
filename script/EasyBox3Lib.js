@@ -203,14 +203,14 @@ const EasyBox3Lib = (function (config) {
         }
         /**
          * 当该菜单被打开时执行的操作
-         * @param {Function} handler 当该菜单被打开时执行的操作。如果类型为`undefined`，则还会显示对应的子菜单
+         * @param {Function} handler 当该菜单被打开时执行的操作。
          */
         onOpen(handler) {
             this.handler.whenOpen = handler;
         }
         /**
          * 当该菜单被关闭时执行的操作
-         * @param {Function} handler 当该菜单被关闭时执行的操作。如果类型为`undefined`，则还会显示对应的子菜单
+         * @param {Function} handler 当该菜单被关闭时执行的操作。
          */
         onClose(handler) {
             this.handler.whenClose = handler;
@@ -277,8 +277,8 @@ const EasyBox3Lib = (function (config) {
     }
     /**
      * 输出一段日志，并记录到日志文件中
-     * @param
-     * @param  {...string} data 要输出的内容
+     * @param {string} type 输出类型
+     * @param {string[]} data 要输出的内容
      * @returns {Output}
      * @version 0.0.1
      * @author qndm
@@ -296,7 +296,7 @@ const EasyBox3Lib = (function (config) {
      * ```javascript
      * entity.player.isAdmin
      * ```
-     * @param {Box3PlayerEntity} entity 
+     * @param {Box3PlayerEntity} entity 要判断的实体
      * @returns {boolean}
      * @version 0.0.1
      * @author qndm
@@ -317,8 +317,8 @@ const EasyBox3Lib = (function (config) {
     }
     /**
      * 缩放一个玩家，包括玩家的移动速度&跳跃高度
-     * @param {Box3PlayerEntity} entity 
-     * @param {number} size 
+     * @param {Box3PlayerEntity} entity 要缩放的玩家
+     * @param {number} size 缩放尺寸
      * @version 0.0.1
      * @author qndm
      */
@@ -339,8 +339,8 @@ const EasyBox3Lib = (function (config) {
     }
     /**
      * 简单创建一个实体（其实也没简单到哪去）
-     * @param {string} mesh 模型外形
-     * @param {Box3Vector3} position 模型位置
+     * @param {string} mesh 实体外形
+     * @param {Box3Vector3} position 实体位置
      * @param {boolean} collides 实体是否可碰撞
      * @param {boolean} gravity 实体是否会下落
      * @param {Box3Vector3} meshScale 实体的缩放比例
@@ -369,14 +369,14 @@ const EasyBox3Lib = (function (config) {
         }
     }
     /**
-     * 弹出一个文本对话框
+     * 弹出一个/若干个文本对话框
      * @async
      * @param {Box3PlayerEntity} entity 要弹出对话框的玩家
      * @param {string} title 对话框的标题
      * @param {string | string[]} content 对话框的正文，也可以输入一个列表来实现多个对话框依次弹出
      * @param {'auto' | boolean} hasArrow 是否显示箭头提示，`auto`表示自动
      * @param {object} otherOptions 对话框的其他选项
-     * @returns {'success' | number | null} 如果完成了所有对话，则返回`success`或者完成对话框的数量
+     * @returns {'success' | number | null} 如果完成了所有对话，则返回`success`（只有一个对话框）或者完成对话框的数量（有多个对话框）；否则返回`null`（只有一个对话框）
      * @version 0.0.1
      * @author qndm
      */
@@ -500,7 +500,7 @@ const EasyBox3Lib = (function (config) {
      * @example
      * toChineseDate(Date.now())
      * @param {number} date Unix时间戳
-     * @return {string}
+     * @return {string} 转换结果
      * @version 0.0.1
      * @author qndm
      */
@@ -513,7 +513,6 @@ const EasyBox3Lib = (function (config) {
      * 执行一段SQL命令
      * @async
      * @param {string} code 
-     * @returns {object}
      */
     async function executeSQLCode(code) {
         output(outputType.LOG, 'SQL', '执行命令', `执行SQL命令： ${code}`);
@@ -525,7 +524,7 @@ const EasyBox3Lib = (function (config) {
      * 创建一个SQL表格
      * @async
      * @param {string} tableName 表格名称
-     * @param  {...Field} fields 字段
+     * @param  {Field[]} fields 表格字段
      * @version 0.0.2
      * @author qndm
      */
@@ -568,7 +567,7 @@ const EasyBox3Lib = (function (config) {
      * @async
      * @param {string} tableName 表名称
      * @param {"*" | string[]} columns 要查找的字段，如果要查找所有字段，输入`"*"`。默认为`"*"`
-     * @param {string} condition 筛选条件，如果为空，查找所有行
+     * @param {string} condition 筛选条件，如果为空，查找所有行（此次应填入SQL表达式）
      * @returns {object[]}
      * @version 0.0.2
      * @author qndm
@@ -587,7 +586,7 @@ const EasyBox3Lib = (function (config) {
      * @async
      * @param {string} tableName 表名称
      * @param {object} data 要更新的数据
-     * @param {string} condition 更新数据所需要的条件，满足时才会更新。如果为空，则更新表格中的所有值
+     * @param {string} condition 更新数据所需要的条件，满足时才会更新。如果为空，则更新表格中的所有值（此次应填入SQL表达式）
      * @author qndm
      * @version 0.0.2
      */
@@ -608,7 +607,7 @@ const EasyBox3Lib = (function (config) {
      * 删除表中的数据
      * @async
      * @param {string} tableName 表名称
-     * @param {string} condition 要删除数据所需要的条件，满足时才会删除。如为空，则删除所有数据
+     * @param {string} condition 要删除数据所需要的条件，满足时才会删除。如为空，则删除所有数据（此次应填入SQL表达式）
      * @author qndm
      * @version 0.0.2
      */
@@ -641,7 +640,7 @@ const EasyBox3Lib = (function (config) {
      * @async
      * @param {string} tableName 表名称
      * @param {string} primaryKey 主键名称，必须保证该字段的值没有重复
-     * @param {object[]} datas 数据来源
+     * @param {object[]} datas 数据来源，应包含主键
      * @param {boolean} overwriteOriginalData 如果数据出现重复，则覆盖表中原来的数据
      * @param {boolean} discardOriginalData 是否保留原数据
      * @author qndm

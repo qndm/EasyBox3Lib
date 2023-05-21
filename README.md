@@ -14,11 +14,15 @@ tips：你放到`index.js`等文件里里面其实也可以，但非常不建议
 const $ = require('./EasyBox3Lib.js');
 ```
 4. 使用`$`来调用库中的方法
+# 开发文档
+[见此](./docs/index.md)
 # 版本 & 更新日志
 ## 0.0.2
 开了个SQL缓存的坑  
 修复了部分SQL方法中没有加`await`的bug  
 修复了`copyObject`中不能复制对象中类型为`undefined`或者`function`的属性的bug  
 为部分方法添加了`jsdoc`
+修复了`Menu`无法打开上一级菜单的bug
+修改部分`jsdoc`内容
 ## 0.0.1
 发布
