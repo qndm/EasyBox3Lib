@@ -9,23 +9,68 @@ if (!CONFIG) {
 /**
  * # EasyBox3Lib库
  * 一个适用于大部分地图的通用代码库
- * @version 0.0.1
+ * @version 0.0.2
  * @author qndm
  */
 const EasyBox3Lib = (function (config) {
     /**
      * 使用`output`方法时的输出类型
+     * @version 0.0.1
      */
     const outputType = {
         LOG: 'log',
         DEBUG: 'debug',
         WARN: 'warn',
         ERROR: 'error'
-    }
+    },
+        /**
+         * 一些常用的时间单位
+         * @version 0.0.1
+         */
+        time = {
+            /**
+             * 一秒对应的毫秒数
+             */
+            second: 1e3,
+            /**
+             * 一分钟对应的毫秒数
+             */
+            minute: 6e4,
+            /**
+             * 一小时对应的毫秒数
+             */
+            hour: 36e5,
+            /**
+             * 一天对应的毫秒数
+             */
+            day: 864e5,
+            /**
+             * 一周对应的毫秒数
+             */
+            week: 6048e5,
+            /**
+             * 一年对应的毫秒数（按365天算）
+             */
+            year: 315576e5,
+            /**
+             * 一`tick`对应的毫秒数（不计误差等意外情况）
+             */
+            tick: 64,
+            /**
+             * 16`tick`对应的毫秒数（不计误差等意外情况）
+             */
+            sixteenTick: 1024
+        };
     /**
      * @type {string[]} 日志文件（准确来说并不是文件，但为了方便就叫日志文件（））
+     * @version 0.0.1
      */
-    var logs = [];
+    var logs = [],
+        /**
+         * SQL缓存
+         * @type {object}
+         */
+        sqlCache = {};
     class Output {
         /**
          * @param {string} type 类型
@@ -38,6 +83,7 @@ const EasyBox3Lib = (function (config) {
     }
     /**
      * SQL数据类型，用于`EasyBox3LibSqlField`中的`dataType`
+     * @version 0.0.1
      */
     const fieldDataTypes = {
         NULL: 'NULL',
@@ -45,7 +91,7 @@ const EasyBox3Lib = (function (config) {
         REAL: 'REAL',
         TEXT: 'TEXT',
         BLOB: 'BLOB'
-    }
+    };
     /**
      * SQL字段
      * @version 0.0.1
@@ -61,6 +107,7 @@ const EasyBox3Lib = (function (config) {
          * @param {boolean} unique 该字段是否不能出现相同值，默认为`false`
          * @param {*} defaultValue 如果为空，该字段的默认值
          * @param {string} check 根据条件对数值检查，这里应该是一段SQL的运算语句
+         * @version 0.0.1
          */
         constructor(name, dataType, isPrimaryKey = false, notNull = true, unique = false, defaultValue = null, check = '') {
             this.name = name;
@@ -73,6 +120,7 @@ const EasyBox3Lib = (function (config) {
         }
         /**
          * 生成SQL代码
+         * @version 0.0.1
          */
         get sqlCode() {
             var result = `"${this.name}" ${this.dataType}`;
@@ -101,6 +149,7 @@ const EasyBox3Lib = (function (config) {
          * 创建一个`Menu`
          * @param {string} title 菜单的标题，同时也作为父菜单选项的标题
          * @param {...string} content 菜单正文内容，可以输入多个值，用`\n`分隔
+         * @version 0.0.1
          */
         constructor(title, ...content) {
             this.title = title;
@@ -109,23 +158,36 @@ const EasyBox3Lib = (function (config) {
              * @type {Menu[]}
              */
             this.options = [];
+            /**
+             * @type {Menu | undefined}
+             */
             this.previousLevelMenu = undefined;
             this.handler = {
                 whenOpen: (() => { }),
                 whenClose: (() => { })
             };
         }
+        /**
+         * 添加子菜单  
+         * 返回该菜单本身
+         * @param {Menu | Menu[]} submenu 要添加的子菜单
+         * @returns {Menu}
+         * @version 0.0.2
+         */
         addSubmenu(submenu) {
-            if (this.type != undefined) {
-                output(outputType.WARN, '添加子菜单', '尝试在类型为', this.type, '的菜单内添加子菜单');
+            var submenus = [];
+            if (submenu instanceof Menu)
+                submenus = [submenu];
+            for (let menu of submenus) {
+                menu.previousLevelMenu = this;
+                this.options.push(menu);
             }
-            submenu.previousLevelMenu = this;
-            this.options.push(submenu);
             return this;
         }
         /**
          * 打开该菜单
          * @param {Box3PlayerEntity} entity 要打开该菜单的玩家
+         * @version 0.0.2
          */
         async open(entity) {
             var value = await selectDialog(entity, this.title, this.content, this.options.map(option => option.title));
@@ -134,6 +196,9 @@ const EasyBox3Lib = (function (config) {
                 this.options[value.index].open(entity);
             } else {
                 this.handler.whenClose(entity, this.type, value);
+                if (this.previousLevelMenu) {//打开上一级菜单
+                    this.previousLevelMenu.open(entity);
+                }
             }
         }
         /**
@@ -153,13 +218,17 @@ const EasyBox3Lib = (function (config) {
     }
 
     /**
-     * 复制一个`object`，理论上来说可以复制任何值
+     * 复制一个`object`
      * @param {object} obj 要复制的`object`
      * @returns {object} 复制的结果
-     * @version 0.0.1
+     * @version 0.0.2
      * @author qndm
      */
     function copyObject(obj) {
+        var newObj = newObj instanceof Array ? [] : {};
+        for (let key in newObj) {
+            newObj[key] = obj[key] instanceof Object ? copyObject(obj[key]) : obj[key];
+        }
         return JSON.parse(JSON.stringify(obj));
     }
     /**
@@ -295,7 +364,7 @@ const EasyBox3Lib = (function (config) {
                 friction: 1
             });
         } else {
-            output(outputType.ERROR, '实体创建失败', '实体数量超过上限')
+            output(outputType.ERROR, '创建实体', '实体创建失败', '实体数量超过上限')
             return null;
         }
     }
@@ -442,74 +511,88 @@ const EasyBox3Lib = (function (config) {
     }
     /**
      * 执行一段SQL命令
+     * @async
      * @param {string} code 
-     * @returns {any}
+     * @returns {object}
      */
     async function executeSQLCode(code) {
-        output(outputType.LOG, '执行SQL命令：', code);
+        output(outputType.LOG, 'SQL', '执行命令', `执行SQL命令： ${code}`);
         var result = await db.sql([code]);
-        output(outputType.LOG, 'SQL运行结果', JSON.stringify(result));
+        output(outputType.LOG, 'SQL', '执行命令', `SQL运行结果：${JSON.stringify(result)}`);
         return result;
     }
     /**
      * 创建一个SQL表格
+     * @async
      * @param {string} tableName 表格名称
      * @param  {...Field} fields 字段
-     * @version 0.0.1
+     * @version 0.0.2
      * @author qndm
      */
     async function createTable(tableName, ...fields) {
-        output(outputType.LOG, '创建表格', tableName);
+        output(outputType.LOG, 'SQL', '创建表格', `创建表：${tableName}`, `字段数：${fields.length}`);
         var code = `CREATE TABLE IF NOT EXISTS "${tableName}" (${fields.map(field => field.sqlCode).join(',')});`;
-        return await executeSQLCode(code);
+        var result = await executeSQLCode(code);
+        if (config.EasyBox3Lib.enableSQLCache)
+            await createCache(tableName);
+        return result;
     }
     /**
      * 插入一条数据
+     * @async
      * @param {string} tableName 表名称
      * @param {object} data 要插入的数据
      * @example
      * await insertData('player', {userKey: entity.player.userKey, money: entity.player.money, itemList: ['糖果', '薯片']});//假设entity是个Box3PlayerEntity并且entity.player有money这个属性
-     * @version 0.0.1
+     * @version 0.0.2
      * @author qndm
      */
     async function insertData(tableName, data) {
-        output(outputType.LOG, '向', tableName, '插入数据');
+        output(outputType.LOG, 'SQL', '插入数据', '向', tableName, '插入数据');
         var code = `INSERT INTO "${tableName}" (${Object.keys(data).map(key => `"${key}"`).join(', ')}) VALUES (${Object.values(data).map(value => {
             if (typeof value == "number" || typeof value == "boolean") return Number(value);
             else if (typeof value == "string") return `'${value}'`
             else return `'${JSON.stringify(value)}'`;
         }).join(', ')})`;
         code += ';';
+        if (config.EasyBox3Lib.enableSQLCache) {
+            /*if (sqlCache[tableName]) {
+                sqlCache[tableName].push(data);
+            }*/
+            await createCache(tableName);
+        }
         return await executeSQLCode(code);
     }
     /**
      * 查找一段数据
+     * @async
      * @param {string} tableName 表名称
-     * @param {"*" | string[]} columns 要查找的字段，如果要查找所有字段，输入`"*"`
+     * @param {"*" | string[]} columns 要查找的字段，如果要查找所有字段，输入`"*"`。默认为`"*"`
      * @param {string} condition 筛选条件，如果为空，查找所有行
      * @returns {object[]}
-     * @version 0.0.1
+     * @version 0.0.2
      * @author qndm
      */
     async function loadData(tableName, columns = '*', condition = '') {
-        output(outputType.LOG, '从', tableName, '读取数据', condition);
+        output(outputType.LOG, 'SQL', '读取数据', '从', tableName, '读取数据', condition);
         var code = `SELECT ${typeof columns == "object" ? columns.join(',') : columns} FROM "${tableName}"`;
         if (condition) {
             code += ` WHERE ${condition}`;
         }
         code += ';';
-        return executeSQLCode(code);
+        return await executeSQLCode(code);
     }
     /**
      * 更新表中的数据
+     * @async
      * @param {string} tableName 表名称
      * @param {object} data 要更新的数据
      * @param {string} condition 更新数据所需要的条件，满足时才会更新。如果为空，则更新表格中的所有值
      * @author qndm
-     * @version 0.0.1
+     * @version 0.0.2
      */
     async function updateData(tableName, data, condition = '') {
-        output(outputType.LOG, '向', tableName, '更新数据', condition);
+        output(outputType.LOG, 'SQL', '更新数据', '向', tableName, '更新数据', condition);
         var code = `UPDATE "${tableName}" SET ${Object.entries(data).map(value => {
             if (typeof value[1] == "number" || typeof value[1] == "boolean") return `"${value[0]}"=${Number(value[1])}`;
             else if (typeof value[1] == "string") return `"${value[0]}"='${value[1]}'`
@@ -517,74 +600,98 @@ const EasyBox3Lib = (function (config) {
         }).join(',')}`;
         if (condition) code += ` WHERE ${condition}`;
         code += ';';
+        if (config.EasyBox3Lib.enableSQLCache)
+            await createCache(tableName);
         return await executeSQLCode(code);
     }
     /**
      * 删除表中的数据
+     * @async
      * @param {string} tableName 表名称
      * @param {string} condition 要删除数据所需要的条件，满足时才会删除。如为空，则删除所有数据
      * @author qndm
-     * @version 0.0.1
+     * @version 0.0.2
      */
     async function deleteData(tableName, condition = '') {
-        output(outputType.LOG, '从', tableName, '删除数据', condition);
+        output(outputType.LOG, 'SQL', '删除数据', '从', tableName, '删除数据', condition);
         var code = `DELETE FROM "${tableName}"`;
         if (condition) code += ` WHERE ${condition}`;
         code += ';';
+        if (config.EasyBox3Lib.enableSQLCache)
+            await createCache(tableName);
         return await executeSQLCode(code);
     }
     /**
-     * 删除一个表
+     * 删除SQL表格
+     * @async
      * @param {string} tableName 要删除的表
      * @author qndm
-     * @version 0.0.1
+     * @version 0.0.2
      */
     async function dropTable(tableName) {
-        output(outputType.WARN, '删除表', tableName, '\n该表中的信息将永久丢失！');
+        output(outputType.WARN, 'SQL', '删除表格', '删除表', tableName, '\n该表中的信息将永久丢失！');
         var tableData = await loadData(tableName);
-        output(outputType.LOG, '表格数据：', JSON.stringify(tableData));
+        output(outputType.LOG, 'SQL', '删除表格', '表格数据：', JSON.stringify(tableData));
         var code = `DROP TABLE "${tableName}";`;
-        return executeSQLCode(code);
+        sqlCache[tableName] = undefined;
+        return await executeSQLCode(code);
     }
     /**
      * 从一个`object[]`中导入数据
+     * @async
      * @param {string} tableName 表名称
      * @param {string} primaryKey 主键名称，必须保证该字段的值没有重复
      * @param {object[]} datas 数据来源
      * @param {boolean} overwriteOriginalData 如果数据出现重复，则覆盖表中原来的数据
      * @param {boolean} discardOriginalData 是否保留原数据
      * @author qndm
-     * @version 0.0.1
+     * @version 0.0.2
      */
     async function importData(tableName, primaryKey, datas, overwriteOriginalData = true, discardOriginalData = false) {
-        output(outputType.LOG, '向', tableName, '导入数据', (overwriteOriginalData ? '覆盖数据' : '') + (discardOriginalData ? '删除原数据' : ''));
+        output(outputType.LOG, 'SQL', '导入数据', '向', tableName, '导入数据', (overwriteOriginalData ? '覆盖数据' : '') + (discardOriginalData ? '删除原数据' : ''));
         if (discardOriginalData) {
             await deleteData(tableName);
         }
         for (let data of datas) {
-            var theNumberOfOldData = loadData(tableName, primaryKey, `${primaryKey}=${data[primaryKey]}`).length;
+            var theNumberOfOldData = await loadData(tableName, primaryKey, `${primaryKey}=${data[primaryKey]}`).length;
             if (theNumberOfOldData <= 0) {
                 await insertData(tableName, data);
             } else if (overwriteOriginalData) {
-                if (theNumberOfOldData != 1) output(outputType.WARN, '检测到', primaryKey, '字段有重复值');
+                if (theNumberOfOldData != 1) output(outputType.WARN, 'SQL', '导入数据', '检测到', primaryKey, '字段有重复值');
                 await updateData(tableName, data, `${primaryKey}=${data[primaryKey]}`);
             }
         }
+        if (config.EasyBox3Lib.enableSQLCache)
+            await createCache(tableName);
     }
     /**
      * 将表格数据导出  
      * （作者吐槽：写的时候才发现就是`loadData`套了个壳）
+     * @async
      * @param {string} tableName 表名称
      * @param {"*" | string[]} columns 要导出的字段
      * @returns {object[]}
-     * @version 0.0.1
+     * @version 0.0.2
      * @author qndm
      */
     async function exportData(tableName, columns = '*') {
-        output(outputType.LOG, '从', tableName, '导出数据');
+        output(outputType.LOG, 'SQL', '导出数据', '从', tableName, '导出数据');
         var tableData = await loadData(tableName, columns);
-        output(outputType.LOG, '表格数据：', JSON.stringify(tableData));
+        output(outputType.LOG, 'SQL', '导出数据', '表格数据：', JSON.stringify(tableData));
         return tableData;
+    }
+    /**
+     * 建立SQL缓存  
+     * 如果已经有缓存，则会覆盖数据  
+     * 如果`config.EasyBox3Lib.enableSQLCache`为`true`时，则会在执行`EasyBox3Lib.sql.createTable`的时候自动运行
+     * @async
+     * @param {string} tableName 表名称
+     */
+    async function createCache(tableName) {
+        if (!config.EasyBox3Lib.enableSQLCache)
+            output(outputType.WARN, 'SQL', '创建缓存')
+        var data = await loadData(tableName);
+        sqlCache[tableName] = data;
     }
     return {
         copyObject,
@@ -616,9 +723,11 @@ const EasyBox3Lib = (function (config) {
             deleteData,
             dropTable,
             importData,
-            exportData
+            exportData,
+            createCache
         },
-        version: [0, 0, 1]
+        time,
+        version: [0, 0, 2]
     }
 }(CONFIG));
 if (CONFIG.EasyBox3Lib.exposureToGlobal) {

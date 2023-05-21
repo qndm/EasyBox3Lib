@@ -91,10 +91,18 @@ const config = {
          */
         defaultDialogOtherOptions: {},
         /**
-         * @todo 是否启用PostgreSQL数据库
+         * @todo 启用PostgreSQL数据库
          * @default false
          */
-        enablePostgreSQL: false
+        enablePostgreSQL: false,
+        /**
+         * @todo 启用SQL缓存，以加快读取速度  
+         * 警告：如果直接使用`db.sql`或者`EasyBox3Lib.sql.executeSQLCode`方法来写入数据，可能会出现问题（读取时使用缓存会失效，即不起作用）  
+         * 请确保使用了`EasyBox3Lib.sql.insertData`、`EasyBox3Lib.sql.updateData`、`EasyBox3Lib.sql.deleteData`、`EasyBox3Lib.sql.importData`、`EasyBox3Lib.sql.dropTable`方法来写入数据（读取不需要）
+         * 施工中……
+         * @default false
+         */
+        enableSQLCache: false
     }
 };
 module.exports = config;
