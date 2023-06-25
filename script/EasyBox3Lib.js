@@ -40,35 +40,35 @@ const EasyBox3Lib = (function (config) {
             /**
              * 一秒对应的毫秒数
              */
-            second: 1e3,
+            SECOND: 1e3,
             /**
              * 一分钟对应的毫秒数
              */
-            minute: 6e4,
+            MINUTE: 6e4,
             /**
              * 一小时对应的毫秒数
              */
-            hour: 36e5,
+            HOUR: 36e5,
             /**
              * 一天对应的毫秒数
              */
-            day: 864e5,
+            DAY: 864e5,
             /**
              * 一周对应的毫秒数
              */
-            week: 6048e5,
+            WEEK: 6048e5,
             /**
              * 一年对应的毫秒数（按365天算）
              */
-            year: 315576e5,
+            YEAR: 315576e5,
             /**
              * 一`tick`对应的毫秒数（不计误差等意外情况）
              */
-            tick: 64,
+            TICK: 64,
             /**
              * 16`tick`对应的毫秒数（不计误差等意外情况）
              */
-            sixteenTick: 1024
+            SIXTEEN_TICK: 1024
         },
         /**
          * SQL比较运算符

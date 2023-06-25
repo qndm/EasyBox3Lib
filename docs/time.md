@@ -15,26 +15,26 @@ toChineseDate(date: number): string
 toChineseDate(Date.now())
 ```
 ***
-### `time`
+### `TIME`
 一些常用的时间单位
 ###### 值
 ```javascript
 {
-    second: 1e3,
-    minute: 6e4,
-    hour: 36e5,
-    day: 864e5,
-    week: 6048e5,
-    year: 315576e5,
-    tick: 64,
-    sixteenTick: 1024
+    SECOND: 1e3,
+    MINUTE: 6e4,
+    HOUR: 36e5,
+    DAY: 864e5,
+    WEEK: 6048e5,
+    YEAR: 315576e5,
+    TICK: 64,
+    SIXTEEN_TICK: 1024
 }
 ```
-- `second`: `number` 一秒对应的毫秒数
-- `minute`: `number` 一分钟对应的毫秒数
-- `hour`: `number` 一小时对应的毫秒数
-- `day`: `number` 一天对应的毫秒数
-- `week`: `number` 一周对应的毫秒数
-- `year`: `number` 一年对应的毫秒数（按365天算）
-- `tick`: `number` 一`tick`对应的毫秒数（不计误差等意外情况）
-- `sixteenTick`: `number` 16`tick`对应的毫秒数（不计误差等意外情况）
+- `SECOND`: `number` 一秒对应的毫秒数
+- `MINUTE`: `number` 一分钟对应的毫秒数
+- `HOUR`: `number` 一小时对应的毫秒数
+- `DAY`: `number` 一天对应的毫秒数
+- `WEEK`: `number` 一周对应的毫秒数
+- `YEAR`: `number` 一年对应的毫秒数（按365天算）
+- `TICK`: `number` 一`tick`对应的毫秒数（不计误差等意外情况）
+- `SIXTEEN_TICK`: `number` 16`tick`对应的毫秒数（不计误差等意外情况）

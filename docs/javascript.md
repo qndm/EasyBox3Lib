@@ -41,7 +41,7 @@ output(type: any, ...data: string[]): Output
 ###### 输出
 `Output` 输出内容
 ***
-### `outputType`
+### `OUTPUT_TYPE`
 使用`output`方法时的输出类型
 ###### 值
 ```javascript

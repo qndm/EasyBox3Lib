@@ -32,31 +32,31 @@ await insertData('player', {userKey: entity.player.userKey, money: entity.player
 ### async `loadData`
 查找一段数据
 ```typescript
-loadData(tableName: string, columns?: "*" | string[], condition?: string): object[]
+loadData(tableName: string, columns?: "*" | string[], condition?: string | Function | SQLExpressions): object[]
 ```
 ###### 输入
 - `tableName`: `string` 表格名称
 - `columns`: `"*" | string[]` 要查找的字段，如果要查找所有字段，输入`"*"`。默认为`"*"`
-- `condition`: `string` 筛选条件，如果为空，查找所有行（此次应填入SQL表达式）
+- `condition`: `string | Function | SQLExpressions` 筛选条件，如果为空，查找所有行
 ###### 输出
 `object[]` 查找结果
 ### async `updateData`
 更新表中的数据
 ```typescript
-updateData(tableName: string, data: object, condition?: string): Promise<any>
+updateData(tableName: string, data: object, condition?: string | SQLExpressions): Promise<any>
 ```
 ###### 输入
 - `tableName`: `string` 表格名称
 - `data`: `object` 要更新的数据
-- `condition`: `string` 更新数据所需要的条件，满足时才会更新。如果为空，则更新表格中的所有值（此次应填入SQL表达式）
+- `condition`: `string | SQLExpressions` 更新数据所需要的条件，满足时才会更新。如果为空，则更新表格中的所有值
 ### async `deleteData`
 删除表中的数据
 ```typescript
-deleteData(tableName: string, condition?: string): Promise<any>
+deleteData(tableName: string, condition?: string | SQLBinaryExpressions): Promise<any>
 ```
 ###### 输入
 - `tableName`: `string` 表格名称
-- `condition`: `string` 要删除数据所需要的条件，满足时才会删除。如为空，则删除所有数据（此次应填入SQL表达式）
+- `condition`: `string | SQLExpressions` 要删除数据所需要的条件，满足时才会删除。如为空，则删除所有数据
 ### async `dropTable`
 删除SQL表格
 ```typescript
@@ -107,6 +107,49 @@ SQL数据类型，用于`EasyBox3LibSqlField`中的`dataType`
     BLOB: 'BLOB'
 }
 ```
+### `OPERATIONS_FUNCTION`
+运算符函数  
+**注意：该常量并不能直接调用，只是列出该库支持的运算符**  
+包含：
+```javascript
+{
+    //比较运算符
+    '==': (a, b) => a == b,
+    '!=': (a, b) => a != b,
+    '>=': (a, b) => a >= b,
+    '<=': (a, b) => a <= b,
+    '>': (a, b) => a > b,
+    '<': (a, b) => a < b,
+    //逻辑运算符
+    'AND': (a, b) => a && b,
+    'OR': (a, b) => a || b,
+    'NOT': (a) => !a,
+    'BETWEEN': (a, min, max) => a >= min && a <= max,
+    'IS': (a, b) => a == b,
+    'IS NOT': (a, b) => a != b,
+    'IS NULL': (a) => a == null,
+    'IN': (a, list) => list.includes(a),
+    'IN NOT': (a, list) => !list.includes(a),
+    '||': (a, b) => a + b,//连接两个字符串
+    //算术运算符
+    '+': (a, b) => a + b,
+    '-': (a, b) => a - b,
+    '*': (a, b) => a * b,
+    '/': (a, b) => a / b,
+    '%': (a, b) => a % b,
+    //位运算符
+    '&': (a, b) => a & b,
+    '|': (a, b) => a | b,
+    '~': (a) => ~a,
+    '>>': (a, b) => a >> b,
+    '<<': (a, b) => a << b
+}
+```
+不支持以下运算符：
+- `EXISTS`
+- `LIKE`
+- `GLOB`
+- `UNIQUE`
 ***
 ### class `Field`
 ```typescript
@@ -133,3 +176,5 @@ Field.sqlCode: string
 ```
 ###### 输出
 `string` 生成的SQL代码
+### class `SQLValue`
+### class `SQLExpressions`
