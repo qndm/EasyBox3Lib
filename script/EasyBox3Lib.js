@@ -5,11 +5,20 @@ if (!CONFIG) {
     if (CONFIG.EasyBox3Lib.enablePostgreSQL) {
         console.warn('暂不支持PostgreSQL数据库');
     }
+    if (CONFIG.EasyBox3Lib.inArena) {
+        console.log('正在自动创建Box3xxx');
+        for (let x in this) {
+            if (x.startsWith('Game')) {
+                this['Box3' + x.slice(4)] = this[x];
+                console.log(`Game${x.slice(4)} -> Box3${x.slice(4)}`);
+            }
+        }
+    }
 }
 /**
  * # EasyBox3Lib库
  * 一个适用于大部分地图的通用代码库
- * @version 0.0.2
+ * @version 0.0.3
  * @author qndm
  */
 const EasyBox3Lib = (function (config) {
@@ -17,7 +26,7 @@ const EasyBox3Lib = (function (config) {
      * 使用`output`方法时的输出类型
      * @version 0.0.1
      */
-    const outputType = {
+    const OUTPUT_THPE = {
         LOG: 'log',
         DEBUG: 'debug',
         WARN: 'warn',
@@ -27,7 +36,7 @@ const EasyBox3Lib = (function (config) {
          * 一些常用的时间单位
          * @version 0.0.1
          */
-        time = {
+        TIME = {
             /**
              * 一秒对应的毫秒数
              */
@@ -60,6 +69,69 @@ const EasyBox3Lib = (function (config) {
              * 16`tick`对应的毫秒数（不计误差等意外情况）
              */
             sixteenTick: 1024
+        },
+        /**
+         * SQL比较运算符
+         * @version 0.0.1
+         */
+        SQL_COMPARISON_OPERATORS = {
+            '==': '==',
+            '=': '==',
+            '!=': '!=',
+            '<>': '!=',
+            '>': '>',
+            '<': '<',
+            '>=': '>=',
+            '<=': '<=',
+            '!<': '>=',
+            '!>': '<='
+        },
+        /**,
+         * SQL数据类型，用于`EasyBox3LibSqlField`中的`dataType`
+         * @version 0.0.1
+         */
+        FIELD_DATA_TYPES = {
+            NULL: 'NULL',
+            INTEGER: 'INTEGER',
+            REAL: 'REAL',
+            TEXT: 'TEXT',
+            BLOB: 'BLOB'
+        }, OPERATIONS_FUNCTION = {
+            //比较运算符
+            '==': (a, b) => a == b,
+            '!=': (a, b) => a != b,
+            '>=': (a, b) => a >= b,
+            '<=': (a, b) => a <= b,
+            '>': (a, b) => a > b,
+            '<': (a, b) => a < b,
+            //逻辑运算符
+            'AND': (a, b) => a && b,
+            'OR': (a, b) => a || b,
+            'NOT': (a) => !a,
+            'BETWEEN': (a, min, max) => a >= min && a <= max,
+            'IS': (a, b) => a == b,
+            'IS NOT': (a, b) => a != b,
+            'IS NULL': (a) => a == null,
+            'IN': (a, list) => list.includes(a),
+            'IN NOT': (a, list) => !list.includes(a),
+            '||': (a, b) => a + b,//连接两个字符串
+            //算术运算符
+            '+': (a, b) => a + b,
+            '-': (a, b) => a - b,
+            '*': (a, b) => a * b,
+            '/': (a, b) => a / b,
+            '%': (a, b) => a % b,
+            //位运算符
+            '&': (a, b) => a & b,
+            '|': (a, b) => a | b,
+            '~': (a) => ~a,
+            '>>': (a, b) => a >> b,
+            '<<': (a, b) => a << b,
+            //不支持
+            'EXISTS': () => { throw '不支持 exists' },
+            'LIKE': () => { throw '不支持 like' },
+            'GLOB': () => { throw '不支持 glob' },
+            'UNIQUE': () => { throw '不支持 unique' }
         };
     /**
      * @type {string[]} 日志文件（准确来说并不是文件，但为了方便就叫日志文件（））
@@ -75,23 +147,35 @@ const EasyBox3Lib = (function (config) {
         /**
          * @param {string} type 类型
          * @param {string} data 内容
+         * @param {any[]} location 代码执行位置
          */
-        constructor(type, data) {
+        constructor(type, data, location) {
             this.type = type;
             this.data = data;
+            this.location = location;
+        }
+        /**
+         * 文件位置
+         * @returns {string}
+         */
+        get file() {
+            return this.location[0];
+        }
+        /**
+         * 行号
+         * @returns {number}
+         */
+        get line() {
+            return this.location[1];
+        }
+        /**
+         * 行位置，指第几个字符
+         * @returns {number}
+         */
+        get lineLocation() {
+            return this.location[2];
         }
     }
-    /**
-     * SQL数据类型，用于`EasyBox3LibSqlField`中的`dataType`
-     * @version 0.0.1
-     */
-    const fieldDataTypes = {
-        NULL: 'NULL',
-        INTEGER: 'INTEGER',
-        REAL: 'REAL',
-        TEXT: 'TEXT',
-        BLOB: 'BLOB'
-    };
     /**
      * SQL字段
      * @version 0.0.1
@@ -129,14 +213,95 @@ const EasyBox3Lib = (function (config) {
             if (this.unique) result += ' UNIQUE';
             if (this.defaultValue) {
                 result += ' DEFAULT ';
-                if (this.dataType == fieldDataTypes.INTEGER || this.dataType == fieldDataTypes.REAL) result += String(this.defaultValue);
-                else if (this.dataType == fieldDataTypes.TEXT) result += `'${this.defaultValue}'`;
-                else if (this.dataType == fieldDataTypes.BLOB) {
-                    output(outputType.WARN, 'SQL代码生成警告', '[BLOB]类型生成的结果可能会有bug，请谨慎使用！！！');
-                } else if (this.dataType == fieldDataTypes.NULL) result += 'NULL'
+                if (this.dataType == FIELD_DATA_TYPES.INTEGER || this.dataType == FIELD_DATA_TYPES.REAL) result += String(this.defaultValue);
+                else if (this.dataType == FIELD_DATA_TYPES.TEXT) result += `'${this.defaultValue}'`;
+                else if (this.dataType == FIELD_DATA_TYPES.BLOB) {
+                    output(OUTPUT_THPE.WARN, 'SQL代码生成警告', '[BLOB]类型生成的结果可能会有bug，请谨慎使用！！！');
+                } else if (this.dataType == FIELD_DATA_TYPES.NULL) result += 'NULL'
             }
             if (this.check) result += ` CHECK(${this.check})`;
             return result;
+        }
+    }
+    class SQLValue {
+        /**
+         * 定义一个SQL值，代表SQL数据表中的数据集
+         * @param {string} fieldName 字段名称
+         * @param {string} tableName 表名称
+         */
+        constructor(fieldName, tableName) {
+            this.fieldName = fieldName;
+            /**
+             * @type {object[]}
+             */
+            this.sqlData = sqlCache[tableName];
+            if (!this.sqlCache)
+                throw `SQL表达式 运算错误 未知缓存`;
+        }
+        /**
+         * 获取该字段的具体数据
+         * @param {number} index 序号
+         * @returns 
+         */
+        data(index) {
+            return this.sqlData[index][this.fieldName];
+        }
+        /**
+         * 获取一个`SQLValue`的值
+         * @param {any} value 需要获取的`SQLValue`
+         * @param {number} index SQL缓存编号
+         * @returns {any}
+         */
+        static getData(value, index) {
+            if (value instanceof SQLValue)
+                return value.data(index);
+            else if (value instanceof Array)
+                return `(${value.join(', ')})`;
+            else if (typeof value == "string")
+                return `'${value}'`;
+            else
+                return value;
+        }
+    }
+    class SQLExpressions {
+        /**
+         * SQL表达式
+         * @param {string} operator 运算符
+         * @param  {...any} values 值
+         */
+        constructor(operator, ...values) {
+            this.values = values;
+            /**
+             * @type {string}
+             */
+            this.operator = SQL_COMPARISON_OPERATORS[operator] || operator.toUpperCase();
+            if (!OPERATIONS_FUNCTION[this.operator])
+                output('SQL表达式', '未知运算符', operator);
+        }
+        /**
+         * 生成SQL代码
+         * @version 0.0.1
+         */
+        get sqlCode() {
+            var values = this.values.map(value => SQLValue.getData(value, index));
+            switch (values.length) {
+                case 1:
+                    return `${this.operator.toUpperCase()}${values[0]}`;
+                case 2:
+                    return `(${value[0]} ${this.operator.toUpperCase()} ${value[1]})`;
+                default:
+                    switch (this.operator) {
+                        case 'between':
+                            return `${value[0]} BETWEEN ${value[1]} AND ${value[2]}`;
+                    }
+            }
+        }
+        /**
+         * 计算结果
+         * @version 0.0.1
+         */
+        result(index) {
+            return OPERATIONS_FUNCTION[this.operator](...this.values.map(value => SQLValue.getData(value, index)));
         }
     }
     /**
@@ -276,6 +441,15 @@ const EasyBox3Lib = (function (config) {
         return copyObject(logs);
     }
     /**
+     * 获取当前代码的执行位置
+     * @param {number} startLocation 对结果进行筛选，在该位置之前会被去除
+     * @returns 
+     */
+    function getTheCodeExecutionLocation(startLocation = 1) {
+        var locations = new Error().stack.match(/[a-z]+.js:\d:\d/gi).slice(startLocation);
+        return locations;
+    }
+    /**
      * 输出一段日志，并记录到日志文件中
      * @param {string} type 输出类型
      * @param {string[]} data 要输出的内容
@@ -285,17 +459,24 @@ const EasyBox3Lib = (function (config) {
      */
     function output(type, ...data) {
         let str = data.join(' ');
-        console[type](str);
-        if (config.EasyBox3Lib.automaticLoggingOfOutputToTheLog && !config.EasyBox3Lib.logOnlyWarningsAndErrors) logs.push(new Output(type, str));
-        return `[${type}] ${str}`;
+        if (config.EasyBox3Lib.getCodeExecutionLocationOnOutput) {
+            let location = getTheCodeExecutionLocation(2).split(':');
+            console[type](`${location[0][0]}:${location[0][1]}`, str);
+            if (config.EasyBox3Lib.automaticLoggingOfOutputToTheLog && (!config.EasyBox3Lib.logOnlyWarningsAndErrors || type == OUTPUT_THPE.WARN || type == OUTPUT_THPE.ERROR))
+                logs.push(new Output(type, str, location.join(':')));
+        } else {
+            console[type](str);
+            if (config.EasyBox3Lib.automaticLoggingOfOutputToTheLog && !config.EasyBox3Lib.logOnlyWarningsAndErrors) logs.push(new Output(type, str, 'undefined', -1, -1));
+        }
+        return `${config.EasyBox3Lib.getCodeExecutionLocationOnOutput ? location[0][0] + ':' + location[0][1] : ''} [${type}] ${str} `;
     }
     /**
      * 通过管理员列表，判断一个玩家是不是管理员  
      * 注意：对于在运行过程中添加的管理员（即`entity.player.isAdmin`为`true`但管理员列表中没有该玩家的`userKey`，返回`false`  
      * 对于这种情况，应该使用：
      * ```javascript
-     * entity.player.isAdmin
-     * ```
+        * entity.player.isAdmin
+        * ```
      * @param {Box3PlayerEntity} entity 要判断的实体
      * @returns {boolean}
      * @version 0.0.1
@@ -312,7 +493,7 @@ const EasyBox3Lib = (function (config) {
      * @author qndm
      */
     function setAdminStatus(entity, type) {
-        output(outputType.LOG, '管理员', `${type ? '' : '取消'}设置玩家 ${entity.player.name}(${entity.player.userKey}) 为管理员`);
+        output(OUTPUT_THPE.LOG, '管理员', `${type ? '' : '取消'}设置玩家 ${entity.player.name} (${entity.player.userKey}) 为管理员`);
         entity.player.isAdmin = type;
     }
     /**
@@ -335,7 +516,7 @@ const EasyBox3Lib = (function (config) {
         entity.player.crouchAcceleration *= size
         entity.player.swimSpeed *= size;
         entity.player.swimAcceleration *= size;
-        output(outputType.LOG, '缩放', `缩放玩家尺寸 ${entity.player.name}(${entity.player.userKey}) 为 ${size}`);
+        output(OUTPUT_THPE.LOG, '缩放', `缩放玩家尺寸 ${entity.player.name} (${entity.player.userKey}) 为 ${size} `);
     }
     /**
      * 简单创建一个实体（其实也没简单到哪去）
@@ -351,8 +532,8 @@ const EasyBox3Lib = (function (config) {
      */
     function createEntity(mesh, position, collides, gravity, meshScale = config.EasyBox3Lib.defaultMeshScale, meshOrientation = config.EasyBox3Lib.defaultMeshOrientation) {
         if (world.entityQuota() >= 1) {
-            output(outputType.LOG, '创建实体', mesh, position, collides, gravity);
-            if (world.entityQuota() >= config.EasyBox3Lib.numberOfEntitiesRemainingToBeCreatedForSecurity) output(outputType.WARN, '实体创建超出安全上限', `剩余可创建实体数量：${world.entityQuota()}`);
+            output(OUTPUT_THPE.LOG, '创建实体', mesh, position, collides, gravity);
+            if (world.entityQuota() >= config.EasyBox3Lib.numberOfEntitiesRemainingToBeCreatedForSecurity) output(OUTPUT_THPE.WARN, '实体创建超出安全上限', `剩余可创建实体数量：${world.entityQuota()} `);
             return world.createEntity({
                 mesh,
                 position,
@@ -364,7 +545,7 @@ const EasyBox3Lib = (function (config) {
                 friction: 1
             });
         } else {
-            output(outputType.ERROR, '创建实体', '实体创建失败', '实体数量超过上限')
+            output(OUTPUT_THPE.ERROR, '创建实体', '实体创建失败', '实体数量超过上限')
             return null;
         }
     }
@@ -515,9 +696,9 @@ const EasyBox3Lib = (function (config) {
      * @param {string} code 
      */
     async function executeSQLCode(code) {
-        output(outputType.LOG, 'SQL', '执行命令', `执行SQL命令： ${code}`);
+        output(OUTPUT_THPE.LOG, 'SQL', '执行命令', `执行SQL命令： ${code} `);
         var result = await db.sql([code]);
-        output(outputType.LOG, 'SQL', '执行命令', `SQL运行结果：${JSON.stringify(result)}`);
+        output(OUTPUT_THPE.LOG, 'SQL', '执行命令', `SQL运行结果：${JSON.stringify(result)} `);
         return result;
     }
     /**
@@ -529,8 +710,8 @@ const EasyBox3Lib = (function (config) {
      * @author qndm
      */
     async function createTable(tableName, ...fields) {
-        output(outputType.LOG, 'SQL', '创建表格', `创建表：${tableName}`, `字段数：${fields.length}`);
-        var code = `CREATE TABLE IF NOT EXISTS "${tableName}" (${fields.map(field => field.sqlCode).join(',')});`;
+        output(OUTPUT_THPE.LOG, 'SQL', '创建表格', `创建表：${tableName} `, `字段数：${fields.length} `);
+        var code = `CREATE TABLE IF NOT EXISTS "${tableName}"(${fields.map(field => field.sqlCode).join(',')}); `;
         var result = await executeSQLCode(code);
         if (config.EasyBox3Lib.enableSQLCache)
             await createCache(tableName);
@@ -543,21 +724,22 @@ const EasyBox3Lib = (function (config) {
      * @param {object} data 要插入的数据
      * @example
      * await insertData('player', {userKey: entity.player.userKey, money: entity.player.money, itemList: ['糖果', '薯片']});//假设entity是个Box3PlayerEntity并且entity.player有money这个属性
-     * @version 0.0.2
+     * @version 0.0.3
      * @author qndm
      */
     async function insertData(tableName, data) {
-        output(outputType.LOG, 'SQL', '插入数据', '向', tableName, '插入数据');
-        var code = `INSERT INTO "${tableName}" (${Object.keys(data).map(key => `"${key}"`).join(', ')}) VALUES (${Object.values(data).map(value => {
+        output(OUTPUT_THPE.LOG, 'SQL', '插入数据', '向', tableName, '插入数据');
+        var code = `INSERT INTO "${tableName}"(${Object.keys(data).map(key => `"${key}"`).join(', ')}) VALUES(${Object.values(data).map(value => {
             if (typeof value == "number" || typeof value == "boolean") return Number(value);
-            else if (typeof value == "string") return `'${value}'`
-            else return `'${JSON.stringify(value)}'`;
-        }).join(', ')})`;
+            else if (typeof value == "string") return `'${value.replace(/\\/g, '\\\\').replace(/\'/g, '\\\'')}'`
+            else return `'${JSON.stringify(value).replace(/\\/g, '\\\\').replace(/\'/g, '\\\'')}'`;
+        }).join(', ')
+            })`;
         code += ';';
         if (config.EasyBox3Lib.enableSQLCache) {
-            /*if (sqlCache[tableName]) {
+            if (sqlCache[tableName]) {
                 sqlCache[tableName].push(data);
-            }*/
+            }
             await createCache(tableName);
         }
         return await executeSQLCode(code);
@@ -567,16 +749,27 @@ const EasyBox3Lib = (function (config) {
      * @async
      * @param {string} tableName 表名称
      * @param {"*" | string[]} columns 要查找的字段，如果要查找所有字段，输入`"*"`。默认为`"*"`
-     * @param {string} condition 筛选条件，如果为空，查找所有行（此次应填入SQL表达式）
+     * @param {string | SQLExpressions | Function} condition 筛选条件，如果为空，查找所有行（此次应填入SQL表达式或者`SQLExpressions`或者判断函数）
      * @returns {object[]}
-     * @version 0.0.2
+     * @version 0.0.3
      * @author qndm
      */
     async function loadData(tableName, columns = '*', condition = '') {
-        output(outputType.LOG, 'SQL', '读取数据', '从', tableName, '读取数据', condition);
+        if (config.EasyBox3Lib.enableSQLCache && typeof condition != 'string') {
+            output(OUTPUT_THPE.LOG, 'SQL', '读取数据', '从', 'SQL缓存', '读取数据', condition);
+            var cache = sqlCache[tableName], result = [];
+            if (condition instanceof SQLExpressions) {
+                for (let index in cache) {
+                    if (condition.result(index)) {
+                        result.push(copyObject(cache[index]));
+                    }
+                }
+            } else return condition(cache);
+        }
+        output(OUTPUT_THPE.LOG, 'SQL', '读取数据', '从', tableName, '读取数据', condition);
         var code = `SELECT ${typeof columns == "object" ? columns.join(',') : columns} FROM "${tableName}"`;
         if (condition) {
-            code += ` WHERE ${condition}`;
+            code += ` WHERE ${typeof condition == "string" ? condition : condition.sqlCode} `;
         }
         code += ';';
         return await executeSQLCode(code);
@@ -586,20 +779,32 @@ const EasyBox3Lib = (function (config) {
      * @async
      * @param {string} tableName 表名称
      * @param {object} data 要更新的数据
-     * @param {string} condition 更新数据所需要的条件，满足时才会更新。如果为空，则更新表格中的所有值（此次应填入SQL表达式）
+     * @param {string | SQLExpressions} condition 更新数据所需要的条件，满足时才会更新。如果为空，则更新表格中的所有值（此次应填入SQL表达式或者`SqlComparisonExpressions`）
      * @author qndm
-     * @version 0.0.2
+     * @version 0.0.3
      */
     async function updateData(tableName, data, condition = '') {
-        output(outputType.LOG, 'SQL', '更新数据', '向', tableName, '更新数据', condition);
+        if (config.EasyBox3Lib.enableSQLCache) {
+            output(OUTPUT_THPE.LOG, 'SQL', '更新数据', '向', '缓存', '更新数据', condition);
+            if (condition instanceof SQLExpressions) {
+                var cache = sqlCache[tableName];
+                for (let index in cache) {
+                    if (condition.result(index)) {
+                        Object.assign(cache[index], data);
+                    }
+                }
+            }
+        }
+        output(OUTPUT_THPE.LOG, 'SQL', '更新数据', '向', tableName, '更新数据', condition);
         var code = `UPDATE "${tableName}" SET ${Object.entries(data).map(value => {
             if (typeof value[1] == "number" || typeof value[1] == "boolean") return `"${value[0]}"=${Number(value[1])}`;
-            else if (typeof value[1] == "string") return `"${value[0]}"='${value[1]}'`
-            else return `"${value[0]}"='${JSON.stringify(value[1])}'`;
-        }).join(',')}`;
-        if (condition) code += ` WHERE ${condition}`;
+            else if (typeof value[1] == "string") return `"${value[0].replace(/\\/g, '\\\\').replace(/\'/g, '\\\'')}"='${value[1].replace(/\\/g, '\\\\').replace(/\'/g, '\\\'')}'`
+            else return `"${value[0].replace(/\\/g, '\\\\').replace(/\'/g, '\\\'')}"='${JSON.stringify(value[1]).replace(/\\/g, '\\\\').replace(/\'/g, '\\\'')}'`;
+        }).join(',')
+            } `;
+        if (condition) code += ` WHERE ${typeof condition == "string" ? condition : condition.sqlCode} `;
         code += ';';
-        if (config.EasyBox3Lib.enableSQLCache)
+        if (typeof condition == 'string')
             await createCache(tableName);
         return await executeSQLCode(code);
     }
@@ -607,17 +812,30 @@ const EasyBox3Lib = (function (config) {
      * 删除表中的数据
      * @async
      * @param {string} tableName 表名称
-     * @param {string} condition 要删除数据所需要的条件，满足时才会删除。如为空，则删除所有数据（此次应填入SQL表达式）
+     * @param {string | SQLBinaryExpressions} condition 要删除数据所需要的条件，满足时才会删除。如为空，则删除所有数据（此次应填入SQL表达式或者`SqlComparisonExpressions`）
      * @author qndm
      * @version 0.0.2
      */
     async function deleteData(tableName, condition = '') {
-        output(outputType.LOG, 'SQL', '删除数据', '从', tableName, '删除数据', condition);
+        output(OUTPUT_THPE.LOG, 'SQL', '删除数据', '从', tableName, '删除数据', condition);
         var code = `DELETE FROM "${tableName}"`;
-        if (condition) code += ` WHERE ${condition}`;
+        if (condition) code += ` WHERE ${typeof condition == "string" ? condition : condition.sqlCode} `;
         code += ';';
-        if (config.EasyBox3Lib.enableSQLCache)
-            await createCache(tableName);
+        if (config.EasyBox3Lib.enableSQLCache) {
+            if (typeof condition == 'string')
+                await createCache(tableName);
+            else if (condition instanceof SQLExpressions) {
+                /**
+                 * @type {object[]}
+                 */
+                var cache = sqlCache[tableName];
+                for (let index in cache) {
+                    if (condition.result(index)) {
+                        cache.splice(index, 1);
+                    }
+                }
+            }
+        }
         return await executeSQLCode(code);
     }
     /**
@@ -625,14 +843,15 @@ const EasyBox3Lib = (function (config) {
      * @async
      * @param {string} tableName 要删除的表
      * @author qndm
-     * @version 0.0.2
+     * @version 0.0.3
      */
     async function dropTable(tableName) {
-        output(outputType.WARN, 'SQL', '删除表格', '删除表', tableName, '\n该表中的信息将永久丢失！');
+        output(OUTPUT_THPE.WARN, 'SQL', '删除表格', '删除表', tableName, '\n该表中的信息将永久丢失！');
         var tableData = await loadData(tableName);
-        output(outputType.LOG, 'SQL', '删除表格', '表格数据：', JSON.stringify(tableData));
-        var code = `DROP TABLE "${tableName}";`;
-        sqlCache[tableName] = undefined;
+        output(OUTPUT_THPE.LOG, 'SQL', '删除表格', '表格数据：', JSON.stringify(tableData));
+        var code = `DROP TABLE "${tableName}"; `;
+        if (config.EasyBox3Lib.enableSQLCache)
+            delete sqlCache[tableName];
         return await executeSQLCode(code);
     }
     /**
@@ -647,17 +866,17 @@ const EasyBox3Lib = (function (config) {
      * @version 0.0.2
      */
     async function importData(tableName, primaryKey, datas, overwriteOriginalData = true, discardOriginalData = false) {
-        output(outputType.LOG, 'SQL', '导入数据', '向', tableName, '导入数据', (overwriteOriginalData ? '覆盖数据' : '') + (discardOriginalData ? '删除原数据' : ''));
+        output(OUTPUT_THPE.LOG, 'SQL', '导入数据', '向', tableName, '导入数据', (overwriteOriginalData ? '覆盖数据' : '') + (discardOriginalData ? '删除原数据' : ''));
         if (discardOriginalData) {
             await deleteData(tableName);
         }
         for (let data of datas) {
-            var theNumberOfOldData = await loadData(tableName, primaryKey, `${primaryKey}=${data[primaryKey]}`).length;
+            var theNumberOfOldData = await loadData(tableName, primaryKey, `"${primaryKey}" = ${data[primaryKey]} `).length;
             if (theNumberOfOldData <= 0) {
                 await insertData(tableName, data);
             } else if (overwriteOriginalData) {
-                if (theNumberOfOldData != 1) output(outputType.WARN, 'SQL', '导入数据', '检测到', primaryKey, '字段有重复值');
-                await updateData(tableName, data, `${primaryKey}=${data[primaryKey]}`);
+                if (theNumberOfOldData != 1) output(OUTPUT_THPE.WARN, 'SQL', '导入数据', '检测到', primaryKey, '字段有重复值');
+                await updateData(tableName, data, `"${primaryKey}" = ${data[primaryKey]} `);
             }
         }
         if (config.EasyBox3Lib.enableSQLCache)
@@ -674,9 +893,9 @@ const EasyBox3Lib = (function (config) {
      * @author qndm
      */
     async function exportData(tableName, columns = '*') {
-        output(outputType.LOG, 'SQL', '导出数据', '从', tableName, '导出数据');
+        output(OUTPUT_THPE.LOG, 'SQL', '导出数据', '从', tableName, '导出数据');
         var tableData = await loadData(tableName, columns);
-        output(outputType.LOG, 'SQL', '导出数据', '表格数据：', JSON.stringify(tableData));
+        output(OUTPUT_THPE.LOG, 'SQL', '导出数据', '表格数据：', JSON.stringify(tableData));
         return tableData;
     }
     /**
@@ -688,7 +907,7 @@ const EasyBox3Lib = (function (config) {
      */
     async function createCache(tableName) {
         if (!config.EasyBox3Lib.enableSQLCache)
-            output(outputType.WARN, 'SQL', '创建缓存')
+            output(OUTPUT_THPE.WARN, 'SQL', '创建缓存')
         var data = await loadData(tableName);
         sqlCache[tableName] = data;
     }
@@ -702,7 +921,7 @@ const EasyBox3Lib = (function (config) {
         isAdmin,
         resizePlayer,
         setAdminStatus,
-        outputType,
+        OUTPUT_THPE,
         createEntity,
         textDialog,
         selectDialog,
@@ -711,10 +930,13 @@ const EasyBox3Lib = (function (config) {
         toChineseDate,
         random,
         Menu,
+        getTheCodeExecutionLocation,
         sql: {
-            Field: Field,
+            Field,
+            Value: SQLValue,
+            Expressions: SQLExpressions,
             executeSQLCode,
-            fieldDataTypes,
+            FIELD_DATA_TYPES,
             createTable,
             insertData,
             loadData,
@@ -725,14 +947,15 @@ const EasyBox3Lib = (function (config) {
             exportData,
             createCache
         },
-        time,
-        version: [0, 0, 2]
+        TIME,
+        version: [0, 0, 3]
     }
 }(CONFIG));
 if (CONFIG.EasyBox3Lib.exposureToGlobal) {
     Object.assign(global, EasyBox3Lib);
-    EasyBox3Lib.output(EasyBox3Lib.EasyBox3LibOutputType.LOG, '已成功暴露到全局');
+    EasyBox3Lib.output(EasyBox3Lib.OUTPUT_THPE.LOG, '已成功暴露到全局');
 }
+global.EasyBox3Lib = EasyBox3Lib;
 if (global.libraryVersions) {
     global.libraryVersions.EasyBox3Lib = EasyBox3Lib.version;
 } else {
