@@ -18,7 +18,7 @@ if (!CONFIG) {
 /**
  * # EasyBox3Lib库
  * 一个适用于大部分地图的通用代码库
- * @version 0.0.3
+ * @version 0.0.4
  * @author qndm
  */
 const EasyBox3Lib = (function (config) {
@@ -442,12 +442,14 @@ const EasyBox3Lib = (function (config) {
     }
     /**
      * 获取当前代码的执行位置
-     * @param {number} startLocation 对结果进行筛选，在该位置之前会被去除
-     * @returns 
+     * @returns {{locations: string, functions: string}}
      */
-    function getTheCodeExecutionLocation(startLocation = 1) {
-        var locations = new Error().stack.match(/[a-z]+.js:\d:\d/gi).slice(startLocation);
-        return locations;
+    function getTheCodeExecutionLocation() {
+        var stack = new Error().stack.match(/[\w$]+ \([\w$]+\.js:\d+:\d+\)/g);
+        if(!stack) return {locations: ['unknown:-1:-1'], functions: ['unknown']};
+        var locations = stack.map(location => location.match(/[\w$]+\.js:\d+:\d+/g)[0]),
+            functions = stack.map(location => location.split(' ')[0]);
+        return {locations, functions};
     }
     /**
      * 输出一段日志，并记录到日志文件中
@@ -460,15 +462,18 @@ const EasyBox3Lib = (function (config) {
     function output(type, ...data) {
         let str = data.join(' ');
         if (config.EasyBox3Lib.getCodeExecutionLocationOnOutput) {
-            let location = getTheCodeExecutionLocation(2).split(':');
-            console[type](`${location[0][0]}:${location[0][1]}`, str);
+            let locations = getTheCodeExecutionLocation();
+            let location = (locations.locations.filter(location => !location.startsWith(__filename))[0] || locations.locations[0]).split(':');
+            console[type](`(${location[0]}:${location[1]}) -> ${locations.functions.filter(func => !config.EasyBox3Lib.getFunctionNameBlackList.includes(func))[0] || 'unknown'}`, str);
             if (config.EasyBox3Lib.automaticLoggingOfOutputToTheLog && (!config.EasyBox3Lib.logOnlyWarningsAndErrors || type == OUTPUT_THPE.WARN || type == OUTPUT_THPE.ERROR))
                 logs.push(new Output(type, str, location.join(':')));
+            return `(${location[0]}:${location[1]}) [${type}] ${str}`;
         } else {
             console[type](str);
-            if (config.EasyBox3Lib.automaticLoggingOfOutputToTheLog && !config.EasyBox3Lib.logOnlyWarningsAndErrors) logs.push(new Output(type, str, 'undefined', -1, -1));
+            if (config.EasyBox3Lib.automaticLoggingOfOutputToTheLog && !config.EasyBox3Lib.logOnlyWarningsAndErrors) 
+                logs.push(new Output(type, str, 'unknown', -1, -1));
+            return `[${type}] ${str}`;
         }
-        return `${config.EasyBox3Lib.getCodeExecutionLocationOnOutput ? location[0][0] + ':' + location[0][1] : ''} [${type}] ${str} `;
     }
     /**
      * 通过管理员列表，判断一个玩家是不是管理员  
@@ -545,7 +550,7 @@ const EasyBox3Lib = (function (config) {
                 friction: 1
             });
         } else {
-            output(OUTPUT_THPE.ERROR, '创建实体', '实体创建失败', '实体数量超过上限')
+            output(OUTPUT_THPE.ERROR, '实体创建失败', '实体数量超过上限')
             return null;
         }
     }
@@ -696,9 +701,9 @@ const EasyBox3Lib = (function (config) {
      * @param {string} code 
      */
     async function executeSQLCode(code) {
-        output(OUTPUT_THPE.LOG, 'SQL', '执行命令', `执行SQL命令： ${code} `);
+        output(OUTPUT_THPE.LOG, `执行SQL命令： ${code} `);
         var result = await db.sql([code]);
-        output(OUTPUT_THPE.LOG, 'SQL', '执行命令', `SQL运行结果：${JSON.stringify(result)} `);
+        output(OUTPUT_THPE.LOG, `SQL运行结果：${JSON.stringify(result)} `);
         return result;
     }
     /**
@@ -710,7 +715,7 @@ const EasyBox3Lib = (function (config) {
      * @author qndm
      */
     async function createTable(tableName, ...fields) {
-        output(OUTPUT_THPE.LOG, 'SQL', '创建表格', `创建表：${tableName} `, `字段数：${fields.length} `);
+        output(OUTPUT_THPE.LOG, `创建表：${tableName} `, `字段数：${fields.length} `);
         var code = `CREATE TABLE IF NOT EXISTS "${tableName}"(${fields.map(field => field.sqlCode).join(',')}); `;
         var result = await executeSQLCode(code);
         if (config.EasyBox3Lib.enableSQLCache)
@@ -728,7 +733,7 @@ const EasyBox3Lib = (function (config) {
      * @author qndm
      */
     async function insertData(tableName, data) {
-        output(OUTPUT_THPE.LOG, 'SQL', '插入数据', '向', tableName, '插入数据');
+        output(OUTPUT_THPE.LOG, `向 ${tableName} 插入数据`);
         var code = `INSERT INTO "${tableName}"(${Object.keys(data).map(key => `"${key}"`).join(', ')}) VALUES(${Object.values(data).map(value => {
             if (typeof value == "number" || typeof value == "boolean") return Number(value);
             else if (typeof value == "string") return `'${value.replace(/\\/g, '\\\\').replace(/\'/g, '\\\'')}'`
@@ -756,7 +761,7 @@ const EasyBox3Lib = (function (config) {
      */
     async function loadData(tableName, columns = '*', condition = '') {
         if (config.EasyBox3Lib.enableSQLCache && typeof condition != 'string') {
-            output(OUTPUT_THPE.LOG, 'SQL', '读取数据', '从', 'SQL缓存', '读取数据', condition);
+            output(OUTPUT_THPE.LOG, '从 SQL缓存 读取数据', condition);
             var cache = sqlCache[tableName], result = [];
             if (condition instanceof SQLExpressions) {
                 for (let index in cache) {
@@ -766,7 +771,7 @@ const EasyBox3Lib = (function (config) {
                 }
             } else return condition(cache);
         }
-        output(OUTPUT_THPE.LOG, 'SQL', '读取数据', '从', tableName, '读取数据', condition);
+        output(OUTPUT_THPE.LOG, '从', tableName, '读取数据', condition);
         var code = `SELECT ${typeof columns == "object" ? columns.join(',') : columns} FROM "${tableName}"`;
         if (condition) {
             code += ` WHERE ${typeof condition == "string" ? condition : condition.sqlCode} `;
@@ -785,7 +790,7 @@ const EasyBox3Lib = (function (config) {
      */
     async function updateData(tableName, data, condition = '') {
         if (config.EasyBox3Lib.enableSQLCache) {
-            output(OUTPUT_THPE.LOG, 'SQL', '更新数据', '向', '缓存', '更新数据', condition);
+            output(OUTPUT_THPE.LOG, '向 缓存 更新数据', condition);
             if (condition instanceof SQLExpressions) {
                 var cache = sqlCache[tableName];
                 for (let index in cache) {
@@ -795,7 +800,7 @@ const EasyBox3Lib = (function (config) {
                 }
             }
         }
-        output(OUTPUT_THPE.LOG, 'SQL', '更新数据', '向', tableName, '更新数据', condition);
+        output(OUTPUT_THPE.LOG, '向', tableName, '更新数据', condition);
         var code = `UPDATE "${tableName}" SET ${Object.entries(data).map(value => {
             if (typeof value[1] == "number" || typeof value[1] == "boolean") return `"${value[0]}"=${Number(value[1])}`;
             else if (typeof value[1] == "string") return `"${value[0].replace(/\\/g, '\\\\').replace(/\'/g, '\\\'')}"='${value[1].replace(/\\/g, '\\\\').replace(/\'/g, '\\\'')}'`
@@ -817,7 +822,7 @@ const EasyBox3Lib = (function (config) {
      * @version 0.0.2
      */
     async function deleteData(tableName, condition = '') {
-        output(OUTPUT_THPE.LOG, 'SQL', '删除数据', '从', tableName, '删除数据', condition);
+        output(OUTPUT_THPE.LOG, '从', tableName, '删除数据', condition);
         var code = `DELETE FROM "${tableName}"`;
         if (condition) code += ` WHERE ${typeof condition == "string" ? condition : condition.sqlCode} `;
         code += ';';
@@ -825,6 +830,7 @@ const EasyBox3Lib = (function (config) {
             if (typeof condition == 'string')
                 await createCache(tableName);
             else if (condition instanceof SQLExpressions) {
+                output(OUTPUT_THPE.LOG, '从 缓存 删除数据', condition);
                 /**
                  * @type {object[]}
                  */
@@ -846,9 +852,9 @@ const EasyBox3Lib = (function (config) {
      * @version 0.0.3
      */
     async function dropTable(tableName) {
-        output(OUTPUT_THPE.WARN, 'SQL', '删除表格', '删除表', tableName, '\n该表中的信息将永久丢失！');
+        output(OUTPUT_THPE.WARN, '删除表', tableName, '\n该表中的信息将永久丢失！');
         var tableData = await loadData(tableName);
-        output(OUTPUT_THPE.LOG, 'SQL', '删除表格', '表格数据：', JSON.stringify(tableData));
+        output(OUTPUT_THPE.LOG, '表格数据：', JSON.stringify(tableData));
         var code = `DROP TABLE "${tableName}"; `;
         if (config.EasyBox3Lib.enableSQLCache)
             delete sqlCache[tableName];
@@ -866,7 +872,7 @@ const EasyBox3Lib = (function (config) {
      * @version 0.0.2
      */
     async function importData(tableName, primaryKey, datas, overwriteOriginalData = true, discardOriginalData = false) {
-        output(OUTPUT_THPE.LOG, 'SQL', '导入数据', '向', tableName, '导入数据', (overwriteOriginalData ? '覆盖数据' : '') + (discardOriginalData ? '删除原数据' : ''));
+        output(OUTPUT_THPE.LOG, '向', tableName, '导入数据', (overwriteOriginalData ? '覆盖数据' : '') + (discardOriginalData ? '删除原数据' : ''));
         if (discardOriginalData) {
             await deleteData(tableName);
         }
@@ -893,9 +899,9 @@ const EasyBox3Lib = (function (config) {
      * @author qndm
      */
     async function exportData(tableName, columns = '*') {
-        output(OUTPUT_THPE.LOG, 'SQL', '导出数据', '从', tableName, '导出数据');
+        output(OUTPUT_THPE.LOG, '从', tableName, '导出数据');
         var tableData = await loadData(tableName, columns);
-        output(OUTPUT_THPE.LOG, 'SQL', '导出数据', '表格数据：', JSON.stringify(tableData));
+        output(OUTPUT_THPE.LOG, '表格数据：', JSON.stringify(tableData));
         return tableData;
     }
     /**
@@ -907,7 +913,7 @@ const EasyBox3Lib = (function (config) {
      */
     async function createCache(tableName) {
         if (!config.EasyBox3Lib.enableSQLCache)
-            output(OUTPUT_THPE.WARN, 'SQL', '创建缓存')
+            output(OUTPUT_THPE.WARN, '创建缓存', tableName)
         var data = await loadData(tableName);
         sqlCache[tableName] = data;
     }
@@ -948,7 +954,7 @@ const EasyBox3Lib = (function (config) {
             createCache
         },
         TIME,
-        version: [0, 0, 3]
+        version: [0, 0, 4]
     }
 }(CONFIG));
 if (CONFIG.EasyBox3Lib.exposureToGlobal) {
@@ -963,5 +969,5 @@ if (global.libraryVersions) {
         EasyBox3Lib: EasyBox3Lib.version
     };
 }
-console.log('EasyBox3Lib', EasyBox3Lib.version);
+console.log('EasyBox3Lib', EasyBox3Lib.version.join('.'));
 module.exports = EasyBox3Lib;

@@ -102,7 +102,21 @@ const config = {
          * 施工中……
          * @default false
          */
-        enableSQLCache: false
+        enableSQLCache: false,
+        /**
+         * 是否在Pro地图中
+         */
+        inArena,
+        /**
+         * 输出时输出代码的执行位置
+         * @default true
+         */
+        getCodeExecutionLocationOnOutput: true,
+        /**
+         * 获取代码执行函数时，要忽略的函数名称
+         * @default ['eval', 'getTheCodeExecutionLocation', 'output']
+         */
+        getFunctionNameBlackList: ['eval', 'getTheCodeExecutionLocation', 'output']
     }
 };
 module.exports = config;
