@@ -26,8 +26,8 @@ ps：`$` 可以改为其他内容，只要不冲突
 ## 0.0.4
 修复 `getTheCodeExecutionLocation` 方法的bug  
 优化 `output` 和 `getTheCodeExecutionLocation` 方法
-- 现在可以获取到调用该方法的函数名称了
-- 可以通过配置 `getFunctionNameBlackList` 添加要忽略的函数
+- 现在可以获取到调用该方法的函数名称了  
+可以通过配置 `getFunctionNameBlackList` 添加要忽略的函数
 ## 0.0.3
 新增 SQL缓存（测试）  
 将一些常量改为了大写（例如：`outputType` -> `OUTPUT_THPE`）  
