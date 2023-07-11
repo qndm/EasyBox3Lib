@@ -22,10 +22,6 @@ const config = {
      */
     EasyBox3Lib: {
         /**
-         * @todo 启用onTick优化
-         */
-        enableOnTickOptimization: true,
-        /**
          * 如果是在编辑端运行，请启用本选项
          * @default true
          */
@@ -116,7 +112,23 @@ const config = {
          * 获取代码执行函数时，要忽略的函数名称
          * @default ['eval', 'getTheCodeExecutionLocation', 'output']
          */
-        getFunctionNameBlackList: ['eval', 'getTheCodeExecutionLocation', 'output']
+        getFunctionNameBlackList: ['eval', 'getTheCodeExecutionLocation', 'output'],
+        /**
+         * onTick事件的每个周期的长度（单位：tick）
+         * @default 16
+         */
+        onTickCycleLength: 16,
+        /**
+         * 多少个周期规划一次onTick，值越小，频率越快
+         * @default 4
+         */
+        planningOnTickFrequency: 4,
+        /**
+         * 禁用事件优化  
+         * 如果为`true`，则监听器可以在同一时间内被运行多次
+         * @default false
+         */
+        disableEventOptimization: false
     }
 };
 module.exports = config;
