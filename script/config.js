@@ -1,4 +1,14 @@
 /**
+ * 是否在Pro地图中
+ * @default false
+ */
+const inArena = false;
+if (inArena) {
+    var Box3Vector3 = GameVector3,
+        Box3Quaternion = GameQuaternion,
+        Box3RGBAColor = GameRGBAColor;
+}
+/**
  * 配置信息文件
  */
 const config = {
