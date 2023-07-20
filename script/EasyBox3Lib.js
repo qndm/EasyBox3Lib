@@ -2,9 +2,6 @@ const CONFIG = require('./config.js');
 if (!CONFIG) {
     console.warn('警告：未找到配置文件\n请检查config.js文件');
 } else {
-    if (CONFIG.EasyBox3Lib.enablePostgreSQL) {
-        console.warn('暂不支持PostgreSQL数据库');
-    }
     if (CONFIG.EasyBox3Lib.inArena) {
         console.log('正在自动创建Box3xxx');
         for (let x in this) {
@@ -18,7 +15,7 @@ if (!CONFIG) {
 /**
  * # EasyBox3Lib库
  * 一个适用于大部分地图的通用代码库
- * @version 0.0.5
+ * @version 0.0.6
  * @author qndm
  */
 const EasyBox3Lib = (function (config) {
@@ -142,10 +139,7 @@ const EasyBox3Lib = (function (config) {
         /**
          * @type {object}
          */
-        sqlCache = {},
-        /**
-         * @type {Function}
-         */
+        dataStorages = {},
         gameLoops = {},
         events = {
             onTick: [],
@@ -157,7 +151,7 @@ const EasyBox3Lib = (function (config) {
         onTickHandlers = new Array(config.EasyBox3Lib.onTickCycleLength).fill({ events: [], timeSpent: 0 }),
         /**
          * 预处理时调用的函数
-         * @type {{todo:Function,priority:number}[]}
+         * @type {{todo:() => void,priority:number}[]}
          */
         preprocessFunctions = [],
         /**
@@ -237,95 +231,158 @@ const EasyBox3Lib = (function (config) {
             return result;
         }
     }
-    class SQLValue {
+    /**
+     * 数据存储模块，管理游戏中的数据。
+     */
+    class Storage {
         /**
-         * 定义一个SQL值，代表SQL数据表中的数据集
-         * @param {string} fieldName 字段名称
-         * @param {string} tableName 表名称
+         * 连接指定数据存储空间，如果不存在则创建一个新的空间。
+         * @async
+         * @param {string} key 指定空间的名称，长度不超过50个字符
+         * @returns {DataStorage}
          */
-        constructor(fieldName, tableName) {
-            this.fieldName = fieldName;
-            /**
-             * @type {object[]}
-             */
-            this.sqlData = sqlCache[tableName];
-            if (!this.sqlCache)
-                throw `SQL表达式 运算错误 未知缓存`;
-        }
-        /**
-         * 获取该字段的具体数据
-         * @param {number} index 对应SQL表格中的第几行
-         * @returns {any}
-         */
-        data(index) {
-            return this.sqlData[index][this.fieldName];
-        }
-        get sqlCode() {
-            return `"${this.fieldName}"`
-        }
-        /**
-         * 获取一个`SQLValue`的值
-         * @param {any} value 需要获取的`SQLValue`
-         * @param {number} index 对应SQL表格中的第几行
-         * @returns {any}
-         */
-        static getData(value, index) {
-            if (value instanceof SQLValue)
-                return value.data(index);
-            else if (value instanceof Array)
-                return `(${value.join(', ')})`;
-            else if (typeof value == "string")
-                return `'${value}'`;
+        static async getDataStorage(key) {
+            if (dataStorages[key]) {
+                output(OUTPUT_TYPE.LOG, '检测到已连接的数据存储空间', key);
+                return dataStorages[key];
+            }
+            output(OUTPUT_TYPE.LOG, '连接数据存储空间', key);
+            var gameDataStorage;
+            if (config.EasyBox3Lib.inArena)
+                gameDataStorage = await storage.getDataStorage(key);
             else
-                return value;
-        }
-        static getCode(value) {
-            if (value instanceof SQLValue)
-                return value.sqlCode;
-            else if (value instanceof Array)
-                return `(${value.join(', ')})`;
-            else if (typeof value == "string")
-                return `'${value}'`;
-            else
-                return value;
+                await executeSQLCode(`CREATE TABLE IF NOT EXISTS "${key}"(
+                "key" TEXT PRIMARY KEY,
+                "value" TEXT NOT NULL,
+                "version" TEXT NOT NULL,
+                "updateTime" INTEGER NOT NULL,
+                "createTime" INTEGER NOT NULL
+            )`);
+            dataStorages[key] = new DataStorage(key, gameDataStorage);
+            return dataStorages[key];
         }
     }
-    class SQLExpressions {
+    /**
+     * 代表数据存储空间的类。仅能通过 `Storage.getDataStorage` 创建。能够以键值对的形式存储数据，提供方法处理空间内键值对相关的操作。  
+     * 和官方的`GameDataStorage`不同，`DataStorage`自带缓存  
+     * 也可以直接在Pro编辑器使用
+     */
+    class DataStorage {
         /**
-         * SQL表达式
-         * @param {string} operator 运算符
-         * @param  {...any} values 值
+         * 定义一个DataStorage
+         * @param {string} key 空间名称（只读）
+         * @param {GameDataStorage} gameDataStorage 对应的`GameDataStorage`
          */
-        constructor(operator, ...values) {
-            this.values = values;
-            /**
-             * @type {string}
-             */
-            this.operator = SQL_COMPARISON_OPERATORS[operator] || operator.toUpperCase();
-            if (!OPERATIONS_FUNCTION[this.operator])
-                output('SQL表达式', '未知运算符', operator);
+        constructor(key, gameDataStorage) {
+            Object.defineProperty(this, 'key', {
+                value: key,
+                writable: false,
+            });
+            if (config.EasyBox3Lib.enableSQLCache)
+                /**
+                 * @type {Map<string, ResultValue>}
+                 */
+                this.data = new Map();
+            if (config.EasyBox3Lib.inArena)
+                this.gameDataStorage = gameDataStorage;
         }
-        get sqlCode() {
-            var values = this.values.map(value => SQLValue.getCode(value, index));
-            switch (values.length) {
-                case 1:
-                    return `${this.operator.toUpperCase()}${values[0]}`;
-                case 2:
-                    return `(${value[0]} ${this.operator.toUpperCase()} ${value[1]})`;
-                default:
-                    switch (this.operator) {
-                        case 'between':
-                            return `${value[0]} BETWEEN ${value[1]} AND ${value[2]}`;
-                    }
+        /**
+         * 获取指定键对应的值  
+         * 如果没有指定的键，返回`undefined`  
+         * 注意：非Pro地图`version`将会返回空字符串
+         * @async
+         * @param {string} key 指定的键
+         * @returns {ReturnValue | undefined}
+         */
+        async get(key) {
+            output(OUTPUT_TYPE.LOG, '获取数据', this.key, ':', key);
+            var result = undefined;
+            if (config.EasyBox3Lib.enableSQLCache && this.data.has(key)) {
+                return copyObject(this.data.get(key));
+            } else {
+                result = config.EasyBox3Lib.inArena ?
+                    await this.gameDataStorage.get(key) :
+                    await executeSQLCode(`SELECT * FROM "${this.key}" WHERE "key" == '${key}'`);
+                if (result instanceof Array && result.length > 0) {
+                    this.data[key] = JSON.parse(result);
+                    return copyObject(this.data[key]);
+                } else
+                    return undefined;
             }
         }
         /**
-         * 计算表达式结果
-         * @param {number} index 对应SQL表格中的第几行
-         * @returns {any}
+         * 传入指定键与值，无论该键是否存在，均将值设置到此键上。
+         * @async
+         * @param {string} key 需要设置的键
+         * @param {JSONValue} value 需要设置的值
          */
-        result(index) {
-            return OPERATIONS_FUNCTION[this.operator](...this.values.map(value => SQLValue.getData(value, index)));
+        async set(key, value) {
+            output(OUTPUT_TYPE.LOG, '更新数据', this.key, ':', key, '=', value);
+            var data = await this.get(key);//由于需要更新版本，所以先获取一遍旧数据
+            if (data) {
+                data.updateTime = Date.now();
+                data.value = JSON.stringify(value);
+                if (config.EasyBox3Lib.inArena)
+                    await this.gameDataStorage.set(key, value);
+                else
+                    await executeSQLCode(`UPDATE "${this.key}" SET ("value" = '${data.value}', "updateTime" = ${data.updateTime}) WHERE "key" == '${key}'`);
+            } else {
+                data = {
+                    key,
+                    value,
+                    createTime: Date.now(),
+                    updateTime: Date.now(),
+                    version: ""
+                };
+                if (config.EasyBox3Lib.inArena) {
+                    await this.gameDataStorage.set(key, value);
+                } else {
+                    await executeSQLCode(`INSERT INTO "${this.key}" ("key", "value", "createTime", "updateTime", "version") VALUES ('${data.key}', '${data.value}', ${data.createTime}, ${data.updateTime}, '${data.version}')`);
+                }
+            }
+            output(OUTPUT_TYPE.LOG, this.data[key].value, data.value);
+            this.data.set(key, value);
+        }
+        /**
+         * 使用传入的方法更新键值对
+         * @async
+         * @param {string} key 
+         * @param {(prevValue : ReturnValue) => JSONValue} handler 
+         */
+        async update(key, handler) {
+            var value = await handler(await this.get(key));
+            await this.set(key, value);
+        }
+        /**
+         * 批量获取键值对  
+         * 注意：该方法不会创建缓存和读取缓存，所以该方法比`get`更慢
+         * @param {ListPageOptions} options 批量获取键值对的配置项
+         * @returns {QueryList}
+         */
+        async list(options) {
+            output(OUTPUT_TYPE.LOG, '获取数据', this.key, ':', options.cursor, '-', options.cursor + (options.pageSize || 100));
+            if (config.EasyBox3Lib.inArena) {
+                return await this.gameDataStorage.list(options);
+            } else {
+                return await executeSQLCode(`SELECT * FROM "${this.key}" LIMIT ${options.pageSize || 100} OFFSET ${options.cursor}`);
+            }
+        }
+        async remove(key) {
+            output(OUTPUT_TYPE.LOG, '删除数据', this.key, ':', key);
+            this.data.delete(key);
+            await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`);
+        }
+        /**
+         * 删除表格
+         */
+        async drop() {
+            if (config.EasyBox3Lib.inArena)
+                throw '暂不支持Pro地图';
+            else {
+                output(OUTPUT_TYPE.WARN, '删除表', this.key);
+                delete this.data;
+                await executeSQLCode(`DROP TABLE ${this.key}`);
+            }
         }
     }
     /**
@@ -349,8 +406,8 @@ const EasyBox3Lib = (function (config) {
              */
             this.previousLevelMenu = undefined;
             this.handler = {
-                whenOpen: (() => { }),
-                whenClose: (() => { })
+                onOpen: (() => { }),
+                onClose: (() => { })
             };
         }
         /**
@@ -375,10 +432,10 @@ const EasyBox3Lib = (function (config) {
         async open(entity) {
             var value = await selectDialog(entity, this.title, this.content, this.options.map(option => option.title));
             if (value) {
-                this.handler.whenOpen(entity, this.type, value);
+                this.handler.onOpen(entity, value);
                 this.options[value.index].open(entity);
             } else {
-                this.handler.whenClose(entity, this.type, value);
+                this.handler.onClose(entity, value);
                 if (this.previousLevelMenu) {//打开上一级菜单
                     this.previousLevelMenu.open(entity);
                 }
@@ -386,17 +443,17 @@ const EasyBox3Lib = (function (config) {
         }
         /**
          * 当该菜单被打开时执行的操作
-         * @param {Function} handler 当该菜单被打开时执行的操作。
+         * @param {(entity: Box3Entity, value: Box3DialogResponse) => void} handler 当该菜单被打开时执行的操作。
          */
         onOpen(handler) {
-            this.handler.whenOpen = handler;
+            this.handler.onOpen = handler;
         }
         /**
          * 当该菜单被关闭时执行的操作
-         * @param {Function} handler 当该菜单被关闭时执行的操作。
+         * @param {(entity: Box3Entity, value: Box3DialogResponse) => void} handler 当该菜单被关闭时执行的操作。
          */
         onClose(handler) {
-            this.handler.whenClose = handler;
+            this.handler.onClose = handler;
         }
     }
     /**
@@ -405,7 +462,7 @@ const EasyBox3Lib = (function (config) {
     class EventHandlerToken {
         /**
          * 创建一个事件令牌
-         * @param {Function} handler 
+         * @param {({tick: number}) => void} handler 
          */
         constructor(handler) {
             this.handler = handler;
@@ -423,7 +480,7 @@ const EasyBox3Lib = (function (config) {
         async run() {
             if (this.statu != STATUS.NOT_RUNNING && (config.EasyBox3Lib.disableEventOptimization || this.statu == STATUS.FREE)) {
                 this.statu = STATUS.RUNNING;
-                await this.handler(world.currentTick);
+                await this.handler({ tick: world.currentTick });
                 this.statu = STATUS.FREE;
             }
         }
@@ -431,7 +488,7 @@ const EasyBox3Lib = (function (config) {
     class OnTickHandlerToken extends EventHandlerToken {
         /**
          * 定义一个`onTick`监听器事件
-         * @param {Function} handler 要执行的函数
+         * @param {({tick: number}) => void} handler 要执行的函数
          * @param {number} tps 每秒钟运行多少次，最大为`config.EasyBox3Lib.onTickCycleLength`，最小为`1`
          * @param {boolean} enforcement 是否强制运行，如果为true，则会在每个tick都运行
          * @param {boolean} automaticTps 是否自动调整tps
@@ -447,7 +504,7 @@ const EasyBox3Lib = (function (config) {
             if (this.enforcement || this.statu == STATUS.FREE) {
                 var startTime = Date.now();
                 this.statu = STATUS.RUNNING;
-                await this.handler(world.currentTick);
+                await this.handler({ tick: world.currentTick });
                 this.statu = STATUS.FREE;
                 if (this.automaticTps) {
                     var timeSpent = Date.now() - startTime;
@@ -458,15 +515,50 @@ const EasyBox3Lib = (function (config) {
             }
         }
     }
+    class EntityGroup {
+        /**
+         * 定义一个实体组
+         * @param {Box3Entity[]} entities 实体组内的实体
+         * @param {Box3Vector3} position 实体组中心位置
+         */
+        constructor(entities, position) {
+            this.entities = entities;
+            if (position)
+                this.position = position;
+            else if (this.entities.length > 0) {
+                this.position = new Box3Vector3(0, 0, 0);
+                for (let entity of this.entities)
+                    this.position.addEq(entity.position);
+                this.position.divEq(this.entities.length, this.entities.length, this.entities.length);
+                output(OUTPUT_TYPE.LOG, '未指定中心位置，设置为', this.position.x, this.position.y, this.position.z);
+            } else {
+                this.position = new Box3Vector3(0, 0, 0);
+                output(OUTPUT_TYPE.WARN, '模型组未指定实体和中心位置');
+            }
+        }
+        /**
+         * 调整实体组中指定实体的位置  
+         * 会更改该实体的`position`和`meshOffect`
+         * @param {Box3Entity} entity 要调整的实体
+         */
+        adjustmentEntityPosition(entity) {
+            var meshOffect = entity.meshOffect.clone();
+            entity.meshOffect = entity.position.sub(this.position).add(meshOffect);
+            entity.position = this.position;
+            entity.offect = meshOffect;//复制原meshOffect，方便调用
+        }
+    }
     /**
      * 复制一个`object`
-     * @param {object} obj 要复制的`object`
-     * @returns {object}
+     * @param {any} obj 要复制的`object`
+     * @returns {any}
      */
     function copyObject(obj) {
+        if (!obj instanceof Object)
+            return obj;
         var newObj = newObj instanceof Array ? [] : {};
         for (let key in newObj) {
-            newObj[key] = obj[key] instanceof Object ? copyObject(obj[key]) : obj[key];
+            newObj[key] = copyObject(obj[key]);
         }
         return JSON.parse(JSON.stringify(obj));
     }
@@ -771,20 +863,6 @@ const EasyBox3Lib = (function (config) {
         return result;
     }
     /**
-     * 创建一个SQL表格
-     * @async
-     * @param {string} tableName 表格名称
-     * @param  {Field[]} fields 表格字段
-     */
-    async function createTable(tableName, ...fields) {
-        output(OUTPUT_TYPE.LOG, `创建表：${tableName} `, `字段数：${fields.length} `);
-        var code = `CREATE TABLE IF NOT EXISTS "${tableName}"(${fields.map(field => field.sqlCode).join(',')}); `;
-        var result = await executeSQLCode(code);
-        if (config.EasyBox3Lib.enableSQLCache)
-            await createCache(tableName);
-        return result;
-    }
-    /**
      * 转化SQL数据
      * @author 萌新大佬
      * @param {any} value 
@@ -803,185 +881,69 @@ const EasyBox3Lib = (function (config) {
         }
     }
     /**
-     * 插入一条数据
-     * @async
-     * @author qndm 萌新大佬
-     * @param {string} tableName 表名称
-     * @param {object} data 要插入的数据
-     * @example
-     * await insertData('player', {userKey: entity.player.userKey, money: entity.player.money, itemList: ['糖果', '薯片']});//假设entity是个Box3PlayerEntity并且entity.player有money这个属性
+     * 在缓存中直接获取指定数据存储空间  
+     * 比`Storage.getDataStorage`更快，但不能创建数据存储空间
+     * @param {string} tableKey 指定数据存储空间名称
+     * @returns {DataStorage}
      */
-    async function insertData(tableName, data) {
-        output(OUTPUT_TYPE.LOG, `向 ${tableName} 插入数据`);
-        let parsedData = Object.values(data).map(value => parseSQLData(value));
-        var code = `INSERT INTO "${tableName}"(${Object.keys(data).map(key => `"${key}"`).join(', ')}) VALUES(${parsedData.join(', ')});`;
-        if (config.EasyBox3Lib.enableSQLCache) {
-            if (sqlCache[tableName]) {
-                sqlCache[tableName].push(data);
-            }
-            await createCache(tableName);
-        }
-        return await executeSQLCode(code);
+    function getDataStorageInCache(tableKey) {
+        if(!dataStorages[tableKey])
+            throw `未找到数据储存空间 ${tableKey}`;
+        return dataStorages[tableKey];
     }
     /**
-     * 查找一段数据
+     * 设置一个键值对
      * @async
-     * @param {string} tableName 表名称
-     * @param {"*" | string[]} columns 要查找的字段，如果要查找所有字段，输入`"*"`。默认为`"*"`
-     * @param {string | SQLExpressions | Function} condition 筛选条件，如果为空，查找所有行（此次应填入SQL表达式或者`SQLExpressions`或者判断函数）
-     * @returns {object[]}
+     * @param {string} tableKey 指定空间的名称
+     * @param {string} key 需要设置的键
+     * @param {string} value 需要设置的值
      */
-    async function loadData(tableName, columns = '*', condition = '') {
-        if (config.EasyBox3Lib.enableSQLCache && typeof condition != 'string') {
-            output(OUTPUT_TYPE.LOG, '从 SQL缓存 读取数据', condition);
-            var cache = sqlCache[tableName], result = [];
-            if (condition instanceof SQLExpressions) {
-                for (let index in cache) {
-                    if (condition.result(index)) {
-                        result.push(copyObject(cache[index]));
-                    }
-                }
-            } else return condition(cache);
-        }
-        output(OUTPUT_TYPE.LOG, '从', tableName, '读取数据', condition);
-        var code = `SELECT ${typeof columns == "object" ? columns.join(',') : columns} FROM "${tableName}"`;
-        if (condition) {
-            code += ` WHERE ${typeof condition == "string" ? condition : condition.sqlCode} `;
-        }
-        code += ';';
-        return await executeSQLCode(code);
+    async function setData(tableKey, key, value) {
+        await Storage.getDataStorage(tableKey).set(key, value);
     }
     /**
-     * 更新表中的数据
+     * 查找一个键值对
      * @async
-     * @author qndm 萌新大佬
-     * @param {string} tableName 表名称
-     * @param {object} data 要更新的数据
-     * @param {string | SQLExpressions} condition 更新数据所需要的条件，满足时才会更新。如果为空，则更新表格中的所有值（此次应填入SQL表达式或者`SqlComparisonExpressions`）
-
+     * @param {string} tableKey 指定空间的名称
+     * @param {string} key 指定的键
+     * @returns {ReturnValue}
      */
-    async function updateData(tableName, data, condition = '') {
-        if (config.EasyBox3Lib.enableSQLCache) {
-            output(OUTPUT_TYPE.LOG, '向 缓存 更新数据', condition);
-            if (condition instanceof SQLExpressions) {
-                var cache = sqlCache[tableName];
-                for (let index in cache) {
-                    if (condition.result(index)) {
-                        Object.assign(cache[index], data);
-                    }
-                }
-            }
-        }
-        output(OUTPUT_TYPE.LOG, '向', tableName, '更新数据', condition);
-        var code = `UPDATE "${tableName}" SET ${Object.entries(data).map(value => `"${value[0]}"=${parseSQLData(value[1])}`).join(',')} `;
-        if (condition) code += ` WHERE ${typeof condition == "string" ? condition : condition.sqlCode} `;
-        code += ';';
-        if (typeof condition == 'string')
-            await createCache(tableName);
-        return await executeSQLCode(code);
+    async function getData(tableKey, key) {
+        await getDataStorageInCache(tableKey).get(key);
     }
     /**
-     * 删除表中的数据
-     * @async
-     * @param {string} tableName 表名称
-     * @param {string | SQLBinaryExpressions} condition 要删除数据所需要的条件，满足时才会删除。如为空，则删除所有数据（此次应填入SQL表达式或者`SqlComparisonExpressions`）
+     * 批量获取键值对  
+     * 注意：该方法不会创建缓存和读取缓存，所以该方法比`get`更慢
+     * @param {string} tableKey 指定空间的名称
+     * @param {ListPageOptions} options 批量获取键值对的配置项
+     * @returns {QueryList}
      */
-    async function deleteData(tableName, condition = '') {
-        output(OUTPUT_TYPE.LOG, '从', tableName, '删除数据', condition);
-        var code = `DELETE FROM "${tableName}"`;
-        if (condition) code += ` WHERE ${typeof condition == "string" ? condition : condition.sqlCode} `;
-        code += ';';
-        if (config.EasyBox3Lib.enableSQLCache) {
-            if (typeof condition == 'string')
-                await createCache(tableName);
-            else if (condition instanceof SQLExpressions) {
-                output(OUTPUT_TYPE.LOG, '从 缓存 删除数据', condition);
-                /**
-                 * @type {object[]}
-                 */
-                var cache = sqlCache[tableName];
-                for (let index in cache) {
-                    if (condition.result(index)) {
-                        cache.splice(index, 1);
-                    }
-                }
-            }
-        }
-        return await executeSQLCode(code);
+    async function listData(tableKey, options){
+        return await getDataStorageInCache(tableKey).list(options);
     }
     /**
-     * 删除SQL表格
+     * 删除表中的键值对
      * @async
-     * @param {string} tableName 要删除的表
+     * @param {string} tableKey 指定空间的名称
+     * @param {string} key 指定的键
      */
-    async function dropTable(tableName) {
-        output(OUTPUT_TYPE.WARN, '删除表', tableName, '\n该表中的信息将永久丢失！');
-        var tableData = await loadData(tableName);
-        output(OUTPUT_TYPE.LOG, '表格数据：', JSON.stringify(tableData));
-        var code = `DROP TABLE "${tableName}"; `;
-        if (config.EasyBox3Lib.enableSQLCache)
-            delete sqlCache[tableName];
-        return await executeSQLCode(code);
+    async function removeData(tableKey, key) {
+        await Storage.getDataStorage(tableKey).remove(key);
     }
     /**
-     * 从一个`object[]`中导入数据
+     * 删除指定数据存储空间
      * @async
-     * @param {string} tableName 表名称
-     * @param {string} primaryKey 主键名称，必须保证该字段的值没有重复
-     * @param {object[]} datas 数据来源，应包含主键
-     * @param {boolean} overwriteOriginalData 如果数据出现重复，则覆盖表中原来的数据
-     * @param {boolean} discardOriginalData 是否保留原数据
+     * @param {string} tableKey 指定数据存储空间
      */
-    async function importData(tableName, primaryKey, datas, overwriteOriginalData = true, discardOriginalData = false) {
-        output(OUTPUT_TYPE.LOG, '向', tableName, '导入数据', (overwriteOriginalData ? '覆盖数据' : '') + (discardOriginalData ? '删除原数据' : ''));
-        if (discardOriginalData) {
-            await deleteData(tableName);
-        }
-        for (let data of datas) {
-            var theNumberOfOldData = await loadData(tableName, primaryKey, `"${primaryKey}" = ${data[primaryKey]} `).length;
-            if (theNumberOfOldData <= 0) {
-                await insertData(tableName, data);
-            } else if (overwriteOriginalData) {
-                if (theNumberOfOldData != 1) output(OUTPUT_TYPE.WARN, 'SQL', '导入数据', '检测到', primaryKey, '字段有重复值');
-                await updateData(tableName, data, `"${primaryKey}" = ${data[primaryKey]} `);
-            }
-        }
-        if (config.EasyBox3Lib.enableSQLCache)
-            await createCache(tableName);
-    }
-    /**
-     * 将表格数据导出  
-     * （作者吐槽：写的时候才发现就是`loadData`套了个壳）
-     * @async
-     * @param {string} tableName 表名称
-     * @param {"*" | string[]} columns 要导出的字段
-     * @returns {object[]}
-     * @deprecated
-     */
-    async function exportData(tableName, columns = '*') {
-        output(OUTPUT_TYPE.LOG, '从', tableName, '导出数据');
-        var tableData = await loadData(tableName, columns);
-        output(OUTPUT_TYPE.LOG, '表格数据：', JSON.stringify(tableData));
-        return tableData;
-    }
-    /**
-     * 建立SQL缓存  
-     * 如果已经有缓存，则会覆盖数据  
-     * 如果`config.EasyBox3Lib.enableSQLCache`为`true`时，则会在执行`EasyBox3Lib.sql.createTable`的时候自动运行
-     * @param {string} tableName 表名称
-     */
-    async function createCache(tableName) {
-        if (!config.EasyBox3Lib.enableSQLCache)
-            output(OUTPUT_TYPE.WARN, '创建缓存', tableName)
-        var data = await loadData(tableName);
-        sqlCache[tableName] = data;
+    async function dropDataStorage(tableKey) {
+        await Storage.getDataStorage(tableKey).drop();
     }
     /**
      * 创建游戏循环  
      * 循环会在执行完成后再次开始  
      * 提供一个参数：time，代表循环执行的次数
      * @param {string} name 循环名称
-     * @param {Function} todo 要执行的函数
+     * @param {(time: number) => void} todo 要执行的函数
      */
     async function createGameLoop(name, todo) {
         output(OUTPUT_TYPE.LOG, '创建游戏循环', name);
@@ -1028,7 +990,7 @@ const EasyBox3Lib = (function (config) {
     function registerEvent(name) {
         if (!events[name]) {
             events[name] = [];
-            output(OUTPUT_TYPE.LOG, name, '事件创建成功');
+            output(OUTPUT_TYPE.LOG, name, '事件注册成功');
         }
         else
             output(OUTPUT_TYPE.WARN, name, '事件已存在');
@@ -1036,7 +998,7 @@ const EasyBox3Lib = (function (config) {
     /**
      * 添加事件监听器
      * @param {string} name 
-     * @param {Function} handler 
+     * @param {({tick: number}) => void} handler 
      */
     function addEventHandler(name, handler) {
         if (name == 'onTick') {
@@ -1072,7 +1034,7 @@ const EasyBox3Lib = (function (config) {
     /**
      * 注册一个`onTick`事件，类似于`Box3`中的`onTick`事件，但有一些优化  
      * 需要在预处理时注册
-     * @param {Function} handler 要执行的函数
+     * @param {({tick: number}) => void} handler 要执行的函数
      * @param {number} tps 每秒执行次数
      * @param {boolean} enforcement 如果为false，则如果上一次未执行完，则不会执行
      * @param {boolean} automaticTps 是否自动调整tps
@@ -1085,7 +1047,7 @@ const EasyBox3Lib = (function (config) {
     }
     /**
      * 添加预处理函数
-     * @param {Function} todo 要执行的函数
+     * @param {() => void} todo 要执行的函数
      * @param {number} priority 优先级，值越大越先执行
      */
     function preprocess(todo, priority) {
@@ -1160,37 +1122,29 @@ const EasyBox3Lib = (function (config) {
         random,
         Menu,
         getTheCodeExecutionLocation,
-        sql: {
-            Field,
-            Value: SQLValue,
-            Expressions: SQLExpressions,
+        storage: {
             executeSQLCode,
-            FIELD_DATA_TYPES,
-            createTable,
-            insertData,
-            loadData,
-            updateData,
-            deleteData,
-            dropTable,
-            importData,
-            exportData,
-            createCache
+            getDataStorage: Storage.getDataStorage,
+            getDataStorageInCache,
+            setData,
+            getData,
+            listData,
+            removeData,
+            dropDataStorage
         },
-        game: {
-            createGameLoop,
-            stopGameLoop,
-            pauseGameLoop,
-            continueGameLoop,
-            onTick,
-            preprocess,
-            start,
-            addEventHandler,
-            triggerEvent,
-            registerEvent,
-            removeEvent
-        },
+        createGameLoop,
+        stopGameLoop,
+        pauseGameLoop,
+        continueGameLoop,
+        onTick,
+        preprocess,
+        start,
+        addEventHandler,
+        triggerEvent,
+        registerEvent,
+        removeEvent,
         TIME,
-        version: [0, 0, 5]
+        version: [0, 0, 6]
     }
 }(CONFIG));
 if (CONFIG.EasyBox3Lib.exposureToGlobal) {

@@ -27,6 +27,23 @@ ps：`$` 可以改为其他内容，只要不冲突
 可联系[qndm](github.com/qndm)，或者发[Issues](github.com/qndm/EasyBox3Lib/issues)和[Pull requests](https://github.com/qndm/EasyBox3Lib/pulls)  
 [开发规范](./developmentSpecification.md)
 ## 版本 & 更新日志
+### 0.0.6
+开了个实体组的坑  
+完全重写了数据库（但也完全没测试）
+- 现在使用键值对来储存数据
+- `EasyBox3Lib.sql` -> `EasyBox3Lib.storage`
+- 移除除了`executeSQLCode`的所有方法
+- 新增方法：  
+  - `storage.getDataStorage`
+  - `storage.getDataStorageInCache`
+  - `storage.setData`
+  - `storage.getData`
+  - `storage.listData`
+  - `storage.removeData`
+  - `storage.dropDataStorage`
+- 添加了对旧编辑器`PostgreSQL`的支持
+- 添加了对新编辑器的支持
+- 移除了配置文件中的`EasyBox3Lib.enablePostgreSQL`
 ### 0.0.5
 优化`JsDoc`
 - 删除了一些不需要的`JsDoc`
