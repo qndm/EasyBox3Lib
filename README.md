@@ -28,6 +28,7 @@ ps：`$` 可以改为其他内容，只要不冲突
 [开发规范](./developmentSpecification.md)
 ## 版本 & 更新日志
 ### 0.0.6
+`EasyBox3Lib.game.xxx` -> `EasyBox3Lib.xxx`
 开了个实体组的坑  
 完全重写了数据库（但也完全没测试）
 - 现在使用键值对来储存数据
