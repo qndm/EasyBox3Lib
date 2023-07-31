@@ -33,8 +33,8 @@ ps：`$` 可以改为其他内容，只要不冲突
 ~~尝试使用`TypeScript`~~ 已放弃：过于难修  
 修复部分`JsDoc`的问题  
 移除了`OUTPUT_TYPE`，`output`方法直接填入字符串  
+`SQL`反注入  
 新增 实体组（已测试）
-`SQL`反注入
 ### 0.0.6
 `EasyBox3Lib.game.xxx` -> `EasyBox3Lib.xxx`  
 开了个实体组的坑  
