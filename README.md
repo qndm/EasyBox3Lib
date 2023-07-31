@@ -27,6 +27,14 @@ ps：`$` 可以改为其他内容，只要不冲突
 可联系[qndm](github.com/qndm)，或者发[Issues](github.com/qndm/EasyBox3Lib/issues)和[Pull requests](https://github.com/qndm/EasyBox3Lib/pulls)  
 [开发规范](./developmentSpecification.md)
 ## 版本 & 更新日志
+### 0.0.7
+修复若干bug  
+允许在配置文件不全的情况下使用库  
+~~尝试使用`TypeScript`~~ 已放弃：过于难修  
+修复部分`JsDoc`的问题  
+移除了`OUTPUT_TYPE`，`output`方法直接填入字符串  
+新增 实体组（已测试）
+`SQL`反注入
 ### 0.0.6
 `EasyBox3Lib.game.xxx` -> `EasyBox3Lib.xxx`  
 开了个实体组的坑  

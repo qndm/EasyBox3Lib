@@ -52,7 +52,7 @@ class SQLValue {
 ### 方法
 - 一般需要写作用、`@param`、`@return`
 - 无参数方法不写`@param`，无返回值方法不写`@return`
-- 对于非常简单的无参数方法，不写`JsDoc`
+- 对于非常简单的 **无参数** 方法，不写`JsDoc`
 - `@param`后需要写清楚类型和作用，例如：
 ```javascript
 /**

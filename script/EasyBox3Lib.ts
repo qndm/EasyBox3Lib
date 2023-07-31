@@ -24,7 +24,16 @@ function nullishCoalescing(a, b) {
  * @author qndm
  */
 const EasyBox3Lib = (function (config) {
-    const /**
+    /**
+     * 使用`output`方法时的输出类型
+     */
+    const OUTPUT_TYPE = {
+        LOG: 'log',
+        DEBUG: 'debug',
+        WARN: 'warn',
+        ERROR: 'error'
+    },
+        /**
          * 一些常用的时间单位
          */
         TIME = {
@@ -68,7 +77,7 @@ const EasyBox3Lib = (function (config) {
             FREE: 'free'
         };
     /**
-     * @type {Output[]} 日志内容
+     * @type {string[]} 日志内容
      */
     var logs = [],
         /**
@@ -101,13 +110,16 @@ const EasyBox3Lib = (function (config) {
      * 日志信息
      */
     class Output {
+        type: string;
+        data: string;
+        location: any[];
         /**
          * 定义一条日志信息
          * @param {string} type 类型
          * @param {string} data 内容
          * @param {any[]} location 代码执行位置
          */
-        constructor(type, data, location) {
+        constructor(type: string, data: string, location: any[]) {
             this.type = type;
             this.data = data;
             this.location = location;
@@ -134,10 +146,10 @@ const EasyBox3Lib = (function (config) {
          */
         static async getDataStorage(key) {
             if (dataStorages[key]) {
-                output('log', '检测到已连接的数据存储空间', key);
+                output(OUTPUT_TYPE.LOG, '检测到已连接的数据存储空间', key);
                 return dataStorages[key];
             }
-            output('log', '连接数据存储空间', key);
+            output(OUTPUT_TYPE.LOG, '连接数据存储空间', key);
             var gameDataStorage;
             if (nullishCoalescing(config.EasyBox3Lib.inArena, false))
                 gameDataStorage = await storage.getDataStorage(key);
@@ -159,6 +171,8 @@ const EasyBox3Lib = (function (config) {
      * 也可以直接在Pro编辑器使用
      */
     class DataStorage {
+        data: Map<any, any>;
+        gameDataStorage: any;
         /**
          * 定义一个DataStorage
          * @param {string} key 空间名称（只读）
@@ -186,8 +200,8 @@ const EasyBox3Lib = (function (config) {
          * @returns {ReturnValue | undefined}
          */
         async get(key) {
-            output('log', '获取数据', this.key, ':', key);
-            var result = undefined;
+            output(OUTPUT_TYPE.LOG, '获取数据', this.key, ':', key);
+            var result: ReturnValue | undefined = undefined;
             if (nullishCoalescing(config.EasyBox3Lib.enableSQLCache, false) && this.data.has(key)) {
                 return copyObject(this.data.get(key));
             } else {
@@ -201,6 +215,9 @@ const EasyBox3Lib = (function (config) {
                     return undefined;
             }
         }
+        key(LOG: string, arg1: string, key: any, arg3: string, key1: any) {
+            throw new Error("Method not implemented.");
+        }
         /**
          * 传入指定键与值，无论该键是否存在，均将值设置到此键上。
          * @async
@@ -208,7 +225,7 @@ const EasyBox3Lib = (function (config) {
          * @param {JSONValue} value 需要设置的值
          */
         async set(key, value) {
-            output('log', '更新数据', this.key, ':', key, '=', value);
+            output(OUTPUT_TYPE.LOG, '更新数据', this.key, ':', key, '=', value);
             var data = await this.get(key);//由于需要更新版本，所以先获取一遍旧数据
             if (data) {
                 data.updateTime = Date.now();
@@ -231,7 +248,7 @@ const EasyBox3Lib = (function (config) {
                     await executeSQLCode(`INSERT INTO "${this.key}" ("key", "value", "createTime", "updateTime", "version") VALUES ('${sqlAntiInjection(data.key)}', '${sqlAntiInjection(data.value)}', ${data.createTime}, ${data.updateTime}, '${sqlAntiInjection(data.version)}')`);
                 }
             }
-            output('log', this.data[key].value, data.value);
+            output(OUTPUT_TYPE.LOG, this.data[key].value, data.value);
             this.data.set(key, value);
         }
         /**
@@ -252,7 +269,7 @@ const EasyBox3Lib = (function (config) {
          * @returns {QueryList | ReturnValue[]}
          */
         async list(options) {
-            output('log', '获取数据', this.key, ':', options.cursor, '-', options.cursor + (options.pageSize || 100));
+            output(OUTPUT_TYPE.LOG, '获取数据', this.key, ':', options.cursor, '-', options.cursor + (options.pageSize || 100));
             if (nullishCoalescing(config.EasyBox3Lib.inArena, false)) {
                 return await this.gameDataStorage.list(options);
             } else {
@@ -260,7 +277,7 @@ const EasyBox3Lib = (function (config) {
             }
         }
         async remove(key) {
-            output('log', '删除数据', this.key, ':', key);
+            output(OUTPUT_TYPE.LOG, '删除数据', this.key, ':', key);
             this.data.delete(key);
             await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`);
         }
@@ -271,7 +288,7 @@ const EasyBox3Lib = (function (config) {
             if (nullishCoalescing(config.EasyBox3Lib.inArena, false))
                 throw '暂不支持Pro地图';
             else {
-                output('warn', '删除表', this.key);
+                output(OUTPUT_TYPE.WARN, '删除表', this.key);
                 delete this.data;
                 await executeSQLCode(`DROP TABLE ${this.key}`);
             }
@@ -281,6 +298,11 @@ const EasyBox3Lib = (function (config) {
      * 菜单
      */
     class Menu {
+        title: any;
+        content: string;
+        options: never[];
+        previousLevelMenu: undefined;
+        handler: { onOpen: () => void; onClose: () => void; };
         /**
          * 创建一个`Menu`
          * @param {string} title 菜单的标题，同时也作为父菜单选项的标题
@@ -355,6 +377,8 @@ const EasyBox3Lib = (function (config) {
      * 事件令牌
      */
     class EventHandlerToken {
+        handler: any;
+        statu: string;
         /**
          * 创建一个事件令牌
          * @param {({tick: number}) => void} handler 
@@ -381,6 +405,10 @@ const EasyBox3Lib = (function (config) {
         }
     }
     class OnTickHandlerToken extends EventHandlerToken {
+        tps: number;
+        enforcement: boolean;
+        automaticTps: boolean;
+        timeSpent: number;
         /**
          * 定义一个`onTick`监听器事件
          * @param {({tick: number}) => void} handler 要执行的函数
@@ -411,6 +439,8 @@ const EasyBox3Lib = (function (config) {
         }
     }
     class EntityGroup {
+        entities: any;
+        position: any;
         /**
          * 定义一个实体组
          * @param {Box3Entity[]} entities 实体组内的实体
@@ -424,22 +454,23 @@ const EasyBox3Lib = (function (config) {
                 this.position = new Box3Vector3(0, 0, 0);
                 for (let entity of this.entities)
                     this.position.addEq(entity.position);
-                this.position.divEq(new Box3Vector3(this.entities.length, this.entities.length, this.entities.length));
+                this.position.divEq(this.entities.length, this.entities.length, this.entities.length);
+                output(OUTPUT_TYPE.LOG, '未指定中心位置，设置为', this.position.x, this.position.y, this.position.z);
             } else {
                 this.position = new Box3Vector3(0, 0, 0);
-                output('warn', '实体组未指定中心位置，自动设为', this.position.toString());
+                output(OUTPUT_TYPE.WARN, '模型组未指定实体和中心位置');
             }
-            this.entities.forEach(entity => this.adjustmentEntityPosition(entity));
         }
         /**
          * 调整实体组中指定实体的位置  
-         * 会更改该实体的`position`和`meshOffest`
+         * 会更改该实体的`position`和`meshOffect`
          * @param {Box3Entity} entity 要调整的实体
          */
         adjustmentEntityPosition(entity) {
-            entity.offset = entity.meshOffset.clone();//复制原meshOffest，方便调用
-            entity.meshOffset.addEq(entity.position.sub(this.position).mul(new Box3Vector3(16, 16, 16)));
+            var meshOffect = entity.meshOffect.clone();
+            entity.meshOffect = entity.position.sub(this.position).add(meshOffect);
             entity.position = this.position;
+            entity.offect = meshOffect;//复制原meshOffect，方便调用
         }
     }
     /**
@@ -507,7 +538,7 @@ const EasyBox3Lib = (function (config) {
     }
     /**
      * 输出一段日志，并记录到日志文件中
-     * @param {'log' | 'warn' | 'error'} type 输出类型
+     * @param {string} type 输出类型
      * @param {string[]} data 要输出的内容
      * @returns {Output}
      */
@@ -517,7 +548,7 @@ const EasyBox3Lib = (function (config) {
             let locations = getTheCodeExecutionLocation();
             let location = (locations.locations.filter(location => !location.startsWith(__filename))[0] || locations.locations[0]).split(':');
             console[type](`(${location[0]}:${location[1]}) -> ${locations.functions.filter(func => !nullishCoalescing(config.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output']).includes(func))[0] || 'unknown'}`, str);
-            if (nullishCoalescing(config.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && (!nullishCoalescing(config.EasyBox3Lib.logOnlyWarningsAndErrors, false) || type == 'warn' || type == 'error'))
+            if (nullishCoalescing(config.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && (!nullishCoalescing(config.EasyBox3Lib.logOnlyWarningsAndErrors, false) || type == OUTPUT_TYPE.WARN || type == OUTPUT_TYPE.ERROR))
                 logs.push(new Output(type, str, location.join(':')));
             return `(${location[0]}:${location[1]}) [${type}] ${str}`;
         } else {
@@ -546,7 +577,7 @@ const EasyBox3Lib = (function (config) {
      * @param {boolean} type 是否设置为管理员
      */
     function setAdminStatus(entity, type) {
-        output('log', '管理员', `${type ? '' : '取消'}设置玩家 ${entity.player.name} (${entity.player.userKey}) 为管理员`);
+        output(OUTPUT_TYPE.LOG, '管理员', `${type ? '' : '取消'}设置玩家 ${entity.player.name} (${entity.player.userKey}) 为管理员`);
         entity.player.isAdmin = type;
     }
     /**
@@ -567,7 +598,7 @@ const EasyBox3Lib = (function (config) {
         entity.player.crouchAcceleration *= size
         entity.player.swimSpeed *= size;
         entity.player.swimAcceleration *= size;
-        output('log', '缩放', `缩放玩家尺寸 ${entity.player.name} (${entity.player.userKey}) 为 ${size} `);
+        output(OUTPUT_TYPE.LOG, '缩放', `缩放玩家尺寸 ${entity.player.name} (${entity.player.userKey}) 为 ${size} `);
     }
     /**
      * 简单创建一个实体（其实也没简单到哪去）
@@ -581,9 +612,8 @@ const EasyBox3Lib = (function (config) {
      */
     function createEntity(mesh, position, collides, gravity, meshScale = nullishCoalescing(config.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), meshOrientation = nullishCoalescing(config.EasyBox3Lib.defaultMeshOrientation, new Box3Quaternion(0, 0, 0, 1))) {
         if (world.entityQuota() >= 1) {
-            output('log', '创建实体', mesh, position, collides, gravity);
-            if (world.entityQuota() <= nullishCoalescing(config.EasyBox3Lib.numberOfEntitiesRemainingToBeCreatedForSecurity, 500)) 
-                output('warn', '实体创建超出安全上限', `剩余可创建实体数量：${world.entityQuota()} `);
+            output(OUTPUT_TYPE.LOG, '创建实体', mesh, position, collides, gravity);
+            if (world.entityQuota() >= nullishCoalescing(config.EasyBox3Lib.numberOfEntitiesRemainingToBeCreatedForSecurity, 500)) output(OUTPUT_TYPE.WARN, '实体创建超出安全上限', `剩余可创建实体数量：${world.entityQuota()} `);
             return world.createEntity({
                 mesh,
                 position,
@@ -595,7 +625,7 @@ const EasyBox3Lib = (function (config) {
                 friction: 1
             });
         } else {
-            output('error', '实体创建失败', '实体数量超过上限')
+            output(OUTPUT_TYPE.ERROR, '实体创建失败', '实体数量超过上限')
             return null;
         }
     }
@@ -695,7 +725,7 @@ const EasyBox3Lib = (function (config) {
      * @param {any[]} oldList 要打乱的列表
      * @returns {any[]}
      */
-    function shuffleTheList(oldList) {
+    function shuffleTheList(oldList: any[]) {
         var list = [];
         while(oldList.length > 0){
             let index = random(0, oldList.length, true);
@@ -735,9 +765,9 @@ const EasyBox3Lib = (function (config) {
      * @param {string} code 
      */
     async function executeSQLCode(code) {
-        output('log', `执行SQL命令 ${code} `);
+        output(OUTPUT_TYPE.LOG, `执行SQL命令 ${code} `);
         var result = await db.sql([code]);
-        output('log', `SQL运行结果：${JSON.stringify(result)} `);
+        output(OUTPUT_TYPE.LOG, `SQL运行结果：${JSON.stringify(result)} `);
         return result;
     }
     /**
@@ -757,6 +787,24 @@ const EasyBox3Lib = (function (config) {
             } else result += char;
         }
         return result;
+    }
+    /**
+     * 转化SQL数据
+     * @author 萌新大佬
+     * @param {any} value 
+     * @returns {number | string}
+     */
+    function parseSQLData(value) {
+        switch (typeof value) {
+            case 'number':
+                return Number(value);
+            case 'boolean':
+                return Number(value);
+            case 'string':
+                return `'${sqlAntiInjection(value)}'`;
+            default:
+                return `'${sqlAntiInjection(JSON.stringify(value))}'`;
+        }
     }
     /**
      * 在缓存中直接获取指定数据存储空间  
@@ -824,7 +872,7 @@ const EasyBox3Lib = (function (config) {
      * @param {(time: number) => void} todo 要执行的函数
      */
     async function createGameLoop(name, todo) {
-        output('log', '创建游戏循环', name);
+        output(OUTPUT_TYPE.LOG, '创建游戏循环', name);
         var time = 1;
         gameLoops[name] = true;
         while (true) {
@@ -836,29 +884,29 @@ const EasyBox3Lib = (function (config) {
     }
     /**
      * 暂停游戏循环
-     * @param {string} name 循环名称
+     * @param {string} name 
      */
     function pauseGameLoop(name) {
-        output('log', '暂停游戏循环', name);
+        output(OUTPUT_TYPE.LOG, '暂停游戏循环', name);
         gameLoops[name] = false;
     }
     /**
      * 继续游戏循环
-     * @param {string} name 循环名称
+     * @param {string} name 
      */
     function continueGameLoop(name) {
-        output('log', '继续游戏循环', name);
+        output(OUTPUT_TYPE.LOG, '继续游戏循环', name);
         if (gameLoops[name] != undefined)
             gameLoops[name] = true;
         else
-            output('warn', '未知游戏循环', name);
+            output(OUTPUT_TYPE.WARN, '未知游戏循环', name);
     }
     /**
      * 停止游戏循环，之后不能再对该循环进行操作
-     * @param {string} name 循环名称
+     * @param {string} name 
      */
     function stopGameLoop(name) {
-        output('log', '停止游戏循环', name);
+        output(OUTPUT_TYPE.LOG, '停止游戏循环', name);
         delete gameLoops[name];
     }
     /**
@@ -868,10 +916,10 @@ const EasyBox3Lib = (function (config) {
     function registerEvent(name) {
         if (!events[name]) {
             events[name] = [];
-            output('log', name, '事件注册成功');
+            output(OUTPUT_TYPE.LOG, name, '事件注册成功');
         }
         else
-            output('warn', name, '事件已存在');
+            output(OUTPUT_TYPE.WARN, name, '事件已存在');
     }
     /**
      * 添加事件监听器
@@ -887,7 +935,7 @@ const EasyBox3Lib = (function (config) {
             events[name].push(event);
             return event;
         } else
-            output('error', name, '事件不存在');
+            output(OUTPUT_TYPE.ERROR, name, '事件不存在');
     }
     /**
      * 触发一个事件
@@ -896,7 +944,7 @@ const EasyBox3Lib = (function (config) {
      * @param {any[]} parameters 监听器使用的参数
      */
     async function triggerEvent(eventName, parameters) {
-        output('log', '触发事件', eventName);
+        output(OUTPUT_TYPE.LOG, '触发事件', eventName);
         events[eventName].forEach(event => event.run(...parameters));
     }
     /**
@@ -905,7 +953,7 @@ const EasyBox3Lib = (function (config) {
      */
     function removeEvent(eventName) {
         if (events[eventName]) {
-            output('warn', `移除事件 ${eventName}\n该事件有${events[eventName].length} 个监听器`);
+            output(OUTPUT_TYPE.WARN, `移除事件 ${eventName}\n该事件有${events[eventName].length} 个监听器`);
             delete events[eventName];
         }
     }
@@ -930,13 +978,13 @@ const EasyBox3Lib = (function (config) {
      */
     function preprocess(todo, priority) {
         preprocessFunctions.push({ todo, priority });
-        output('log', '注册函数成功');
+        output(OUTPUT_TYPE.LOG, '注册函数成功');
     }
     /**
      * 规划onTick事件
      */
     async function planningOnTickEvents() {
-        output('log', '开始规划onTick……');
+        output(OUTPUT_TYPE.LOG, '开始规划onTick……');
         onTickHandlers = [];
         for (let event of events.onTick) { //先运行一次，记录时间
             await event.run();
@@ -947,9 +995,9 @@ const EasyBox3Lib = (function (config) {
             }
         }
         for (let index in onTickHandlers) {
-            output('log', 'tick', index, ':', onTickHandlers[index].timeSpent, 'ms');
+            output(OUTPUT_TYPE.LOG, 'tick', index, ':', onTickHandlers[index].timeSpent, 'ms');
         }
-        output('log', 'onTick事件规划完成');
+        output(OUTPUT_TYPE.LOG, 'onTick事件规划完成');
     }
     /**
      * 启动地图（执行预处理函数）
@@ -960,10 +1008,10 @@ const EasyBox3Lib = (function (config) {
             try {
                 await func.todo();
             } catch (error) {
-                output('error', '预处理函数发生错误', error);
+                output(OUTPUT_TYPE.ERROR, '预处理函数发生错误', error);
             }
         }
-        output('log', '预处理函数执行完成');
+        output(OUTPUT_TYPE.LOG, '预处理函数执行完成');
         triggerEvent('onStart');
         await planningOnTickEvents();
         world.onTick(() => {
@@ -972,13 +1020,13 @@ const EasyBox3Lib = (function (config) {
             });
             tick = (tick + 1) % onTickCycleLength;
             if (tick <= 0) {
-                output('log', '开始新的onTick周期', ++cycleNumber);
+                output(OUTPUT_TYPE.LOG, '开始新的onTick周期', ++cycleNumber);
                 if (cycleNumber % nullishCoalescing(config.EasyBox3Lib.planningOnTickFrequency, 4)) {
                     planningOnTickEvents();
                 }
             }
         });
-        output('log', '地图启动完成');
+        output(OUTPUT_TYPE.LOG, '地图启动完成');
     }
     return {
         copyObject,
@@ -990,6 +1038,7 @@ const EasyBox3Lib = (function (config) {
         isAdmin,
         resizePlayer,
         setAdminStatus,
+        OUTPUT_TYPE,
         createEntity,
         textDialog,
         selectDialog,
@@ -1020,14 +1069,13 @@ const EasyBox3Lib = (function (config) {
         triggerEvent,
         registerEvent,
         removeEvent,
-        EntityGroup,
         TIME,
         version: [0, 0, 7]
     }
 }(CONFIG));
 if (nullishCoalescing(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
     Object.assign(global, EasyBox3Lib);
-    EasyBox3Lib.output('log', '已成功暴露到全局');
+    EasyBox3Lib.output(EasyBox3Lib.OUTPUT_TYPE.LOG, '已成功暴露到全局');
 }
 global.EasyBox3Lib = EasyBox3Lib;
 console.log('EasyBox3Lib', EasyBox3Lib.version.join('.'));

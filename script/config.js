@@ -1,8 +1,4 @@
-/**
- * 是否在Pro地图中
- * @default false
- */
-const inArena = false;
+const inArena = global['GameEntity'] != undefined;
 if (inArena) {
     var Box3Vector3 = GameVector3,
         Box3Quaternion = GameQuaternion,
@@ -24,7 +20,8 @@ const config = {
      */
     isBeta: false,
     /**
-     * 地图管理员
+     * 地图管理员，使用`userKey`
+     * @type {string[]}
      */
     admin: [],
     /**
