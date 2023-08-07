@@ -42,8 +42,6 @@ class SQLValue {
 /**
  * @type {number}
  * @type {string[]}
- * @type {{todo:Function,priority:number}[]}
- * @type {{events: OnTickHandlerToken[], timeSpent: number}[]}
 */
 ```
 #### 临时变量
