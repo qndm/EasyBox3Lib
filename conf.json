@@ -1,0 +1,6 @@
+{
+    "plugins": [
+        "plugins/markdown"
+    ],
+    "output_dir": "docs"
+}

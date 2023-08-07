@@ -14,7 +14,7 @@ tips：你放到`index.js`等文件里里面其实也可以，但非常不建议
 ```javascript
 const $ = require('./EasyBox3Lib.js');
 ```
-4. 在需要调用库的其他代码文件开头加上以下代码：
+4. 在需要调用库的其他代码文件（你自己写的）开头加上以下代码：
 ```javascript
 const $ = EasyBox3Lib;
 ```
@@ -27,6 +27,15 @@ ps：`$` 可以改为其他内容，只要不冲突
 可联系[qndm](github.com/qndm)，或者发[Issues](github.com/qndm/EasyBox3Lib/issues)和[Pull requests](https://github.com/qndm/EasyBox3Lib/pulls)  
 [开发规范](./developmentSpecification.md)
 ## 版本 & 更新日志
+### 0.0.8
+新增 `Page`  
+新增 `changeVelocity`  
+优化 `DataStorage.list`，使其新旧编辑器返回值一致  
+修复 `planningOnTickEvents`的bug  
+新增 `EntityGroup.removeEntity`  
+调整 `OnTickHandlerToken.constructor` 方法：
+- `automaticTps` 参数的默认值从`true`改为`false`
+- 修复`tps`的bug
 ### 0.0.7
 修复若干bug  
 允许在配置文件不全的情况下使用库  
@@ -40,7 +49,7 @@ ps：`$` 可以改为其他内容，只要不冲突
 开了个实体组的坑  
 完全重写了数据库（但也完全没测试）
 - 现在使用键值对来储存数据
-- `EasyBox3Lib.sql` -> `EasyBox3Lib.storage`
+- `sql` -> `storage`
 - 移除除了`executeSQLCode`的所有方法
 - 新增方法：  
   - `storage.getDataStorage`
