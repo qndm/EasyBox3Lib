@@ -36,6 +36,7 @@ ps：`$` 可以改为其他内容，只要不冲突
 调整 `OnTickHandlerToken.constructor` 方法：
 - `automaticTps` 参数的默认值从`true`改为`false`
 - 修复`tps`的bug
+
 ### 0.0.7
 修复若干bug  
 允许在配置文件不全的情况下使用库  
@@ -44,6 +45,7 @@ ps：`$` 可以改为其他内容，只要不冲突
 移除了`OUTPUT_TYPE`，`output`方法直接填入字符串  
 `SQL`反注入  
 新增 实体组（已测试）
+
 ### 0.0.6
 `EasyBox3Lib.game.xxx` -> `EasyBox3Lib.xxx`  
 开了个实体组的坑  
@@ -62,6 +64,7 @@ ps：`$` 可以改为其他内容，只要不冲突
 - 添加了对旧编辑器`PostgreSQL`的支持
 - 添加了对新编辑器的支持
 - 移除了配置文件中的`EasyBox3Lib.enablePostgreSQL`
+
 ### 0.0.5
 优化`JsDoc`
 - 删除了一些不需要的`JsDoc`
@@ -77,11 +80,13 @@ ps：`$` 可以改为其他内容，只要不冲突
 新增预处理（还是未测试）
 - 使用`preprocess`方法添加
 - 使用`addEventHandler`监听`onStart方法`
+
 ### 0.0.4
 修复 `getTheCodeExecutionLocation` 方法的bug  
 优化 `output` 和 `getTheCodeExecutionLocation` 方法
 - 现在可以获取到调用该方法的函数名称了  
 可以通过配置 `getFunctionNameBlackList` 添加要忽略的函数
+
 ### 0.0.3
 新增 SQL缓存（测试）  
 将一些常量改为了大写（例如：`outputType` -> `OUTPUT_THPE`）  
@@ -91,7 +96,8 @@ ps：`$` 可以改为其他内容，只要不冲突
 
 新增 `getTheCodeExecutionLocation`，以获取代码的执行位置  
 `output`方法输出时会输出代码执行位置（测试，可配置）  
-`index.js`以外脚本调用库时不是重复使用`require`，而是直接使用`global.EasyBox3Lib`  
+`index.js`以外脚本调用库时不是重复使用`require`，而是直接使用`global.EasyBox3Lib`
+
 ### 0.0.2
 开了个SQL缓存的坑  
 修复了部分SQL方法中没有加`await`的bug  
@@ -99,5 +105,6 @@ ps：`$` 可以改为其他内容，只要不冲突
 为部分方法添加了`jsdoc`
 修复了`Menu`无法打开上一级菜单的bug
 修改部分`jsdoc`内容
+
 ### 0.0.1
 发布
