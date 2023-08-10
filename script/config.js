@@ -15,6 +15,7 @@ if (inArena) {
 }
 /**
  * 配置信息文件
+ * @readonly
  */
 module.exports = {
     /**
@@ -35,6 +36,7 @@ module.exports = {
     admin: [],
     /**
      * EasyBox3Lib的配置文件
+     * @namespace
      */
     EasyBox3Lib: {
         /**
