@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>config.js - Documentation</title>
+    <title>Menu - Documentation</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -29,162 +29,980 @@
 
 <div id="main">
     
-    <h1 class="page-title">config.js</h1>
+    <h1 class="page-title">Menu</h1>
     
 
     
 
 
 
-    
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>/**
- * @module config
- */
 
-/**
- * 是否在Pro地图中
- * @type {boolean}
- * @default false
- */
-const inArena = global['GameEntity'] != undefined;
-if (inArena) {
-    var Box3Vector3 = GameVector3,
-        Box3Quaternion = GameQuaternion,
-        Box3RGBAColor = GameRGBAColor;
-}
-/**
- * 配置信息文件
- */
-module.exports = {
-    /**
-     * 地图版本号
-     * @type {number[]}
-     */
-    version: [0, 0, 1],
-    /**
-     * 是否为测试版
-     * @type {boolean}
-     * @default false
-     */
-    isBeta: false,
-    /**
-     * 地图管理员，使用`userKey`
-     * @type {string[]}
-     */
-    admin: [],
-    /**
-     * EasyBox3Lib的配置文件
-     */
-    EasyBox3Lib: {
-        /**
-         * 如果是在编辑端运行，请启用本选项
-         * @default true
-         */
-        debug: true,
-        /**
-         * 是否自动将输出写入日志里，建议在debug为false的时候启用
-         * @default true
-         */
-        automaticLoggingOfOutputToTheLog: true,
-        /**
-         * 是否只记录警告和错误
-         * @default false
-         */
-        logOnlyWarningsAndErrors: false,
-        /**
-         * 是否暴露到全局
-         * @default false
-         */
-        exposureToGlobal: false,
-        /**
-         * 安全剩余可创建实体数量
-         * @default 500
-         */
-        numberOfEntitiesRemainingToBeCreatedForSecurity: 500,
-        /**
-         * 默认模型缩放比例
-         * @default new Box3Vector3(1 / 16, 1 / 16, 1 / 16) //默认值的默认值（）
-         */
-        defaultMeshScale: new Box3Vector3(1 / 16, 1 / 16, 1 / 16),
-        /**
-         * 默认模型旋转角度
-         * @default new Box3Quaternion(0, 0, 0, 1) //默认值的默认值（）
-         */
-        defaultMeshOrientation: new Box3Quaternion(0, 0, 0, 1),
-        /**
-         * 默认对话框标题颜色
-         * @default new Box3RGBAColor(0, 0, 0, 1) //默认值的默认值（）
-         */
-        defaultTitleTextColor: new Box3RGBAColor(0, 0, 0, 1),
-        /**
-         * 默认对话框标题背景颜色
-         * @default new Box3RGBAColor(0.968, 0.702, 0.392, 1) //默认值的默认值（）
-         */
-        defaultTitleBackgroundColor: new Box3RGBAColor(0.968, 0.702, 0.392, 1),
-        /**
-         * 默认对话框内容颜色
-         * @default new Box3RGBAColor(0, 0, 0, 1) //默认值的默认值（）
-         */
-        defaultContentTextColor: new Box3RGBAColor(0, 0, 0, 1),
-        /**
-         * 默认对话框内容背景颜色
-         * @default new Box3RGBAColor(1, 1, 1, 1) //默认值的默认值（）
-         */
-        defaultContentBackgroundColor: new Box3RGBAColor(1, 1, 1, 1),
-        /**
-         * 默认文本对话框中是否有箭头
-         * @default 'auto' //默认值的默认值（）
-         */
-        defaultHasArrow: 'auto',
-        /**
-         * 默认对话框其他配置选项
-         * @default {} //默认值的默认值（）
-         */
-        defaultDialogOtherOptions: {},
-        /**
-         * @todo 启用SQL缓存，以加快读取速度  
-         * 警告：如果直接使用`db.sql`或者`EasyBox3Lib.sql.executeSQLCode`方法来写入数据，可能会出现问题（读取时使用缓存会失效，即不起作用）  
-         * 请确保使用了`EasyBox3Lib.sql.insertData`、`EasyBox3Lib.sql.updateData`、`EasyBox3Lib.sql.deleteData`、`EasyBox3Lib.sql.importData`、`EasyBox3Lib.sql.dropTable`方法来写入数据（读取不需要）
-         * 施工中……
-         * @default false
-         */
-        enableSQLCache: false,
-        /**
-         * 是否在Pro地图中
-         */
-        inArena,
-        /**
-         * 输出时输出代码的执行位置
-         * @default true
-         */
-        getCodeExecutionLocationOnOutput: true,
-        /**
-         * 获取代码执行函数时，要忽略的函数名称
-         * @default ['eval', 'getTheCodeExecutionLocation', 'output']
-         */
-        getFunctionNameBlackList: ['eval', 'getTheCodeExecutionLocation', 'output'],
-        /**
-         * onTick事件的每个周期的长度（单位：tick）
-         * @default 16
-         */
-        onTickCycleLength: 16,
-        /**
-         * 多少个周期规划一次onTick，值越小，频率越快
-         * @default 4
-         */
-        planningOnTickFrequency: 4,
-        /**
-         * 禁用事件优化  
-         * 如果为`true`，则监听器可以在同一时间内被运行多次
-         * @default false
-         */
-        disableEventOptimization: false
-    }
-};</code></pre>
-        </article>
-    </section>
+<section>
+
+<header>
+    
+        <h2>
+            <span class="ancestors"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a>~</span>
+        
+        Menu
+        </h2>
+        
+            <div class="class-description"><p>菜单</p></div>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+<div class="section-method">
+
+    
+    <h2>Constructor</h2>
+    
+
+    <h4 class="name" id="Menu"><span class="type-signature"></span>new Menu<span class="signature">(title, &hellip;content)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>创建一个<code>Menu</code></p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="EasyBox3Lib.js.html">EasyBox3Lib.js</a>, <a href="EasyBox3Lib.js.html#line385">line 385</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>title</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>string</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <p>菜单的标题，同时也作为父菜单选项的标题</p>
+                
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>content</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>string</code></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                    &lt;repeatable><br>
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <p>菜单正文内容，可以输入多个值，显示时用<code>\n</code>分隔</p>
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id="options"><span class="type-signature"></span>options<span class="type-signature"> :Array.&lt;Menu></span></h4>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="EasyBox3Lib.js.html">EasyBox3Lib.js</a>, <a href="EasyBox3Lib.js.html#line397">line 397</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><code>Array.&lt;Menu></code></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</div>
+
+        
+            
+<div class="section-members">
+<h4 class="name" id="previousLevelMenu"><span class="type-signature"></span>previousLevelMenu<span class="type-signature"> :Menu|undefined</span></h4>
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="EasyBox3Lib.js.html">EasyBox3Lib.js</a>, <a href="EasyBox3Lib.js.html#line401">line 401</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><code>Menu</code></span>
+|
+
+<span class="param-type"><code>undefined</code></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</div>
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="addSubmenu"><span class="type-signature"></span>addSubmenu<span class="signature">(submenu)</span><span class="type-signature"> &rarr; {Menu}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>添加子菜单<br>
+返回该菜单本身</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="EasyBox3Lib.js.html">EasyBox3Lib.js</a>, <a href="EasyBox3Lib.js.html#line413">line 413</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>submenu</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>Menu</code></span>
+|
+
+<span class="param-type"><code>Array.&lt;Menu></code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                <p>要添加的子菜单</p>
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+<dl class="param-type">
+    <dt>
+        Type:
+    </dt>
+    <dd>
+        
+<span class="param-type"><code>Menu</code></span>
+
+
+    </dd>
+</dl>
+
+
+    
+</div>
+
+
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="onClose"><span class="type-signature"></span>onClose<span class="signature">(handler)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>当该菜单被关闭时执行的操作</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="EasyBox3Lib.js.html">EasyBox3Lib.js</a>, <a href="EasyBox3Lib.js.html#line461">line 461</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>handler</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>dialogCallBack</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                <p>当该菜单被关闭时执行的操作。</p>
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="onOpen"><span class="type-signature"></span>onOpen<span class="signature">(handler)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>当该菜单被打开时执行的操作</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="EasyBox3Lib.js.html">EasyBox3Lib.js</a>, <a href="EasyBox3Lib.js.html#line454">line 454</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>handler</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>dialogCallBack</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                <p>当该菜单被打开时执行的操作。</p>
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+        
+            
+<div class="section-method">
+
+    
+
+    <h4 class="name" id="open"><span class="type-signature">(async) </span>open<span class="signature">(entity)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>打开该菜单<br>
+如果没有任何子菜单，则直接调用<code>this.handler.onOpen</code>，并返回<code>true</code><br>
+如果关闭该菜单，则尝试打开上一级菜单</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="EasyBox3Lib.js.html">EasyBox3Lib.js</a>, <a href="EasyBox3Lib.js.html#line433">line 433</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>entity</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>Box3PlayerEntity</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                <p>要打开该菜单的玩家</p>
+                
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+<dl class="param-type">
+    <dt>
+        Type:
+    </dt>
+    <dd>
+        
+<span class="param-type"><code>boolean</code></span>
+
+
+    </dd>
+</dl>
+
+
+<div class="param-desc">
+    <p>是否完成了该菜单。如果关闭了该菜单，返回<code>false</code>；否则返回<code>true</code></p>
+</div>
+
+    
+</div>
+
+
+
+</div>
+        
+    
+
+    
+
+    
+</article>
+
+</section>
 
 
 
