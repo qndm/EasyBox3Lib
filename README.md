@@ -6,6 +6,7 @@
 - 简单 - 该库使用简单
 - 易懂 - 该库的代码简单，方便修改，并编写了大量的`JsDoc`
 - 实用 - 不存在一些虽然很厉害但是没什么用的方法
+
 ## 使用
 1. 添加主文件：复制[/script/EasyBox3Lib.js](./script/EasyBox3Lib.js)中的全部内容，并粘贴在地图内的一个**空的**脚本文件内，如`EasyBox3Lib.js`。  
 tips：你放到`index.js`等文件里里面其实也可以，但非常不建议这么做，并且通常需要修改
@@ -21,8 +22,6 @@ const $ = EasyBox3Lib;
 5. 使用 `$` 来调用库中的方法
 
 ps：`$` 可以改为其他内容，只要不冲突
-## 开发文档
-[见此](./docs/index.md)
 ## 协助开发
 可联系[qndm](github.com/qndm)，或者发[Issues](github.com/qndm/EasyBox3Lib/issues)和[Pull requests](https://github.com/qndm/EasyBox3Lib/pulls)  
 [开发规范](./developmentSpecification.md)
@@ -102,8 +101,8 @@ ps：`$` 可以改为其他内容，只要不冲突
 开了个SQL缓存的坑  
 修复了部分SQL方法中没有加`await`的bug  
 修复了`copyObject`中不能复制对象中类型为`undefined`或者`function`的属性的bug  
-为部分方法添加了`jsdoc`
-修复了`Menu`无法打开上一级菜单的bug
+为部分方法添加了`jsdoc`  
+修复了`Menu`无法打开上一级菜单的bug  
 修改部分`jsdoc`内容
 
 ### 0.0.1
