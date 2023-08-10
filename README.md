@@ -22,6 +22,8 @@ const $ = EasyBox3Lib;
 5. 使用 `$` 来调用库中的方法
 
 ps：`$` 可以改为其他内容，只要不冲突
+## 开发文档
+<https://qndm.github.io/EasyBox3Lib/>
 ## 协助开发
 可联系[qndm](github.com/qndm)，或者发[Issues](github.com/qndm/EasyBox3Lib/issues)和[Pull requests](https://github.com/qndm/EasyBox3Lib/pulls)  
 [开发规范](./developmentSpecification.md)

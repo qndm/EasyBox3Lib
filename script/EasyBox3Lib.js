@@ -1,3 +1,11 @@
+/**
+ * EasyBox3Lib库  
+ * 一个适用于大部分地图的通用代码库
+ * @module EasyBox3Lib
+ * @version 0.0.8
+ * @author qndm Nomen
+ * @license MIT
+ */
 const CONFIG = require('./config.js');
 if (!CONFIG) {
     console.warn('警告：未找到配置文件\n请检查config.js文件');
@@ -12,12 +20,6 @@ if (!CONFIG) {
         })
     }
 }
-/**
- * EasyBox3Lib库  
- * 一个适用于大部分地图的通用代码库
- * @version 0.0.8
- * @author qndm Nomen
- */
 const EasyBox3Lib = {
     copyObject,
     getEntity,

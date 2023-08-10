@@ -1,3 +1,12 @@
+/**
+ * @module config
+ */
+
+/**
+ * 是否在Pro地图中
+ * @type {boolean}
+ * @default false
+ */
 const inArena = global['GameEntity'] != undefined;
 if (inArena) {
     var Box3Vector3 = GameVector3,
@@ -7,7 +16,7 @@ if (inArena) {
 /**
  * 配置信息文件
  */
-const config = {
+module.exports = {
     /**
      * 地图版本号
      * @type {number[]}
@@ -133,4 +142,3 @@ const config = {
         disableEventOptimization: false
     }
 };
-module.exports = config;
