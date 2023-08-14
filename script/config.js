@@ -66,49 +66,48 @@ module.exports = {
         numberOfEntitiesRemainingToBeCreatedForSecurity: 500,
         /**
          * 默认模型缩放比例
-         * @default new Box3Vector3(1 / 16, 1 / 16, 1 / 16) //默认值的默认值（）
+         * @default new Box3Vector3(1 / 16, 1 / 16, 1 / 16)
          */
         defaultMeshScale: new Box3Vector3(1 / 16, 1 / 16, 1 / 16),
         /**
          * 默认模型旋转角度
-         * @default new Box3Quaternion(0, 0, 0, 1) //默认值的默认值（）
+         * @default new Box3Quaternion(0, 0, 0, 1)
          */
         defaultMeshOrientation: new Box3Quaternion(0, 0, 0, 1),
         /**
          * 默认对话框标题颜色
-         * @default new Box3RGBAColor(0, 0, 0, 1) //默认值的默认值（）
+         * @default new Box3RGBAColor(0, 0, 0, 1)
          */
         defaultTitleTextColor: new Box3RGBAColor(0, 0, 0, 1),
         /**
          * 默认对话框标题背景颜色
-         * @default new Box3RGBAColor(0.968, 0.702, 0.392, 1) //默认值的默认值（）
+         * @default new Box3RGBAColor(0.968, 0.702, 0.392, 1)
          */
         defaultTitleBackgroundColor: new Box3RGBAColor(0.968, 0.702, 0.392, 1),
         /**
          * 默认对话框内容颜色
-         * @default new Box3RGBAColor(0, 0, 0, 1) //默认值的默认值（）
+         * @default new Box3RGBAColor(0, 0, 0, 1)
          */
         defaultContentTextColor: new Box3RGBAColor(0, 0, 0, 1),
         /**
          * 默认对话框内容背景颜色
-         * @default new Box3RGBAColor(1, 1, 1, 1) //默认值的默认值（）
+         * @default new Box3RGBAColor(1, 1, 1, 1)
          */
         defaultContentBackgroundColor: new Box3RGBAColor(1, 1, 1, 1),
         /**
          * 默认文本对话框中是否有箭头
-         * @default 'auto' //默认值的默认值（）
+         * @default 'auto'
          */
         defaultHasArrow: 'auto',
         /**
          * 默认对话框其他配置选项
-         * @default {} //默认值的默认值（）
+         * @default {}
          */
         defaultDialogOtherOptions: {},
         /**
          * 启用SQL缓存，以加快读取速度  
-         * 警告：如果直接使用`db.sql`或者`EasyBox3Lib.sql.executeSQLCode`方法来写入数据，可能会出现问题（读取时使用缓存会失效，即不起作用）  
-         * 请确保使用了`EasyBox3Lib.sql.insertData`、`EasyBox3Lib.sql.updateData`、`EasyBox3Lib.sql.deleteData`、`EasyBox3Lib.sql.importData`、`EasyBox3Lib.sql.dropTable`方法来写入数据（读取不需要）
-         * 施工中……
+         * 警告：如果直接使用`db.sql`或者`EasyBox3Lib.storage.executeSQLCode`方法来写入数据，可能会出现问题（读取时使用缓存会失效，即不起作用）  
+         * 请确保使用了`DataStorage.set`、`DataStorage.update`、`DataStorage.remove`方法来写入数据
          * @default false
          */
         enableSQLCache: false,

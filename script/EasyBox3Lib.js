@@ -377,6 +377,10 @@ class DataStorage {
             return new StorageQueryList(data, options.cursor, options.pageSize);
         }
     }
+    /**
+     * 删除键值对
+     * @param {string} key 需要删除的键
+     */
     async remove(key) {
         output('log', '删除数据', this.key, ':', key);
         this.data.delete(key);
