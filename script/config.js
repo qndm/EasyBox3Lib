@@ -141,6 +141,18 @@ module.exports = {
          * 如果为`true`，则监听器可以在同一时间内被运行多次
          * @default false
          */
-        disableEventOptimization: false
+        disableEventOptimization: false,
+        /**
+         * 数据库最大重试次数  
+         * 如果超过最大重试次数，将报错，否则出错将会输出警告
+         * @default 5
+         */
+        maximumDatabaseRetries: 5,
+        /**
+         * 是否启用`onPlayerJoin`事件  
+         * 如果为`true`，则会调用`world.onPlayerJoin`
+         * @default false
+         */
+        enableOnPlayerJoin: false
     }
 };

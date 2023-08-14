@@ -2,7 +2,7 @@
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.0.8
+ * @version 0.0.9
  * @author qndm Nomen
  * @license MIT
  */
@@ -48,7 +48,8 @@ const EasyBox3Lib = {
         getData,
         listData,
         removeData,
-        dropDataStorage
+        dropDataStorage,
+        tryExecuteSQL
     },
     createGameLoop,
     stopGameLoop,
@@ -64,7 +65,8 @@ const EasyBox3Lib = {
     EntityGroup,
     changeVelocity,
     TIME,
-    version: [0, 0, 8]
+    started,
+    version: [0, 0, 9]
 };
 function nullishCoalescing(a, b) {
     if (a == null || a == undefined)
@@ -172,8 +174,12 @@ var
     dataStorages = {},
     gameLoops = {},
     events = {
+        /**@type {OnTickHandlerToken[]} */
         onTick: [],
-        onStart: []
+        /**@type {EventHandlerToken[]} */
+        onStart: [],
+        /**@type {EventHandlerToken[]} */
+        onPlayerJoin: []
     },
     /**
      * @private
@@ -195,7 +201,15 @@ var
      * 当前已完成多少个周期
      * @private
      */
-    cycleNumber = 0;
+    cycleNumber = 0,
+    /**
+     * 要处理的玩家队列
+     * @private
+     * @type {Map<string, Box3PlayerEntity>}
+     */
+    players = new Map(),
+    /** 地图是否完全启动（预处理函数执行完成） */
+    started = false;
 /**
  * 日志信息
  * @private
@@ -293,9 +307,9 @@ class DataStorage {
         if (nullishCoalescing(CONFIG.EasyBox3Lib.enableSQLCache, false) && this.data.has(key)) {
             return copyObject(this.data.get(key));
         } else {
-            result = nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false) ?
+            result = await tryExecuteSQL(async () => nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false) ?
                 await this.gameDataStorage.get(key) :
-                await executeSQLCode(`SELECT * FROM "${this.key}" WHERE "key" == '${key}'`)[0];
+                await executeSQLCode(`SELECT * FROM "${this.key}" WHERE "key" == '${key}'`)[0], '获取数据失败');
             if (result instanceof Array && result.length > 0) {
                 this.data[key] = result;
                 return copyObject(this.data[key]);
@@ -310,31 +324,29 @@ class DataStorage {
      * @param {JSONValue} value 需要设置的值
      */
     async set(key, value) {
-        output('log', '更新数据', this.key, ':', key, '=', value);
-        var data = await this.get(key);//由于需要更新版本，所以先获取一遍旧数据
-        if (data) {
-            data.updateTime = Date.now();
-            data.value = JSON.stringify(value);
-            if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
-                await this.gameDataStorage.set(key, value);
-            else
-                await executeSQLCode(`UPDATE "${this.key}" SET ("value" = '${sqlAntiInjection(data.value)}', "updateTime" = ${data.updateTime}) WHERE "key" == '${sqlAntiInjection(key)}'`);
+        output('log', '设置数据', this.key, ':', key, '=', value);
+        if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false)) {
+            await tryExecuteSQL(async () => await this.gameDataStorage.set(key, value), '设置数据失败');
+            return;
         } else {
-            data = {
-                key,
-                value,
-                createTime: Date.now(),
-                updateTime: Date.now(),
-                version: ""
-            };
-            if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false)) {
-                await this.gameDataStorage.set(key, value);
+            var data = await tryExecuteSQL(async () => await this.get(key), '获取数据失败');//由于需要更新版本，所以先获取一遍旧数据
+            if (data) {
+                data.updateTime = Date.now();
+                data.value = JSON.stringify(value);
+                await tryExecuteSQL(async () => await executeSQLCode(`UPDATE "${this.key}" SET ("value" = '${sqlAntiInjection(data.value)}', "updateTime" = ${data.updateTime}) WHERE "key" == '${sqlAntiInjection(key)}'`), '更新数据失败');
             } else {
-                await executeSQLCode(`INSERT INTO "${this.key}" ("key", "value", "createTime", "updateTime", "version") VALUES ('${sqlAntiInjection(data.key)}', '${sqlAntiInjection(data.value)}', ${data.createTime}, ${data.updateTime}, '${sqlAntiInjection(data.version)}')`);
+                data = {
+                    key,
+                    value,
+                    createTime: Date.now(),
+                    updateTime: Date.now(),
+                    version: ""
+                };
+                await tryExecuteSQL(async () => await executeSQLCode(`INSERT INTO "${this.key}" ("key", "value", "createTime", "updateTime", "version") VALUES ('${sqlAntiInjection(data.key)}', '${sqlAntiInjection(data.value)}', ${data.createTime}, ${data.updateTime}, '${sqlAntiInjection(data.version)}')`), '插入数据失败');
             }
         }
-        output('log', this.data[key].value, data.value);
-        this.data.set(key, value);
+        output('log', this.key, ':', key, ':', this.data[key].value, '->', data.value);
+        this.data.set(key, data);
     }
     /**
      * 使用传入的方法更新键值对
@@ -343,6 +355,10 @@ class DataStorage {
      * @param {dataStorageUpdateCallBack} handler 处理更新的方法，接受一个参数，为当前键的值，返回一个更新后的值
      */
     async update(key, handler) {
+        if (CONFIG.EasyBox3Lib.inArena) {
+            this.gameDataStorage.update(key, handler);
+            return;
+        }
         var value = await handler(await this.get(key));
         await this.set(key, value);
     }
@@ -355,27 +371,27 @@ class DataStorage {
     async list(options) {
         output('log', '获取数据', this.key, ':', options.cursor, '-', options.cursor + (options.pageSize || 100));
         if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false)) {
-            return await this.gameDataStorage.list(options);
+            return await tryExecuteSQL(async () => await this.gameDataStorage.list(options), '获取数据失败');
         } else {
-            let data = await executeSQLCode(`SELECT * FROM "${this.key}"`);
+            let data = await tryExecuteSQL(async () => await executeSQLCode(`SELECT * FROM "${this.key}"`), '获取数据失败');
             return new StorageQueryList(data, options.cursor, options.pageSize);
         }
     }
     async remove(key) {
         output('log', '删除数据', this.key, ':', key);
         this.data.delete(key);
-        await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`);
+        await tryExecuteSQL(async () => await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`), '删除数据失败');
     }
     /**
      * 删除表格
      */
     async drop() {
         if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
-            throw '暂不支持Pro地图';
+            output("error", '暂不支持Pro地图');
         else {
             output('warn', '删除表', this.key);
             delete this.data;
-            await executeSQLCode(`DROP TABLE ${this.key}`);
+            await tryExecuteSQL(async () => await executeSQLCode(`DROP TABLE ${this.key}`));
         }
     }
 }
@@ -564,10 +580,10 @@ class EventHandlerToken {
     resume() {
         this.statu = STATUS.FREE;
     }
-    async run() {
+    async run(data = {}) {
         if (this.statu != STATUS.NOT_RUNNING && (nullishCoalescing(CONFIG.EasyBox3Lib.disableEventOptimization, false) || this.statu == STATUS.FREE)) {
             this.statu = STATUS.RUNNING;
-            await this.handler({ tick: world.currentTick });
+            await this.handler(Object.assign({ tick: world.currentTick }, data));
             this.statu = STATUS.FREE;
         }
     }
@@ -948,6 +964,7 @@ function toChineseDate(date) {
  * 执行一段SQL命令
  * @async
  * @param {string} code 
+ * @returns {any}
  */
 async function executeSQLCode(code) {
     output('log', `执行SQL命令 ${code} `);
@@ -975,6 +992,27 @@ function sqlAntiInjection(value) {
     return result;
 }
 /**
+ * 尝试执行SQL代码
+ * @param {Function} func 要执行的代码
+ * @param {string} msg 当代码执行失败时，输出的信息
+ */
+async function tryExecuteSQL(func, msg = '') {
+    var count = 0, lastError = '', data;
+    while (count <= nullishCoalescing(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5))
+        try {
+            data = await func();
+            return data;
+        } catch (error) {
+            output("warn", msg, error);
+            count++;
+            lastError = error;
+        }
+    if (count > nullishCoalescing(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5)) {
+        output("error", msg, lastError);
+        throw lastError;
+    }
+}
+/**
  * 连接指定数据存储空间，如果不存在则创建一个新的空间。
  * @async
  * @param {string} key 指定空间的名称，长度不超过50个字符
@@ -988,15 +1026,9 @@ async function getDataStorage(key) {
     output('log', '连接数据存储空间', key);
     var gameDataStorage;
     if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
-        gameDataStorage = await storage.getDataStorage(key);
+        gameDataStorage = await tryExecuteSQL(async () => await storage.getDataStorage(key), '数据存储空间连接失败');
     else
-        await executeSQLCode(`CREATE TABLE IF NOT EXISTS "${key}"(
-            "key" TEXT PRIMARY KEY,
-            "value" TEXT NOT NULL,
-            "version" TEXT NOT NULL,
-            "updateTime" INTEGER NOT NULL,
-            "createTime" INTEGER NOT NULL
-        )`);
+        await tryExecuteSQL(async () => await executeSQLCode(`CREATE TABLE IF NOT EXISTS "${key}"("key" TEXT PRIMARY KEY, "value" TEXT NOT NULL, "version" TEXT NOT NULL, "updateTime" INTEGER NOT NULL, "createTime" INTEGER NOT NULL)`), '数据存储空间连接失败');
     dataStorages[key] = new DataStorage(key, gameDataStorage);
     return dataStorages[key];
 }
@@ -1104,6 +1136,8 @@ function stopGameLoop(name) {
 }
 /**
  * 注册一个事件
+ * @example
+ * registerEvent('testEvent');
  * @param {string} name 事件名称
  */
 function registerEvent(name) {
@@ -1116,33 +1150,51 @@ function registerEvent(name) {
 }
 /**
  * 添加事件监听器
- * @param {string} name 
- * @param {onTickEventCallBack} handler 
+ * @example
+ * registerEvent('testEvent');
+ * addEventHandler('testEvent', () => {
+ *     output("log", '触发事件');
+ * });
+ * @param {string} eventName 事件名称
+ * @param {onTickEventCallBack} handler 事件监听器
  */
-function addEventHandler(name, handler) {
-    if (name == 'onTick') {
+function addEventHandler(eventName, handler) {
+    if (eventName == 'onTick') {
         throw `不可使用 addEventHandler 方法注册 onTick 事件，请使用 onTick 方法`
     }
     var event = new EventHandlerToken(handler);
-    if (events[name]) {
-        events[name].push(event);
+    if (events[eventName]) {
+        events[eventName].push(event);
         return event;
     } else
-        output('error', name, '事件不存在');
+        output('error', eventName, '事件不存在');
 }
 /**
  * 触发一个事件
  * @async
+ * @example
+ * registerEvent('testEvent');
+ * addEventHandler('testEvent', () => {
+ *     output("log", '触发事件');
+ * });
+ * triggerEvent('testEvent');
+ * @example
+ * registerEvent('testEvent');
+ * addEventHandler('testEvent', ({ data }) => {
+ *     output("log", '触发事件 data =', data);
+ * });
+ * triggerEvent('testEvent', { data: 114514 });
  * @param {string} eventName 事件名称
- * @param {any[]} parameters 监听器使用的参数
+ * @param {object} data 监听器使用的参数
  */
-async function triggerEvent(eventName, parameters) {
+async function triggerEvent(eventName, data) {
     output('log', '触发事件', eventName);
-    events[eventName].forEach(event => event.run(...parameters));
+    for (let event of events[eventName])
+        await event.run(data);
 }
 /**
  * 移除一个事件，之后不能监听该事件
- * @param {string} eventName 
+ * @param {string} eventName 事件名称
  */
 function removeEvent(eventName) {
     if (events[eventName]) {
@@ -1153,13 +1205,17 @@ function removeEvent(eventName) {
 /**
  * 注册一个`onTick`事件，类似于`Box3`中的`onTick`事件，但有一些优化  
  * 需要在预处理时注册
+ * @example
+ * onTick(({ tick }) => {
+ *     output("log", 'tick', tick);
+ * }, 16);
  * @param {onTickEventCallBack} handler 要执行的函数
- * @param {number} tps 每秒执行次数
+ * @param {number} tps 每个循环的执行次数
  * @param {boolean} enforcement 如果为false，则如果上一次未执行完，则不会执行
  * @param {boolean} automaticTps 是否自动调整tps
  * @returns {OnTickHandlerToken}
  */
-function onTick(handler, tps, enforcement = false, automaticTps = true) {
+function onTick(handler, tps, enforcement = false, automaticTps = false) {
     var event = new OnTickHandlerToken(handler, tps, enforcement, automaticTps);
     events.onTick.push(event);
     return event;
@@ -1168,6 +1224,16 @@ function onTick(handler, tps, enforcement = false, automaticTps = true) {
  * 添加预处理函数
  * @param {eventCallBack} todo 要执行的函数
  * @param {number} priority 优先级，值越大越先执行
+ * @example
+ * preprocess(() => {
+ *     output("log", '这是一个预处理函数，会第一个执行');
+ * }, 2);
+ * preprocess(() => {
+ *     output("log", '这是一个预处理函数，会第二个执行');
+ * }, 1);
+ * preprocess(() => {
+ *     output("log", '优先级甚至可以是负数和小数！');
+ * }, -114.514);
  */
 function preprocess(todo, priority) {
     preprocessFunctions.push({ todo, priority });
@@ -1219,6 +1285,10 @@ async function start() {
             }
         }
     });
+    for (let [userKey, entity] of players)
+        await triggerEvent('onPlayerJoin', { entity });
+    players.clear();
+    started = true;
     output('log', '地图启动完成');
 }
 /**
@@ -1228,6 +1298,11 @@ async function start() {
  * ```javascript
  * result = velocity * time / 64
  * ```
+ * @example
+ * changeVelocity(1, 1000); // 1格/s
+ * @example
+ * changeVelocity(299792458, 1000); // 光速，299792458格/s
+ * @param {number}
  * @param {number} velocity 移动的速度，每`time`应该移动`velocity`格
  * @param {number} time 速度的单位时间，单位：ms。默认为1s
  */
@@ -1236,7 +1311,16 @@ function changeVelocity(velocity, time = TIME.SECOND) {
 }
 if (nullishCoalescing(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
     Object.assign(global, EasyBox3Lib);
-    EasyBox3Lib.output('log', '已成功暴露到全局');
+    output('log', '已成功暴露到全局');
+}
+if (CONFIG.EasyBox3Lib.enableOnPlayerJoin) {
+    world.onPlayerJoin(({ entity }) => {
+        if (started)
+            players.set(entity.player.userKey, entity);
+        else
+            triggerEvent('onPlayerJoin', { entity });
+        output("log", '进入玩家', entity);
+    });
 }
 global.EasyBox3Lib = EasyBox3Lib;
 console.log('EasyBox3Lib', EasyBox3Lib.version.join('.'));

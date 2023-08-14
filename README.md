@@ -28,6 +28,21 @@ ps：`$` 可以改为其他内容，只要不冲突
 可联系[qndm](github.com/qndm)，或者发[Issues](github.com/qndm/EasyBox3Lib/issues)和[Pull requests](https://github.com/qndm/EasyBox3Lib/pulls)  
 [开发规范](./developmentSpecification.md)
 ## 版本 & 更新日志
+### 0.0.9
+新增 `tryExecuteSQL`
+调整数据库：
+- 现在所有数据库的操作都会在失败后执行多次（默认`5`次，在`config.EasyBox3Lib.maximumDatabaseRetries`中更改）
+
+调整`triggerEvent`：
+- 第二个参数现在填入一个`object`来传递参数
+
+新增 `onPlayerJoin` 事件
+- 当地图启动中（运行预处理脚本时），不会立刻触发事件，而是等地图启动完后触发事件  
+  当地图启动完毕时，会立刻触发事件
+
+调整 `onTick` 方法：
+- `automaticTps` 参数的默认值从`true`改为`false`
+
 ### 0.0.8
 新增 `Page`  
 新增 `changeVelocity`  
