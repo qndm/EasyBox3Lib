@@ -208,7 +208,9 @@ var
      * @type {Map<string, Box3PlayerEntity>}
      */
     players = new Map(),
-    /** 地图是否完全启动（预处理函数执行完成） */
+    /** 
+     * 地图是否完全启动（预处理函数执行完成） 
+     */
     started = false;
 /**
  * 日志信息
