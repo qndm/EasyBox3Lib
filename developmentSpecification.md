@@ -12,6 +12,7 @@ var variable1 = 114514,
 - 对于可配置但运行时不可更改的值，写在配置文件[config.js](./script/config.js)中
 - 写完一句代码，除非类似`function`、`class`、`if`、`for`、`while`等语句，应打分号（`var`、`let`、`const`、`break`、`continue`、`return`等需要）
 - 变量/方法命名使用驼峰式命名法，常量使用常量命名法，类使用对象类命名法
+- 变量/常量/方法/类命名应使用单词全称，除临时变量外不应使用单字母/拼音/十六进制/任何人类难以理解的变量名作为变量名
 - 对于像`SQL`、`SQLite`、`PostgreSQL`、`Box3Entity`这样的专有名词，应保留原来的大小写
 ```javascript
 const FIELD_DATA_TYPES = {

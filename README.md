@@ -1,16 +1,11 @@
 # EasyBox3Lib
 一个适用于大部分地图的通用代码库。  
-**警告：该库可能存在不稳定性，因该库出现的任何损失，库作者一概不负责！** ~~因一些原因没测试过QAQ~~
-## 特点
-- 开源 - 该库根据`MIT`协议开源
-- 简单 - 该库使用简单
-- 易懂 - 该库的代码简单，方便修改，并编写了大量的`JsDoc`
-- 实用 - 不存在一些虽然很厉害但是没什么用的方法
+**警告：该库可能存在不稳定性，因该库出现的任何损失，库作者一概不负责！** 
 
 ## 使用
 1. 添加主文件：复制[/script/EasyBox3Lib.js](./script/EasyBox3Lib.js)中的全部内容，并粘贴在地图内的一个**空的**脚本文件内，如`EasyBox3Lib.js`。  
-tips：你放到`index.js`等文件里里面其实也可以，但非常不建议这么做，并且通常需要修改
-2. 添加配置文件，创建一个新的脚本文件，命名为`config.js`（**不要命名为`config`或者`config.js.js`，这样无法读取**），并将[/script/config.js](./script/config.js)
+tips：你放到`index.js`等文件里里面其实也可以，但非常不建议这么做，会存在许多兼容性问题
+2. 添加配置文件，创建一个新的脚本文件，命名为`config.js`（**不要命名为`config`或者`config.js.js`，这样无法读取**），并将[/script/config.js](./script/config.js)复制到`config.js`中
 3. 在`index.js`的开头加上以下代码（**`EasyBox3Lib.js`改成库的名称**）：
 ```javascript
 const $ = require('./EasyBox3Lib.js');
