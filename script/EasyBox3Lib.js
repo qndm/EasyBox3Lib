@@ -23,6 +23,12 @@ if (!CONFIG) {
         })
     }
 }
+/**
+ * 空值合并
+ * @param {*} a 
+ * @param {*} b 
+ * @returns {*}
+ */
 function nullishCoalescing(a, b) {
     if (a === null || a === undefined)
         return b;
@@ -100,6 +106,40 @@ function nullishCoalescing(a, b) {
  * @param {Thing[]} array 原数组
  */
 
+/**
+ * @typedef Output
+ * @property {string} type 类型
+ * @property {string} data 内容
+ * @property {any[]} location 代码执行位置
+ */
+
+/**
+ * 物品（`Thing`）转换为`string`的结果  
+ * 格式为：
+ * ```text
+ * i[id](|n[name])|s[stackSize]|d[data]
+ * ```
+ * 例如：  
+ * itest1|n测试物品1|s114514|d{}  
+ * itest2|s1919810|d{hello: 'world!'}
+ * @typedef {string} ThingString
+ */
+
+/**
+ * Storage任务  
+ * 用于Storage Queue
+ * @typedef StorageTask
+ * @property {"set" | "remove"} type 任务类型
+ * @property {string} storageKey 数据储存空间名称
+ * @property {string} key 数据键
+ * @property {any} value 数据值
+ */
+
+/**
+ * 储存物品的格子
+ * @typedef {?Thing} Tartan
+ * @private
+ */
 const
     /**
      * 一些常用的时间单位
@@ -193,17 +233,18 @@ var
      * @type {Map<string, Box3PlayerEntity>}
      */
     players = new Map(),
-    /** 
-     * 地图是否完全启动（预处理函数执行完成）
-     * @type {boolean}
-     */
+    /** 地图是否完全启动（预处理函数执行完成）@type {boolean} */
     started = false,
-    /**
-     * 物品注册表
-     * @private
-     * @type {Map<string, Item>}
+    /** 物品注册表 @private @type {Map<string, Item>} */
+    itemRegistry = new Map(),
+    /** 
+     * Storage Queue - Storage任务队列
+     * 队列只会在`start`方法调用时才会开始，或者手动调用`startStorageQueue`函数
+     * @type {StorageTask[]} 
      */
-    itemRegistry = new Map();
+    storageQueue = [],
+    /**@type {number} */
+    storageQueueIntervalID;
 /**
  * 日志信息
  * @private
@@ -214,7 +255,6 @@ class Output {
      * @param {string} type 类型
      * @param {string} data 内容
      * @param {any[]} location 代码执行位置
-     * @private
      */
     constructor(type, data, location) {
         this.type = type;
@@ -232,24 +272,26 @@ class Output {
     }
 }
 /**
- * 键值对查询列表，用于批量获取键值对，通过 `GameDataStorage.list` 方法返回。
- * 列表根据配置项被划分为一个或多个分页，每个分页最多包含 `ListPageOptions` | `pageSize` 个键值对。
+ * 键值对查询列表，用于批量获取键值对，通过 `DataStorage.list` 方法返回。  
+ * 列表根据配置项被划分为一个或多个分页，每个分页最多包含 `ListPageOptions` | `pageSize` 个键值对。  
+ * 数据以 `DataStorage.list` 方法调用时的数据为准
  * @private
  */
 class StorageQueryList {
     /**
-     * 键值对查询列表，用于批量获取键值对，通过 `GameDataStorage.list` 方法返回。
+     * 键值对查询列表，用于批量获取键值对，通过 `DataStorage.list` 方法返回。
      * 列表根据配置项被划分为一个或多个分页，每个分页最多包含 `ListPageOptions` | `pageSize` 个键值对。
      * @param {ReturnValue[]} data 数据
      * @param {number} cursor 
-     * @param {number} pageSize 
-     * @private
+     * @param {number} pageSize 分页大小
      */
     constructor(data, cursor, pageSize = 100) {
         this.data = data;
+        /**当前页码 @type {number}*/
         this.page = 0;
         this.cursor = cursor;
         this.length = data.length;
+        /**分页大小 @type {number}*/
         this.pageSize = pageSize;
     }
     get isLastPage() {
@@ -386,7 +428,9 @@ class DataStorage {
         await tryExecuteSQL(async () => await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`), '删除数据失败');
     }
     /**
-     * 删除表格
+     * 删除表格  
+     * 警告：删除之后无法恢复，请谨慎使用！！！
+     * 
      */
     async drop() {
         if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
@@ -684,16 +728,24 @@ class EntityGroup {
  * @class
  * @param {string} id 该物品的id，除了字母、数字、下划线以外的字符会被忽略
  * @param {string} name 该物品的显示名称，默认和id相同
+ * @param {string} mesh 该物品的模型
  * @param {number} maxStackSize 该物品的最大堆叠数量，默认为`Infinity`。最小值为`1`。当`data`不为空对象时，为`1`.
  * @param {string[]} tags 该物品的标签，除了字母、数字、下划线以外的字符会被忽略
  * @param {object} data 该物品的默认数据
  */
-function Item(id, name = id, maxStackSize = Infinity, tags = [], data = {}) {
+function Item(id, name = id, mesh = '', maxStackSize = Infinity, tags = [], data = {}) {
+    /**该物品的id @type {string} */
     this.id = id.match(/[/w]/g);
+    /**该物品的显示名称 @type {string} */
     this.name = name;
+    /**该物品的最大堆叠数量 @type {string} */
     this.maxStackSize = Math.max(Object.keys(data).length ? 1 : maxStackSize, 1);
+    /**该物品的标签 @type {string} */
     this.tags = tags.map(tag => tag.match(/[/w]/g).join(''));
+    /**该物品的默认数据 @type {string} */
     this.data = data;
+    /**该物品的模型 @type {string} */
+    this.mesh = mesh;
 }
 /**
  * 一个（或一组）物品
@@ -707,8 +759,7 @@ class Thing {
      */
     constructor(id, stackSize = 1, data = {}) {
         if (!itemRegistry.has(id)) {
-            output("error", `未注册的物品`, id);
-            throw `未注册的物品：${id}`;
+            throwError('未注册的物品', id);
         }
         var item = itemRegistry.get(id);
         /**物品id @type {string} */
@@ -720,6 +771,7 @@ class Thing {
         /**物品数据，如果有数据将不能再堆叠 */
         this.data = copyObject(item.data);
         Thing.setData(this, copyObject(data));
+        Object.seal(this.data);
     }
     /**该物品的类型 @returns {Item} */
     get item() {
@@ -753,12 +805,22 @@ class Thing {
      */
     static setData(thing, data) {
         var item = itemRegistry.get(thing.id), keys = Object.keys(item.data);
-        for (let key in data) {
-            if (keys.includes(key) && typeof item.data[key] == typeof data[key]) {
+        for (let key in data)
+            if (keys.includes(key) && typeof item.data[key] == typeof data[key])
                 thing.data = data;
-            }
-        }
         return thing;
+    }
+    /**
+     * 为该物品设置`data`
+     * @param {object} data 要设置的数据。如果数据中包含该种物品中没有的键值对或者数据类型不符，将被忽略
+     * @returns {Thing}
+     */
+    setData(data) {
+        var item = this.item, keys = Object.keys(item.data);
+        for (let key in data)
+            if (keys.includes(key) && typeof item.data[key] == typeof data[key])
+                this.data = data;
+        return this;
     }
     /**
      * 测试物品是否满足选择器的条件
@@ -779,12 +841,11 @@ class Thing {
                 index++;
             }
             test = thing === null ? selector.substring(index) == 'null' : ((selector[index] == '#') ? (thing.id == selector.substring(index + 1)) : (thing.tags.includes(selector.substring(index + 1))));
-            test ^= not;//（虽然是number类型，不过无所谓了）
-            if (test) {
+            test ^= not;//虽然是number类型，不过无所谓了（）
+            if (test)
                 result = true;
-            } else if (must) {//test为false且must为true时，就没有必要再往下测试了
+            else if (must) //test为false且must为true时，就没有必要再往下测试了
                 break;
-            }
         }
         return result;
     }
@@ -796,6 +857,59 @@ class Thing {
      */
     static from(source) {
         return new Thing(source.id, source.stackingNumber, source.data);
+    }
+    /**
+     * 为该物品创建对应的实体
+     * @param {Box3Vector3} position 实体位置
+     * @param {Box3Vector3} meshScale 实体尺寸
+     * @param {boolean} allowedPickups 是否允许拾取
+     * @returns {Box3Entity}
+     */
+    createThingEntity(position, meshScale = nullishCoalescing(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), allowedPickups = true, interactRadius = 4, interactColor = new Box3RGBColor(1, 1, 1)) {
+        var entity = createEntity(this.item.mesh, position, true, true, meshScale);
+        entity.thing = this;
+        if (allowedPickups) {
+            entity.enableInteract = true;
+            entity.interactHint = this.name;
+            entity.interactColor = interactColor;
+            entity.interactRadius = interactRadius;
+        }
+        return entity;
+    }
+    /**
+     * 将物品转换为字符串
+     * @returns {ThingString}
+     */
+    toString() {
+        return `i${this.id}${this.name != this.item.name ? ('|n' + this.name) : ''}|s${this.stackSize.toString(16)}|d${JSON.stringify(this.data)}`;
+    }
+    /**
+     * 从字符串中获取物品数据
+     * @param {ThingString} string 物品数据的字符串
+     */
+    static fromString(string) {
+        var /**@type {string[]}*/source = string.split('|'), id = '', name = '', stackSize = 1, data = {};
+        for (const item of source) {
+            switch (item[0]) {
+                case 'i':
+                    id = item.substring(1);
+                    break;
+                case 'n':
+                    name = item.substring(1);
+                    break;
+                case 's':
+                    stackSize = parseInt(item.substring(1), 16);
+                    break;
+                case 'd':
+                    data = JSON.parse(item.substring(1));
+                    break;
+            }
+        }
+        if (itemRegistry.has(id))
+            throwError('未知的物品id', id);
+        if (!name)
+            name = itemRegistry.get(id).name;
+        return new Thing(id, name, Math.max(Math.min(stackSize, itemRegistry.get(id).maxStackSize), 1), data);
     }
 }
 /**
@@ -817,12 +931,12 @@ class ThingStorage {
         this.stackSizeMultiplier = stackSizeMultiplier;
         /**黑名单，在黑名单内的物品不能放入该储存空间 @type {ItemSelectorString[]} */
         this.blacklist = blacklist;
-        /**@type {(?Thing)[]} */
+        /**@type {Tartan[]} */
         this.thingStorage = new Array(size).fill(null);
     }
     /**
      * 向该物品储存空间的指定位置放入物品  
-     * @param {?Thing} source 要放入的物品
+     * @param {Tartan} source 要放入的物品
      * @param {number} index 放入物品的位置
      * @returns {?Thing} 剩余的物品。如果没有剩余物品，返回`null`
      */
@@ -884,7 +998,7 @@ class ThingStorage {
      * @returns {?Thing}
      */
     takeOut(index, quantity = 1) {
-        if (index < 0 || index >= this.size || !Number.isInteger(index)) {
+        if (!Number.isInteger(index) || index < 0 || index >= this.size) {
             output("error", '未知的index', index);
             return null;
         }
@@ -1048,8 +1162,8 @@ function getTheCodeExecutionLocation() {
 /**
  * 输出一段日志，并记录到日志文件中
  * @param {'log' | 'warn' | 'error'} type 输出类型
- * @param {string[]} data 要输出的内容
- * @returns {Output}
+ * @param {...string} data 要输出的内容
+ * @returns {string}
  */
 function output(type, ...data) {
     let str = data.join(' ');
@@ -1065,6 +1179,24 @@ function output(type, ...data) {
         if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
             logs.push(new Output(type, str, ['unknown', -1, -1]));
         return `[${type}] ${str}`;
+    }
+}
+/**
+ * 抛出错误
+ * @param {...string} data 错误内容
+ */
+function throwError(...data) {
+    let str = data.join(' ');
+    if (nullishCoalescing(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
+        let locations = getTheCodeExecutionLocation();
+        let location = (locations.locations.filter(location => !location.startsWith(__filename))[0] || locations.locations[0]).split(':');
+        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
+            logs.push(new Output('error', str, location.join(':')));
+        throw `(${location[0]}:${location[1]}) [${type}] ${str}`;
+    } else {
+        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
+            logs.push(new Output('error', str, ['unknown', -1, -1]));
+        throw `[${type}] ${str}`;
     }
 }
 /**
@@ -1107,7 +1239,7 @@ function resizePlayer(entity, size) {
     entity.player.crouchAcceleration *= size
     entity.player.swimSpeed *= size;
     entity.player.swimAcceleration *= size;
-    output('log', '缩放', `缩放玩家尺寸 ${entity.player.name} (${entity.player.userKey}) 为 ${size} `);
+    output('log', `缩放玩家尺寸 ${entity.player.name} (${entity.player.userKey}) 为 ${size} `);
 }
 /**
  * 简单创建一个实体（其实也没简单到哪去）
@@ -1135,7 +1267,7 @@ function createEntity(mesh, position, collides, gravity, meshScale = nullishCoal
             friction: 1
         });
     } else {
-        output('error', '实体创建失败', '实体数量超过上限')
+        throwError('实体创建失败', '实体数量超过上限');
         return null;
     }
 }
@@ -1317,8 +1449,7 @@ async function tryExecuteSQL(func, msg = '') {
             lastError = error;
         }
     if (count > nullishCoalescing(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5)) {
-        output("error", msg, lastError);
-        throw lastError;
+        throwError(msg, lastError);
     }
 }
 /**
@@ -1344,62 +1475,62 @@ async function getDataStorage(key) {
 /**
  * 在缓存中直接获取指定数据存储空间  
  * 比`getDataStorage`更快，但不能创建数据存储空间
- * @param {string} tableKey 指定数据存储空间名称
+ * @param {string} storageKey 指定数据存储空间名称
  * @returns {DataStorage}
  */
-function getDataStorageInCache(tableKey) {
-    if (!dataStorages.has(tableKey)) {
-        output("error", '未找到数据储存空间', tableKey);
-        throw `未找到数据储存空间 ${tableKey}`;
+function getDataStorageInCache(storageKey) {
+    if (!dataStorages.has(storageKey)) {
+        throwError('未找到数据储存空间', storageKey);
     }
-    return dataStorages.get(tableKey);
+    return dataStorages.get(storageKey);
 }
 /**
- * 设置一个键值对
- * @async
- * @param {string} tableKey 指定空间的名称
+ * 设置一个键值对  
+ * 与`DataStorage.set`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中，所以不是异步函数
+ * @param {string} storageKey 指定空间的名称
  * @param {string} key 需要设置的键
  * @param {string} value 需要设置的值
  */
-async function setData(tableKey, key, value) {
-    await getDataStorage(tableKey).set(key, value);
+function setData(storageKey, key, value) {
+    storageQueue.push({ type: "set", storageKey, key, value });
 }
 /**
  * 查找一个键值对
  * @async
- * @param {string} tableKey 指定空间的名称
+ * @param {string} storageKey 指定空间的名称
  * @param {string} key 指定的键
  * @returns {ReturnValue}
  */
-async function getData(tableKey, key) {
-    await getDataStorageInCache(tableKey).get(key);
+async function getData(storageKey, key) {
+    await getDataStorage(storageKey).get(key);
 }
 /**
  * 批量获取键值对  
  * 注意：该方法不会创建缓存和读取缓存，所以该方法比`get`更慢
- * @param {string} tableKey 指定空间的名称
+ * @param {string} storageKey 指定空间的名称
  * @param {ListPageOptions} options 批量获取键值对的配置项
  * @returns {QueryList}
  */
-async function listData(tableKey, options) {
-    return await getDataStorageInCache(tableKey).list(options);
+async function listData(storageKey, options) {
+    return await getDataStorage(storageKey).list(options);
 }
 /**
  * 删除表中的键值对
- * @async
- * @param {string} tableKey 指定空间的名称
+ * 与`DataStorage.remove`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中，所以不是异步函数
+ * @param {string} storageKey 指定空间的名称
  * @param {string} key 指定的键
  */
-async function removeData(tableKey, key) {
-    await getDataStorage(tableKey).remove(key);
+function removeData(storageKey, key) {
+    storageQueue.push({ type: "set", storageKey, key });
 }
 /**
- * 删除指定数据存储空间
+ * 删除指定数据存储空间  
+ * 警告：删除之后无法恢复，请谨慎使用！！！
  * @async
- * @param {string} tableKey 指定数据存储空间
+ * @param {string} storageKey 指定数据存储空间
  */
-async function dropDataStorage(tableKey) {
-    await getDataStorage(tableKey).drop();
+async function dropDataStorage(storageKey) {
+    await getDataStorage(storageKey).drop();
 }
 /**
  * 创建游戏循环  
@@ -1471,15 +1602,14 @@ function registerEvent(name) {
  */
 function addEventHandler(eventName, handler) {
     if (eventName == 'onTick') {
-        output("error", '不可使用 addEventHandler 方法注册 onTick 事件，请使用 onTick 方法');
-        throw `不可使用 addEventHandler 方法注册 onTick 事件，请使用 onTick 方法`;
+        throwError('不可使用 addEventHandler 方法注册 onTick 事件，请使用 onTick 方法');
     }
     var event = new EventHandlerToken(handler);
     if (events[eventName]) {
         events[eventName].push(event);
         return event;
     } else
-        output('error', eventName, '事件不存在');
+        throwError(eventName, '事件不存在');
 }
 /**
  * 触发一个事件
@@ -1620,6 +1750,7 @@ async function start() {
 function changeVelocity(velocity, time = TIME.SECOND) {
     return velocity * time / TIME.TICK;
 }
+
 /**
  * 注册一种物品  
  * 如果成功注册物品，返回`true`，否则返回`false`
@@ -1631,6 +1762,42 @@ function registerItem(item) {
         return false;
     itemRegistry.set(item.id, copyObject(item));
     return true;
+}
+/**
+ * 启动Storage Queue  
+ * 只有启动了Storage Queue，`setData`和`removeData`的任务才会被处理
+ */
+function startStorageQueue() {
+    storageQueueIntervalID = setInterval(async () => {
+        if (storageQueue.length <= 0)
+            return;
+        var task = storageQueue[0];
+        await tryExecuteSQL(async () => {
+            var dataStorage = await getDataStorage(task.storageKey);
+            switch(task.type){
+                case "set":
+                    await dataStorage.set(task.key, task.value);
+                    break;
+                case "remove":
+                    await dataStorage.remove(task.key);
+                    break;
+                default:
+                    output("warn", '未知的type', task.type, `\n数据：${task.storageKey}.${task.key}=${task.value}`);
+            }
+        });
+        storageQueue.splice(0, 1);
+    }, 256);
+    output("log", '已启动Storage Queue');
+}
+/**
+ * 停止Storage Queue  
+ * `setData`和`removeData`仍会将任务放到队列中，但不会再次处理，除非运行`startStorageQueue`
+ */
+function stopStorageQueue() {
+    if (typeof storageQueueIntervalID != "number")
+        throwError('未启动Storage Queue')
+    clearInterval(storageQueueIntervalID);
+    output("log", '已停止Storage Queue\n若要重新启动Storage Queue，请使用startStorageQueue方法');
 }
 const EasyBox3Lib = {
     copyObject,
@@ -1661,7 +1828,9 @@ const EasyBox3Lib = {
         listData,
         removeData,
         dropDataStorage,
-        tryExecuteSQL
+        tryExecuteSQL,
+        startStorageQueue,
+        stopStorageQueue
     },
     createGameLoop,
     stopGameLoop,
@@ -1680,6 +1849,7 @@ const EasyBox3Lib = {
     Item,
     Thing,
     ThingStorage,
+    throwError,
     TIME,
     started,
     version: [0, 0, 10]
@@ -1697,6 +1867,10 @@ if (CONFIG.EasyBox3Lib.enableOnPlayerJoin) {
         output("log", '进入玩家', entity);
     });
 }
+/**
+ * EasyBox3Lib的全局对象
+ * @global
+ */
 global.EasyBox3Lib = EasyBox3Lib;
 console.log('EasyBox3Lib', EasyBox3Lib.version.join('.'));
 module.exports = EasyBox3Lib;
