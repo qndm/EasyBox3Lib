@@ -23,4 +23,4 @@ ps：`$` 可以改为其他内容，只要不冲突
 可联系[qndm](github.com/qndm)，或者发[Issues](github.com/qndm/EasyBox3Lib/issues)和[Pull requests](https://github.com/qndm/EasyBox3Lib/pulls)  
 [开发规范](./developmentSpecification.md)
 ## 版本 & 更新日志
-<./changelog.md>
+[Changelog](./changelog.md)
