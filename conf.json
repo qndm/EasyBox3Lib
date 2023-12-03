@@ -1,7 +1,7 @@
 {
     "source": {
         "include": [
-            "lib",
+            "script",
             "package.json",
             "README.md",
             "changelog.md"
