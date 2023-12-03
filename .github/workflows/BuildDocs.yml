@@ -19,6 +19,7 @@ jobs:
           output_dir: ./docs
           config_file: conf.json
           front_page: README.md
+          template: clean-jsdoc-theme
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
