@@ -18,7 +18,6 @@
         "destination": "docs/",
         "recurse": true,
         "verbose": true,
-        "template": "clean-jsdoc-theme",
         "theme_opts": {
             "default_theme": "fallback-light",
             "sort": false
