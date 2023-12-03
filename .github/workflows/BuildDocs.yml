@@ -18,7 +18,6 @@ jobs:
           source_dir: ./script
           output_dir: ./docs
           config_file: conf.json
-          template: clean-jsdoc-theme
           front_page: README.md
 
       - name: Deploy
