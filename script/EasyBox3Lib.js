@@ -2,7 +2,7 @@
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.0.10
+ * @version 0.0.11
  * @author qndm Nomen
  * @license MIT
  */
@@ -36,7 +36,7 @@ function nullishCoalescing(a, b) {
 }
 /**
  * 事件回调函数
- * @callback eventCallBack
+ * @callback EventCallBack
  * @param {any} data 传递的参数
  * @returns {void}
  */
@@ -183,7 +183,11 @@ const
         FAILED: 'failed',
         SKIP: 'skip',
         FREE: 'free'
-    };
+    },
+    /**
+     * @type {[[string | RegExp, string | Function]]}
+     */
+    TRANSLATION_REGEXPS = [['too much recursion', '太多递归'],[/Permission denied to access property "(\w+)"/ig, '尝试访问无权访问的对象：$1'],[/Invalid code point (\w+)/ig, '无效码位：$1'],['Invalid array length', '无效的数组长度'],['Division by zero', '除以0'],['Exponent must be positive', '指数必须为正数'],['Invalid time value', '非法时间值'],[/(\w+\(\)) argument must be between (\d+) and (\d+)/ig, '$1 的参数必须在 $2 和 $3 之间'],[/(\w+\(\)) (\w+) argument must be between (\d+) and (\d+)/ig, '$1 的 $2 参数必须在 $3 和 $4 之间'],['Invalid count value', '无效的计数参数'],[/The number (\d.+) cannot be converted to a BigInt because it is not an integer/ig, '数字 $1 不能被转换成 BigInt 类型，因为它不是整数'],[/"(\w+)" is not defined/ig, '$1 未定义'],[/Cannot access '(\w+)' before initialization/ig, '初始化前无法访问 $1'],[/'(\w+)', '(\w+)', and '(\w+)' properties may not be accessed on strict mode functions or the arguments objects for calls to them/ig, '$1、$2、$3 属性不能在严格模式函数或调用它们的参数对象上访问'],[/(\w+) literals are not allowed in strict mode./ig, '严格模式下不允许使用$1字面量。'],['Illegal \'use strict\' directive in function with non-simple parameter list', '带有非简单参数列表的函数中的非法 "use strict" 指令'],['Unexpected reserved word', '意外的保留字'],[/(\S+) loop variable declaration may not have an initializer./ig, '$1语句的变量声明不能有初始化表达式。'],['Delete of an unqualified identifier in strict mode.', '在严格模式下，无法对标识符调用 "delete"。'],['Function statements require a function name', '函数声明需要提供函数名称'],['await is only valid in async functions and the top level bodies of modules', 'await 仅在异步函数和模块的顶层主体中有效'],[/Unexpected token '(\S+)'/ig, '意外标记 $1（不能在不使用括号的情况下混用 "||" 和 "??" 操作）'],['Illegal continue statement: no surrounding iteration statement', '非法 continue 语句：周围没有迭代语句（"continue" 语句只能在封闭迭代语句内使用）'],['Invalid or unexpected token', '无效或意外的标识符'],['Invalid left-hand side in assignment', '赋值中的左值无效'],['Invalid regular expression flags', '正则表达式修饰符无效'],[/Cannot convert (\d.+) to a BigInt/ig, '不能将 $1 转换成 BigInt 类型'],['Unexpected identifier', '意外标识符'],[/(\w+) is not iterable/ig, '$1 是不可迭代的'],[/(\w+) has no properties/ig, '$1 没有属性'],[/Cannot read properties of (\w+) (reading '(\w+)')/ig, '不能从 $1 中读取属性 $2'],[/(\w+) is not a constructor/ig, '$1 不是构造器'],[/(\w+) is not a function/ig, '$1 不是函数'],[/Property description must be an object: (\w+)/ig, '属性描述必须是一个对象：$1'],[/Cannot assign to read only property '(\w+)' of object '(\S+)'/ig, '无法为对象\'$2\'的只读属性\'$1\'赋值'],[/Cannot create property '(\w+)' on string '(\S+)'/ig, '无法在字符串 \'$2\' 上创建属性 $1'],['Cannot mix BigInt and other types, use explicit conversions', '不能混合 BigInt 和其他类型，应该使用显式转换'],['Warning', '警告'], ['Reference', '引用'], ['Type', '类型'], ['Syntax', '语法'], ['Range', '范围'], ['Internal', '内部'], ['Error', '错误'], ['Uncaught', '未捕获的'], [/(at\b)/g, '在'], ['Octal', '八进制'], [/Unexpected/ig, '意外的'], [/Invalid/ig, '无效的'], [/token/ig, '标识符']];
 
 var
     /**
@@ -197,7 +201,10 @@ var
      * @private
      */
     dataStorages = new Map(),
-    gameLoops = {},
+    /**
+     * @type {Map<string, {statu: "running" | "stop" | "awaiting_deletion" | "awaiting_stop", init: EventCallBack, times: number}>}
+     */
+    gameLoops = new Map(),
     events = {
         /**@type {OnTickHandlerToken[]} */
         onTick: [],
@@ -240,9 +247,9 @@ var
     /** 
      * Storage Queue - Storage任务队列
      * 队列只会在`start`方法调用时才会开始，或者手动调用`startStorageQueue`函数
-     * @type {StorageTask[]} 
+     * @type {Map<string, StorageTask[]>} 
      */
-    storageQueue = [],
+    storageQueue = new Map(),
     /**@type {number} */
     storageQueueIntervalID;
 /**
@@ -722,30 +729,75 @@ class EntityGroup {
         delete entity.offset;
         this.entities.splice(index, 1);
     }
+    /**
+     * 实体组动画
+     * @param {Box3EntityKeyframe[]} keyframes 动画关键帧
+     * @param {Box3AnimationPlaybackConfig} playbackInfo 动画配置信息
+     */
+    animate(keyframes, playbackInfo) {
+        var position = this.position.clone();
+        for (const keyframe of keyframes)
+            if (Object.keys(keyframe).includes('position'))
+                position.copy(keyframe.position);
+        this.entities.forEach((entity) => {
+            entity.animate(keyframes, playbackInfo).onFinish(() => {
+                entity.position = position;
+            });
+        });
+        this.position = position;
+    }
 }
 /**
  * 定义一种物品
  * @class
  * @param {string} id 该物品的id，除了字母、数字、下划线以外的字符会被忽略
  * @param {string} name 该物品的显示名称，默认和id相同
- * @param {string} mesh 该物品的模型
+ * @param {string} mesh 该物品的模型。如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
  * @param {number} maxStackSize 该物品的最大堆叠数量，默认为`Infinity`。最小值为`1`。当`data`不为空对象时，为`1`.
  * @param {string[]} tags 该物品的标签，除了字母、数字、下划线以外的字符会被忽略
  * @param {object} data 该物品的默认数据
+ * @param {Box3Wearable | boolean} wearable 该实体是否可穿戴。如果可以穿戴，那么填入一个`Box3Wearable`，表示玩家穿戴的部件；如果填入`true`，代表该实体可以穿戴但是没有模型；填入`false`，表示该物品不可穿戴
  */
-function Item(id, name = id, mesh = '', maxStackSize = Infinity, tags = [], data = {}) {
-    /**该物品的id @type {string} */
-    this.id = id.match(/[/w]/g);
-    /**该物品的显示名称 @type {string} */
+function Item(id, name = id, maxStackSize = Infinity, tags = [], data = {}, wearable = undefined, mesh = '',) {
+    /**
+     * 该物品的id
+     * @type {string} 
+     */
+    this.id = encodeURI(id);
+    /**
+     * 该物品的显示名称
+     * @type {string}
+     */
     this.name = name;
-    /**该物品的最大堆叠数量 @type {string} */
+    /**
+     * 该物品的最大堆叠数量 
+     * @type {string}
+     */
     this.maxStackSize = Math.max(Object.keys(data).length ? 1 : maxStackSize, 1);
-    /**该物品的标签 @type {string} */
-    this.tags = tags.map(tag => tag.match(/[/w]/g).join(''));
-    /**该物品的默认数据 @type {string} */
+    /**
+     * 该物品的标签
+     * @type {string}
+     */
+    this.tags = tags.map(tag => encodeURI(tag));
+    /**
+     * 该物品的默认数据
+     * @type {string}
+     */
     this.data = data;
-    /**该物品的模型 @type {string} */
+    /**
+     * 该物品的穿戴配件
+     * @type {Box3Wearable}
+     */
+    this.wearable = wearable;
+    /**
+     * 该物品的模型  
+     * 如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
+     * @type {string}
+     */
     this.mesh = mesh;
+    if (!this.mesh && typeof this.wearable == "object" && this.mesh) {
+        this.mesh = this.wearable.mesh;
+    }
 }
 /**
  * 一个（或一组）物品
@@ -753,7 +805,7 @@ function Item(id, name = id, mesh = '', maxStackSize = Infinity, tags = [], data
 class Thing {
     /**
      * 定义一个（或一组）物品
-     * @param {string} id 物品的id，除了字母、数字、下划线以外的字符会被忽略。应该是已经注册的物品id。如果`data`不为空对象时，最大为`1`
+     * @param {string} id 物品的id。应该是已经注册的物品id。如果`data`不为空对象时，最大为`1`
      * @param {number} stackSize 该物品的堆叠数量，最大为该物品的最大堆叠数量
      * @param {object} data 该物品的数据
      */
@@ -763,31 +815,82 @@ class Thing {
         }
         var item = itemRegistry.get(id);
         /**物品id @type {string} */
-        this.id = id;
+        this.id = encodeURI(id);
         /**最大堆叠数量 @type {number} */
         this.stackSize = Math.min(stackSize, item.maxStackSize);
         /**物品显示名称 @type {string} */
         this.name = item.name;
         /**物品数据，如果有数据将不能再堆叠 */
         this.data = copyObject(item.data);
+        /**该物品是否处于穿戴状态 @type {boolean} */
+        this._wearing = false;
         Thing.setData(this, copyObject(data));
         Object.seal(this.data);
     }
-    /**该物品的类型 @returns {Item} */
+    /**
+     * 该物品的类型
+     * @returns {Item} 
+     */
     get item() {
-        return itemRegistry.get(thing.id);
+        return itemRegistry.get(this.id);
     }
-    /**该物品的标签 @returns {string[]} */
+    /**
+     * 该物品的标签
+     * @returns {string[]}
+     */
     get tags() {
         return this.item.tags;
     }
-    /**该物品的最大堆叠数量 @returns {number} */
+    /**
+     * 该物品的最大堆叠数量 
+     * @returns {number} 
+     */
     get maxStackSize() {
         return this.item.maxStackSize;
     }
-    /**该物品是否可堆叠 @returns {boolean} */
+    /**
+     * 该物品是否可堆叠 
+     * @returns {boolean} 
+     */
     get stackable() {
         return Object.keys(this.data) <= 0;
+    }
+    /**
+     * 该物品的穿戴部件
+     * 如果为`false`，则该部件不可穿戴
+     * @returns {Box3Wearable | true | false}
+     */
+    get wearable() {
+        return this.item.wearable;
+    }
+    /**
+     * 该物品是否处于穿戴状态
+     * @returns {boolean} 是否处于穿戴状态
+     */
+    get wearing() {
+        return this._wearing && this.wearable;
+    }
+    /**
+     * 设置物品穿戴状态
+     */
+    set wearing(value) {
+        if (this.wearable)
+            this._wearing = value;
+    }
+    /**
+     * 对实体更新穿戴状态  
+     * 更新后的实体会显示穿戴部件
+     * @param {Box3Entity} entity 要更新的实体
+     */
+    updateWear(entity) {
+        if (!this.wearable)
+            throwError('该物品不可穿戴：', this.id);
+        if (this.wearable === true)
+            return;
+        if (this.wearing)
+            entity.player.addWearable(this.wearable);
+        else
+            entity.player.removeWearable(this.wearable);//qndm: 笑死，现在才知道removeWearable填的是穿戴部件而不是编号
     }
     /**
      * 测试该物品是否满足选择器的条件
@@ -829,7 +932,7 @@ class Thing {
      * @returns {boolean}
      */
     static testSelector(thing, selectorString) {
-        var selectors = selectorString.match(/[\w#!\.,&]/g).join('').split(','), result = false;
+        var selectors = encodeURI(selectorString).split(','), result = false;
         for (let selector of selectors) {
             let test = false, must = false, not = false, index = 0;
             if (selector[index] == '&') {
@@ -881,14 +984,14 @@ class Thing {
      * @returns {ThingString}
      */
     toString() {
-        return `i${this.id}${this.name != this.item.name ? ('|n' + this.name) : ''}|s${this.stackSize.toString(16)}|d${JSON.stringify(this.data)}`;
+        return `i${this.id}${this.name != this.item.name ? ('|n' + this.name) : ''}|s${this.stackSize.toString(16)}|d${encodeURIComponent(JSON.stringify(this.data))}${this.wearing ? 'w' : ''}`;
     }
     /**
      * 从字符串中获取物品数据
      * @param {ThingString} string 物品数据的字符串
      */
     static fromString(string) {
-        var /**@type {string[]}*/source = string.split('|'), id = '', name = '', stackSize = 1, data = {};
+        var /**@type {string[]}*/source = string.split('|'), id = '', name = '', stackSize = 1, data = {}, wearing = false;
         for (const item of source) {
             switch (item[0]) {
                 case 'i':
@@ -901,7 +1004,10 @@ class Thing {
                     stackSize = parseInt(item.substring(1), 16);
                     break;
                 case 'd':
-                    data = JSON.parse(item.substring(1));
+                    data = JSON.parse(decodeURIComponent(item.substring(1)));
+                    break;
+                case 'w':
+                    wearing = true;
                     break;
             }
         }
@@ -909,7 +1015,13 @@ class Thing {
             throwError('未知的物品id', id);
         if (!name)
             name = itemRegistry.get(id).name;
-        return new Thing(id, name, Math.max(Math.min(stackSize, itemRegistry.get(id).maxStackSize), 1), data);
+        var thing = new Thing(id, name, Math.max(Math.min(stackSize, itemRegistry.get(id).maxStackSize), 1), data);
+        thing.wearing = wearing;
+        thing.name = name;
+        return thing;
+    }
+    async dialog(entity, content, thingStorage = undefined, otherOptions = {}) {
+        return await selectDialog(entity, this.name);
     }
 }
 /**
@@ -1170,7 +1282,8 @@ function output(type, ...data) {
     if (nullishCoalescing(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
         let locations = getTheCodeExecutionLocation();
         let location = (locations.locations.filter(location => !location.startsWith(__filename))[0] || locations.locations[0]).split(':');
-        console[type](`(${location[0]}:${location[1]}) -> ${locations.functions.filter(func => !nullishCoalescing(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output']).includes(func))[0] || 'unknown'}`, str);
+        console[type](`(${location[0]}:${location[1]}) -> ${locations.functions.filter(func => !nullishCoalescing(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output']).includes(func))[0] || 'unknown'}`,
+            nullishCoalescing(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str);
         if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && (!nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false) || type == 'warn' || type == 'error'))
             logs.push(new Output(type, str, location.join(':')));
         return `(${location[0]}:${location[1]}) [${type}] ${str}`;
@@ -1196,7 +1309,7 @@ function throwError(...data) {
     } else {
         if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
             logs.push(new Output('error', str, ['unknown', -1, -1]));
-        throw `[${type}] ${str}`;
+        throw `[${type}] ${nullishCoalescing(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str}`;
     }
 }
 /**
@@ -1492,7 +1605,9 @@ function getDataStorageInCache(storageKey) {
  * @param {string} value 需要设置的值
  */
 function setData(storageKey, key, value) {
-    storageQueue.push({ type: "set", storageKey, key, value });
+    /**@type {StorageTask} */
+    var task = { type: "set", storageKey, key, value };
+    storageQueue.set(JSON.stringify(task), task);
 }
 /**
  * 查找一个键值对
@@ -1521,7 +1636,9 @@ async function listData(storageKey, options) {
  * @param {string} key 指定的键
  */
 function removeData(storageKey, key) {
-    storageQueue.push({ type: "set", storageKey, key });
+    /**@type {StorageTask} */
+    var task = { type: "remove", storageKey, key, value };
+    storageQueue.set(JSON.stringify(task), task);
 }
 /**
  * 删除指定数据存储空间  
@@ -1534,47 +1651,82 @@ async function dropDataStorage(storageKey) {
 }
 /**
  * 创建游戏循环  
- * 单次循环会在执行完成后再次开始  
+ * 需要手动运行
  * @param {string} name 循环名称
- * @param {onTickEventCallBack} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数
+ * @param {EventCallBack} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数
  */
-async function createGameLoop(name, callbackfn) {
-    output('log', '创建游戏循环', name);
-    var time = 1;
-    gameLoops[name] = true;
-    while (true) {
-        if (gameLoops[name])
-            await callbackfn(time++);
-        else if (gameLoops[name] == undefined)
-            break;
+function createGameLoop(name, callbackfn) {
+    if (gameLoops.has(name)) {
+        output('error', name, '循环已存在');
+        return;
     }
+    output('log', '创建游戏循环', name);
+    gameLoops.set(name, { statu: "stop", init: callbackfn, times: 0 });
 }
 /**
- * 暂停游戏循环
+ * 创建并运行游戏循环  
  * @param {string} name 循环名称
+ * @param {EventCallBack | undefined} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数。如果为空且循环存在，则继续循环
  */
-function pauseGameLoop(name) {
-    output('log', '暂停游戏循环', name);
-    gameLoops[name] = false;
+async function startGameLoop(name, callbackfn = undefined) {
+    if (gameLoops[name] && callbackfn === undefined) {
+        await runGameLoop(name);
+        return;
+    }
+    output('log', '创建并运行游戏循环', name);
+    createGameLoop(name, callbackfn);
+    await runGameLoop(name);
 }
 /**
- * 继续游戏循环
- * @param {string} name 循环名称
- */
-function continueGameLoop(name) {
-    output('log', '继续游戏循环', name);
-    if (gameLoops[name] != undefined)
-        gameLoops[name] = true;
-    else
-        output('warn', '未知游戏循环', name);
-}
-/**
- * 停止游戏循环，之后不能再对该循环进行操作
+ * 停止游戏循环
  * @param {string} name 循环名称
  */
 function stopGameLoop(name) {
     output('log', '停止游戏循环', name);
-    delete gameLoops[name];
+    gameLoops.get(name).statu = 'awaiting_stop';
+}
+/**
+ * 运行游戏循环
+ * @param {string} name 循环名称
+ */
+async function runGameLoop(name) {
+    if (!gameLoops.has(name)) {
+        output('error', '未知游戏循环', name);
+        return;
+    }
+    var gameLoop = gameLoops.get(name);
+    if (gameLoop.statu != 'stop') {
+        output('warn', '该游戏循环已经在运行中或等待删除/停止，当前状态：', gameLoop.statu);
+        return;
+    }
+    output('log', '运行游戏循环', name);
+    gameLoop.statu = 'running';
+    while (true) {
+        if (!gameLoops.has(name) && gameLoop.statu != 'running')
+            break;
+        await gameLoop.init(++gameLoop.times);
+    }
+    if (gameLoops.has(name))
+        if (gameLoop.statu == 'awaiting_deletion')
+            gameLoops.delete(name);
+        else if (gameLoop.statu == 'awaiting_stop')
+            gameLoop.statu == 'stop';
+}
+/**
+ * 删除游戏循环，之后不能再对该循环进行操作  
+ * 如果循环正在运行中，那么循环结束后才会删除
+ * @param {string} name 循环名称
+ */
+function deleteGameLoop(name) {
+    if (['$StorageQueue'].includes(name))
+        throwError('受保护的GameLoop：', name);
+    output('log', '停止游戏循环', name);
+    var gameLoop = gameLoops.get(name);
+    if (gameLoop.statu == 'stop') {
+        gameLoops.delete(name);
+        return;
+    }
+    gameLoop.statu = 'awaiting_deletion';
 }
 /**
  * 注册一个事件
@@ -1598,7 +1750,7 @@ function registerEvent(name) {
  *     output("log", '触发事件');
  * });
  * @param {string} eventName 事件名称
- * @param {eventCallBack} handler 事件监听器
+ * @param {EventCallBack} handler 事件监听器
  */
 function addEventHandler(eventName, handler) {
     if (eventName == 'onTick') {
@@ -1768,13 +1920,17 @@ function registerItem(item) {
  * 只有启动了Storage Queue，`setData`和`removeData`的任务才会被处理
  */
 function startStorageQueue() {
-    storageQueueIntervalID = setInterval(async () => {
+    if (gameLoops.has('$StorageQueue')) {
+        runGameLoop('$StorageQueue');
+        return;
+    }
+    startGameLoop('$StorageQueue', async () => {
         if (storageQueue.length <= 0)
             return;
         var task = storageQueue[0];
         await tryExecuteSQL(async () => {
             var dataStorage = await getDataStorage(task.storageKey);
-            switch(task.type){
+            switch (task.type) {
                 case "set":
                     await dataStorage.set(task.key, task.value);
                     break;
@@ -1786,7 +1942,7 @@ function startStorageQueue() {
             }
         });
         storageQueue.splice(0, 1);
-    }, 256);
+    });
     output("log", '已启动Storage Queue');
 }
 /**
@@ -1796,8 +1952,20 @@ function startStorageQueue() {
 function stopStorageQueue() {
     if (typeof storageQueueIntervalID != "number")
         throwError('未启动Storage Queue')
-    clearInterval(storageQueueIntervalID);
+    stopGameLoop('$StorageQueue');
     output("log", '已停止Storage Queue\n若要重新启动Storage Queue，请使用startStorageQueue方法');
+}
+/**
+ * 翻译报错信息
+ * @param {string} message 报错内容
+ * @returns {string} 翻译后的信息
+ */
+function translationError(msg) {
+    var message = msg;
+    for (let tr of TRANSLATION_REGEXPS) {
+        message = message.replaceAll(...tr);
+    }
+    return message;
 }
 const EasyBox3Lib = {
     copyObject,
@@ -1833,9 +2001,10 @@ const EasyBox3Lib = {
         stopStorageQueue
     },
     createGameLoop,
+    startGameLoop,
+    deleteGameLoop,
     stopGameLoop,
-    pauseGameLoop,
-    continueGameLoop,
+    runGameLoop,
     onTick,
     preprocess,
     start,
@@ -1850,9 +2019,10 @@ const EasyBox3Lib = {
     Thing,
     ThingStorage,
     throwError,
+    translationError,
     TIME,
     started,
-    version: [0, 0, 10]
+    version: [0, 0, 11]
 };
 if (nullishCoalescing(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
     Object.assign(global, EasyBox3Lib);

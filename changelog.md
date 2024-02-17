@@ -1,10 +1,30 @@
 # 版本 & 更新日志
+## 0.0.11
+`StorageQueue`使用`Map`而不是`Array`实现  
+新增`Thing.dialog`方法  
+`StorageQueue`使用`Gameloops`实现而不是`setInterval`实现
+新增`EntityGroup.animate`，用于控制整个实体组的动画  
+物品添加可穿戴属性，支持穿戴部件  
+修复了`static Thing.fromString`方法的bug  
+`createGameLoop`使用相同名称创建游戏循环时会直接继续循环，而不是重新创建  
+`Gameloops`使用`Map`储存而不是`object`，同时更改了其运行逻辑  
+- 在取消时不会继续轮询，而是直接结束循环
+- 修改了方法名
+  - `continueGameLoop` -> `runGameLoop`
+  - `stopGameLoop` -> `deleteGameLoop`
+  - `pauseGameLoop` -> `stopGameLoop`
+  - `createGameLoop` -> `startGameLoop`，同时`createGameLoop`有了新的用途
+
+新增`translationError`方法  
+- 可以更改`enableAutoTranslation`的值为`true`来开启报错自动翻译
+
 ## 0.0.10
 为`Item`的成员添加了`JsDoc`  
 新增 `Thing.setData`、`Thing.createThingEntity`、`Thing.toString`、static `Thing.fromString`方法  
 更好看的开发文档  
 新增Storage Queue，以避免一次写入大量数据导致崩溃  
 - 新增`startStorageQueue`、`stopStorageQueue`方法
+
 `Thing`可以转换成`string`了，并可以还原
 - 比直接转换为JSON长度更短
 

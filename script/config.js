@@ -152,6 +152,11 @@ module.exports = {
          * 如果为`true`，则会调用`world.onPlayerJoin`
          * @default false
          */
-        enableOnPlayerJoin: false
+        enableOnPlayerJoin: false,
+        /**
+         * 是否启用自动翻译  
+         * 如果为`true`，那么output和throwError的报错内容将会自动翻译成中文（日志仍为原文）
+         */
+        enableAutoTranslation: false
     }
 };

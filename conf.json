@@ -6,7 +6,6 @@
             "README.md",
             "changelog.md"
         ],
-        "includePattern": ".js$",
         "excludePattern": "(node_modules/|docs)"
     },
     "plugins": [
