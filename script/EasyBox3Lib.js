@@ -2,7 +2,7 @@
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.0.11
+ * @version 0.1.0
  * @author qndm Nomen
  * @license MIT
  */
@@ -18,7 +18,6 @@ if (!CONFIG) {
         Object.keys(global).forEach(v => {
             if (v.startsWith("Game")) {
                 global['Box3' + v.slice(4)] = global[v];
-                console.log(`Game${v.slice(4)} -> Box3${v.slice(4)}`);
             }
         })
     }
@@ -29,7 +28,7 @@ if (!CONFIG) {
  * @param {*} b 
  * @returns {*}
  */
-function nullishCoalescing(a, b) {
+function nullc(a, b) {
     if (a === null || a === undefined)
         return b;
     else return a;
@@ -217,7 +216,7 @@ var
      * @private
      * @type {onTickEventToken[]}
      */
-    onTickHandlers = new Array(nullishCoalescing(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], timeSpent: 0 }),
+    onTickHandlers = new Array(nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], timeSpent: 0 }),
     /**
      * 预处理时调用的函数
      * @private
@@ -247,11 +246,11 @@ var
     /** 
      * Storage Queue - Storage任务队列
      * 队列只会在`start`方法调用时才会开始，或者手动调用`startStorageQueue`函数
-     * @type {Map<string, StorageTask[]>} 
+     * @type {Map<string, StorageTask>} 
      */
     storageQueue = new Map(),
-    /**@type {number} */
-    storageQueueIntervalID;
+    /**@type {boolean} */
+    storageQueueStarted = false;
 /**
  * 日志信息
  * @private
@@ -335,10 +334,13 @@ class DataStorage {
             value: key,
             writable: false,
         });
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.enableSQLCache, false))
+        if (nullc(CONFIG.EasyBox3Lib.enableSQLCache, false))
             /**@type {Map<string, ResultValue>}*/
             this.data = new Map();
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
+        if (nullc(CONFIG.EasyBox3Lib.inArena, false))
+            /**
+             * @type {GameDataStorage}
+             */
             this.gameDataStorage = gameDataStorage;
     }
     /**
@@ -351,18 +353,23 @@ class DataStorage {
      */
     async get(key) {
         output('log', '获取数据', this.key, ':', key);
-        var result = undefined;
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.enableSQLCache, false) && this.data.has(key)) {
+        if (nullc(CONFIG.EasyBox3Lib.enableSQLCache, false) && this.data.has(key)) {
             return copyObject(this.data.get(key));
         } else {
-            result = await tryExecuteSQL(async () => nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false) ?
-                await this.gameDataStorage.get(key) :
-                await executeSQLCode(`SELECT * FROM "${this.key}" WHERE "key" == '${key}'`)[0], '获取数据失败');
-            if (result instanceof Array && result.length > 0) {
-                this.data[key] = result;
-                return copyObject(this.data[key]);
-            } else
-                return undefined;
+            if (!nullc(CONFIG.EasyBox3Lib.inArena, false)) {
+                result = await tryExecuteSQL(async () => {
+                    return await executeSQLCode(`SELECT * FROM "${encodeURIComponent(this.key)}" WHERE "key" == '${key}'`)[0], '获取数据失败'
+                });
+                if (result instanceof Array && result.length > 0) {
+                    this.data[key] = result;
+                    return copyObject(this.data[key]);
+                } else
+                    return;
+            }
+            output('log', '使用Pro数据库');
+            let result = await this.gameDataStorage.get(key);
+            output('log', '读取完成，数据：', JSON.stringify(result))
+            return result;
         }
     }
     /**
@@ -373,15 +380,21 @@ class DataStorage {
      */
     async set(key, value) {
         output('log', '设置数据', this.key, ':', key, '=', value);
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false)) {
-            await tryExecuteSQL(async () => await this.gameDataStorage.set(key, value), '设置数据失败');
+        if (nullc(CONFIG.EasyBox3Lib.inArena, false)) {
+            await tryExecuteSQL(async () => {
+                var data = await tryExecuteSQL(async () => await this.get(key), '获取数据失败') || {};
+                this.data.set(key, {
+                    key, value, updateTime: Date.now(), createTime: data.createTime || Date.now(), version: data.version || ""
+                });
+                await this.gameDataStorage.set(key, value);
+            }, '设置数据失败');
             return;
         } else {
             var data = await tryExecuteSQL(async () => await this.get(key), '获取数据失败');//由于需要更新版本，所以先获取一遍旧数据
             if (data) {
                 data.updateTime = Date.now();
                 data.value = JSON.stringify(value);
-                await tryExecuteSQL(async () => await executeSQLCode(`UPDATE "${this.key}" SET ("value" = '${sqlAntiInjection(data.value)}', "updateTime" = ${data.updateTime}) WHERE "key" == '${sqlAntiInjection(key)}'`), '更新数据失败');
+                await tryExecuteSQL(async () => await executeSQLCode(`UPDATE "${encodeURIComponent(this.key)}" SET ("value" = '${sqlAntiInjection(data.value)}', "updateTime" = ${data.updateTime}) WHERE "key" == '${sqlAntiInjection(key)}'`), '更新数据失败');
             } else {
                 data = {
                     key,
@@ -390,11 +403,12 @@ class DataStorage {
                     updateTime: Date.now(),
                     version: ""
                 };
-                await tryExecuteSQL(async () => await executeSQLCode(`INSERT INTO "${this.key}" ("key", "value", "createTime", "updateTime", "version") VALUES ('${sqlAntiInjection(data.key)}', '${sqlAntiInjection(data.value)}', ${data.createTime}, ${data.updateTime}, '${sqlAntiInjection(data.version)}')`), '插入数据失败');
+                await tryExecuteSQL(async () => await executeSQLCode(`INSERT INTO "${encodeURIComponent(this.key)}" ("key", "value", "createTime", "updateTime", "version") VALUES ('${sqlAntiInjection(data.key)}', '${sqlAntiInjection(data.value)}', ${data.createTime}, ${data.updateTime}, '${sqlAntiInjection(data.version)}')`), '插入数据失败');
             }
         }
         output('log', this.key, ':', key, ':', this.data[key].value, '->', data.value);
-        this.data.set(key, data);
+        if (!storageQueueStarted)
+            this.data.set(key, data);
     }
     /**
      * 使用传入的方法更新键值对
@@ -403,8 +417,8 @@ class DataStorage {
      * @param {dataStorageUpdateCallBack} handler 处理更新的方法，接受一个参数，为当前键的值，返回一个更新后的值
      */
     async update(key, handler) {
-        if (CONFIG.EasyBox3Lib.inArena) {
-            this.gameDataStorage.update(key, handler);
+        if (nullc(CONFIG.EasyBox3Lib.inArena, false)) {
+            await this.gameDataStorage.update(key, handler);
             return;
         }
         var value = await handler(await this.get(key));
@@ -418,7 +432,7 @@ class DataStorage {
      */
     async list(options) {
         output('log', '获取数据', this.key, ':', options.cursor, '-', options.cursor + (options.pageSize || 100));
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false)) {
+        if (!nullc(CONFIG.EasyBox3Lib.inArena, false)) {
             return await tryExecuteSQL(async () => await this.gameDataStorage.list(options), '获取数据失败');
         } else {
             let data = await tryExecuteSQL(async () => await executeSQLCode(`SELECT * FROM "${this.key}"`), '获取数据失败');
@@ -432,7 +446,10 @@ class DataStorage {
     async remove(key) {
         output('log', '删除数据', this.key, ':', key);
         this.data.delete(key);
-        await tryExecuteSQL(async () => await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`), '删除数据失败');
+        if (!nullc(CONFIG.EasyBox3Lib.inArena, false))
+            await tryExecuteSQL(async () => await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`), '删除数据失败');
+        else
+            await this.gameDataStorage.remove(key);
     }
     /**
      * 删除表格  
@@ -440,7 +457,7 @@ class DataStorage {
      * 
      */
     async drop() {
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
+        if (nullc(CONFIG.EasyBox3Lib.inArena, false))
             output("error", '暂不支持Pro地图');
         else {
             output('warn', '删除表', this.key);
@@ -638,7 +655,7 @@ class EventHandlerToken {
         this.statu = STATUS.FREE;
     }
     async run(data = {}) {
-        if (this.statu != STATUS.NOT_RUNNING && (nullishCoalescing(CONFIG.EasyBox3Lib.disableEventOptimization, false) || this.statu == STATUS.FREE)) {
+        if (this.statu != STATUS.NOT_RUNNING && (nullc(CONFIG.EasyBox3Lib.disableEventOptimization, false) || this.statu == STATUS.FREE)) {
             this.statu = STATUS.RUNNING;
             await this.handler(Object.assign({ tick: world.currentTick }, data));
             this.statu = STATUS.FREE;
@@ -659,7 +676,7 @@ class OnTickHandlerToken extends EventHandlerToken {
      */
     constructor(handler, tps, enforcement = false, automaticTps = false) {
         super(handler);
-        this.tps = Math.max(Math.min(tps, nullishCoalescing(CONFIG.EasyBox3Lib.onTickCycleLength, 16)), 1);
+        this.tps = Math.max(Math.min(tps, nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)), 1);
         this.enforcement = enforcement;
         this.automaticTps = automaticTps;
         this.timeSpent = TIME.SECOND / tps;
@@ -973,7 +990,7 @@ class Thing {
      * @param {boolean} allowedPickups 是否允许拾取
      * @returns {Box3Entity}
      */
-    createThingEntity(position, meshScale = nullishCoalescing(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), allowedPickups = true, interactRadius = 4, interactColor = new Box3RGBColor(1, 1, 1)) {
+    createThingEntity(position, meshScale = nullc(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), allowedPickups = true, interactRadius = 4, interactColor = new Box3RGBColor(1, 1, 1)) {
         var entity = createEntity(this.item.mesh, position, true, true, meshScale);
         entity.thing = this;
         if (allowedPickups) {
@@ -1034,7 +1051,7 @@ class Thing {
      * @returns {Box3DialogSelectResponse} 对话框选择结果
      */
     async dialog(entity, content, options = [], otherOptions = {}) {
-        return await selectDialog(entity, this.name, nullishCoalescing(
+        return await selectDialog(entity, this.name, nullc(
             typeof content == "function" ? content(this) : content,
             typeof this.item.content == "function" ? content(this) : content
         ), options, otherOptions);
@@ -1223,6 +1240,25 @@ class ThingStorage {
         var result = await selectDialog(entity, title, content, arr.map(x => x[1]), otherOptions);
         return arr[result.index][0];
     }
+    /**
+     * 将物品储存空间转换成字符串  
+     * 空物品和数量小于0的物品会被忽略
+     * @returns {string} 转换结果
+     */
+    toString() {
+        return this.thingStorage.filter(thing => thing !== null && thing.stackSize > 0).map(thing => thing.toString()).join(',');
+    }
+    /**
+     * 从字符串中读取物品储存空间
+     * @param {string} str 要读取的字符串
+     * @param {number} size 储存空间大小。如果存储空间不能放下，则剩余的数据会被舍弃
+     * @param {number} stackSizeMultiplier 堆叠数量倍率。默认为1
+     */
+    static fromString(str, size, stackSizeMultiplier = 1) {
+        var thingStorage = new ThingStorage(size, stackSizeMultiplier), things = str.split(',').filter(thing => thing).map(thing => Thing.fromString(thing));
+        thingStorage.putInto(...things);
+        return thingStorage;
+    }
 }
 /**
  * 复制一个`object`
@@ -1246,7 +1282,7 @@ function copyObject(obj) {
 function getEntity(id) {
     var entity = world.querySelector('#' + id);
     if (entity) return entity;
-    else console.warn('错误：没有ID为', id, '的实体');
+    else output('warn', '错误：没有ID为', id, '的实体');
 }
 /**
  * 使用实体标签获取一组实体
@@ -1256,7 +1292,7 @@ function getEntity(id) {
 function getEntities(tag) {
     var entities = world.querySelectorAll('.' + tag);
     if (entities.length > 0) return entities;
-    else console.warn('错误：没有标签为', tag, '的实体');
+    else output('warn', '错误：没有标签为', tag, '的实体');
 }
 /**
  * 通过玩家的昵称/BoxID/userKey找到一个玩家  
@@ -1278,7 +1314,7 @@ function getAllLogs() {
 }
 /**
  * 获取当前代码的执行位置
- * @returns {{locations: string, functions: string}}
+ * @returns {{locations: string[], functions: string[]}}
  */
 function getTheCodeExecutionLocation() {
     var stack = new Error().stack.match(/[\w$]+ \([\w$]+\.js:\d+:\d+\)/g);
@@ -1294,18 +1330,18 @@ function getTheCodeExecutionLocation() {
  * @returns {string}
  */
 function output(type, ...data) {
+    const BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output']);
     let str = data.join(' ');
-    if (nullishCoalescing(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
+    if (nullc(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
         let locations = getTheCodeExecutionLocation();
-        let location = (locations.locations.filter(location => !location.startsWith(__filename))[0] || locations.locations[0]).split(':');
-        console[type](`(${location[0]}:${location[1]}) -> ${locations.functions.filter(func => !nullishCoalescing(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output']).includes(func))[0] || 'unknown'}`,
-            nullishCoalescing(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str);
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && (!nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false) || type == 'warn' || type == 'error'))
+        let location = (locations.locations.filter((location, index) => !BLACKLIST.includes(locations.functions[index]))[0] || (locations.locations[1] || locations.locations[0])).split(':');
+        console[type](`(${location[0]}:${location[1]}) -> ${locations.functions.filter(func => !BLACKLIST.includes(func))[0] || 'unknown'}`, nullc(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str);
+        if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && (!nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false) || type == 'warn' || type == 'error'))
             logs.push(new Output(type, str, location.join(':')));
         return `(${location[0]}:${location[1]}) [${type}] ${str}`;
     } else {
         console[type](str);
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
+        if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
             logs.push(new Output(type, str, ['unknown', -1, -1]));
         return `[${type}] ${str}`;
     }
@@ -1316,16 +1352,16 @@ function output(type, ...data) {
  */
 function throwError(...data) {
     let str = data.join(' ');
-    if (nullishCoalescing(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
+    if (nullc(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
         let locations = getTheCodeExecutionLocation();
         let location = (locations.locations.filter(location => !location.startsWith(__filename))[0] || locations.locations[0]).split(':');
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
+        if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
             logs.push(new Output('error', str, location.join(':')));
         throw `(${location[0]}:${location[1]}) [${type}] ${str}`;
     } else {
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
+        if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
             logs.push(new Output('error', str, ['unknown', -1, -1]));
-        throw `[${type}] ${nullishCoalescing(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str}`;
+        throw `[ERROR] ${nullc(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str}`;
     }
 }
 /**
@@ -1339,7 +1375,7 @@ function throwError(...data) {
  * @returns {boolean}
  */
 function isAdmin(entity) {
-    return nullishCoalescing(CONFIG.admin, []).includes(entity.player.userKey);
+    return nullc(CONFIG.admin, []).includes(entity.player.userKey);
 }
 /**
  * 设置一个玩家是否是管理员
@@ -1380,10 +1416,10 @@ function resizePlayer(entity, size) {
  * @param {Box3Quaternion} meshOrientation 实体的旋转角度
  * @returns {Box3Entity | null}
  */
-function createEntity(mesh, position, collides, gravity, meshScale = nullishCoalescing(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), meshOrientation = nullishCoalescing(CONFIG.EasyBox3Lib.defaultMeshOrientation, new Box3Quaternion(0, 0, 0, 1))) {
+function createEntity(mesh, position, collides, gravity, meshScale = nullc(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), meshOrientation = nullc(CONFIG.EasyBox3Lib.defaultMeshOrientation, new Box3Quaternion(0, 0, 0, 1))) {
     if (world.entityQuota() >= 1) {
         output('log', '创建实体', mesh, position, collides, gravity);
-        if (world.entityQuota() <= nullishCoalescing(CONFIG.EasyBox3Lib.numberOfEntitiesRemainingToBeCreatedForSecurity, 500))
+        if (world.entityQuota() <= nullc(CONFIG.EasyBox3Lib.numberOfEntitiesRemainingToBeCreatedForSecurity, 500))
             output('warn', '实体创建超出安全上限', `剩余可创建实体数量：${world.entityQuota()} `);
         return world.createEntity({
             mesh,
@@ -1410,17 +1446,17 @@ function createEntity(mesh, position, collides, gravity, meshScale = nullishCoal
  * @param {object} otherOptions 对话框的其他选项
  * @returns {'success' | number | null} 如果完成了所有对话，则返回`success`（只有一个对话框）或者完成对话框的数量（有多个对话框）；否则返回`null`（只有一个对话框）
  */
-async function textDialog(entity, title, content, hasArrow = nullishCoalescing(CONFIG.EasyBox3Lib.defaultHasArrow, 'auto'), otherOptions = nullishCoalescing(CONFIG.EasyBox3Lib.defaultDialogOtherOptions, {})) {
+async function textDialog(entity, title, content, hasArrow = nullc(CONFIG.EasyBox3Lib.defaultHasArrow, 'auto'), otherOptions = nullc(CONFIG.EasyBox3Lib.defaultDialogOtherOptions, {})) {
     if (typeof content == "string") {
         return await entity.player.dialog(Object.assign({
             type: Box3DialogType.TEXT,
             content,
             title,
             hasArrow: typeof hasArrow == "boolean" ? hasArrow : false,
-            titleTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-            titleBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
-            contentTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-            contentBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
+            titleTextColor: nullc(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+            titleBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
+            contentTextColor: nullc(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+            contentBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
         }, otherOptions));
     } else {
         var cnt = 0, length = content.length - 1;
@@ -1430,10 +1466,10 @@ async function textDialog(entity, title, content, hasArrow = nullishCoalescing(C
                 content: content[index],
                 title,
                 hasArrow: index < length,
-                titleTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-                titleBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
-                contentTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-                contentBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
+                titleTextColor: nullc(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+                titleBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
+                contentTextColor: nullc(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+                contentBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
             }, otherOptions));
             if (result == 'success') cnt++;
         }
@@ -1458,10 +1494,10 @@ async function inputDialog(entity, title, content, confirmText = undefined, plac
         title,
         confirmText,
         placeholder,
-        titleTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-        titleBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
-        contentTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-        contentBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
+        titleTextColor: nullc(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+        titleBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
+        contentTextColor: nullc(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+        contentBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
     }, otherOptions));
 }
 /**
@@ -1485,10 +1521,10 @@ async function selectDialog(entity, title, content, options, otherOptions = CONF
             }
             return text;
         }),
-        titleTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-        titleBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
-        contentTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-        contentBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
+        titleTextColor: nullc(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+        titleBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
+        contentTextColor: nullc(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+        contentBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
     }, otherOptions));
 }
 /**
@@ -1568,7 +1604,7 @@ function sqlAntiInjection(value) {
  */
 async function tryExecuteSQL(func, msg = '') {
     var count = 0, lastError = '', data;
-    while (count <= nullishCoalescing(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5))
+    while (count <= nullc(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5))
         try {
             data = await func();
             return data;
@@ -1577,7 +1613,7 @@ async function tryExecuteSQL(func, msg = '') {
             count++;
             lastError = error;
         }
-    if (count > nullishCoalescing(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5)) {
+    if (count > nullc(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5)) {
         throwError(msg, lastError);
     }
 }
@@ -1594,7 +1630,7 @@ async function getDataStorage(key) {
     }
     output('log', '连接数据存储空间', key);
     var gameDataStorage;
-    if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
+    if (nullc(CONFIG.EasyBox3Lib.inArena, false))
         gameDataStorage = await tryExecuteSQL(async () => await storage.getDataStorage(key), '数据存储空间连接失败');
     else
         await tryExecuteSQL(async () => await executeSQLCode(`CREATE TABLE IF NOT EXISTS "${key}"("key" TEXT PRIMARY KEY, "value" TEXT NOT NULL, "version" TEXT NOT NULL, "updateTime" INTEGER NOT NULL, "createTime" INTEGER NOT NULL)`), '数据存储空间连接失败');
@@ -1620,10 +1656,15 @@ function getDataStorageInCache(storageKey) {
  * @param {string} key 需要设置的键
  * @param {string} value 需要设置的值
  */
-function setData(storageKey, key, value) {
+async function setData(storageKey, key, value) {
+    startStorageQueue();
     /**@type {StorageTask} */
-    var task = { type: "set", storageKey, key, value };
+    var task = { type: "set", storageKey, key, value }, dataStorage = await getDataStorage(storageKey);
     storageQueue.set(JSON.stringify(task), task);
+    var data = await dataStorage.get(key) || {};
+    dataStorage.data.set(key, {
+        key, value, updateTime: Date.now(), createTime: data.createTime || Date.now(), version: data.version || ""
+    });
 }
 /**
  * 查找一个键值对
@@ -1633,7 +1674,13 @@ function setData(storageKey, key, value) {
  * @returns {ReturnValue}
  */
 async function getData(storageKey, key) {
-    await getDataStorage(storageKey).get(key);
+    var dataStorage = await getDataStorage(storageKey), result;
+    try {
+        result = await dataStorage.get(key);
+    } catch (error) {
+        output('warn', error);
+    }
+    return result;
 }
 /**
  * 批量获取键值对  
@@ -1643,7 +1690,8 @@ async function getData(storageKey, key) {
  * @returns {QueryList}
  */
 async function listData(storageKey, options) {
-    return await getDataStorage(storageKey).list(options);
+    var dataStorage = await getDataStorage(storageKey);
+    return dataStorage.list(options);
 }
 /**
  * 删除表中的键值对
@@ -1652,6 +1700,7 @@ async function listData(storageKey, options) {
  * @param {string} key 指定的键
  */
 function removeData(storageKey, key) {
+    startStorageQueue();
     /**@type {StorageTask} */
     var task = { type: "remove", storageKey, key, value };
     storageQueue.set(JSON.stringify(task), task);
@@ -1712,7 +1761,8 @@ async function runGameLoop(name) {
     }
     var gameLoop = gameLoops.get(name);
     if (gameLoop.statu != 'stop') {
-        output('warn', '该游戏循环已经在运行中或等待删除/停止，当前状态：', gameLoop.statu);
+        if (name != '$StorageQueue')
+            output('warn', '该游戏循环已经在运行中或等待删除/停止，当前状态：', gameLoop.statu);
         return;
     }
     output('log', '运行游戏循环', name);
@@ -1854,7 +1904,7 @@ function preprocess(callbackfn, priority) {
  */
 async function planningOnTickEvents() {
     output('log', '开始规划onTick……');
-    onTickHandlers = new Array(nullishCoalescing(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], timeSpent: 0 });
+    onTickHandlers = new Array(nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], timeSpent: 0 });
     for (let event of events.onTick) { //先运行一次，记录时间
         await event.run();
         onTickHandlers.sort((a, b) => a.timeSpent < b.timeSpent);
@@ -1887,16 +1937,15 @@ async function start() {
         onTickHandlers[tick].events.forEach(async token => {
             token.run();
         });
-        tick = (tick + 1) % onTickCycleLength;
-        if (tick <= 0) {
+        tick = (tick + 1) % nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16);
+        if (tick <= 0)
             output('log', '开始新的onTick周期', ++cycleNumber);
-            if (cycleNumber % nullishCoalescing(CONFIG.EasyBox3Lib.planningOnTickFrequency, 4)) {
-                planningOnTickEvents();
-            }
-        }
     });
-    for (let [userKey, entity] of players)
+    output('log', '开始处理玩家', '玩家数量：', players.size)
+    for (let [userKey, entity] of players) {
+        output('log', '处理玩家', userKey);
         await triggerEvent('onPlayerJoin', { entity });
+    }
     players.clear();
     started = true;
     output('log', '地图启动完成');
@@ -1936,14 +1985,20 @@ function registerItem(item) {
  * 只有启动了Storage Queue，`setData`和`removeData`的任务才会被处理
  */
 function startStorageQueue() {
+    if (storageQueueStarted)
+        return;
+    storageQueueStarted = true;
+    output('log', '启动Storage Queue');
     if (gameLoops.has('$StorageQueue')) {
         runGameLoop('$StorageQueue');
         return;
     }
     startGameLoop('$StorageQueue', async () => {
-        if (storageQueue.length <= 0)
+        if (storageQueue.size <= 0) {
+            stopStorageQueue();
             return;
-        var task = storageQueue[0];
+        }
+        var task = storageQueue.values().next().value;
         await tryExecuteSQL(async () => {
             var dataStorage = await getDataStorage(task.storageKey);
             switch (task.type) {
@@ -1957,7 +2012,7 @@ function startStorageQueue() {
                     output("warn", '未知的type', task.type, `\n数据：${task.storageKey}.${task.key}=${task.value}`);
             }
         });
-        storageQueue.splice(0, 1);
+        storageQueue.delete(storageQueue.keys().next().value);
     });
     output("log", '已启动Storage Queue');
 }
@@ -1966,8 +2021,9 @@ function startStorageQueue() {
  * `setData`和`removeData`仍会将任务放到队列中，但不会再次处理，除非运行`startStorageQueue`
  */
 function stopStorageQueue() {
-    if (typeof storageQueueIntervalID != "number")
-        throwError('未启动Storage Queue')
+    if (!storageQueueStarted)
+        return;
+    storageQueueStarted = false;
     stopGameLoop('$StorageQueue');
     output("log", '已停止Storage Queue\n若要重新启动Storage Queue，请使用startStorageQueue方法');
 }
@@ -2038,18 +2094,18 @@ const EasyBox3Lib = {
     translationError,
     TIME,
     started,
-    version: [0, 0, 11]
+    version: [0, 1, 0]
 };
-if (nullishCoalescing(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
+if (nullc(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
     Object.assign(global, EasyBox3Lib);
     output('log', '已成功暴露到全局');
 }
 if (CONFIG.EasyBox3Lib.enableOnPlayerJoin) {
     world.onPlayerJoin(({ entity }) => {
         if (started)
-            players.set(entity.player.userKey, entity);
-        else
             triggerEvent('onPlayerJoin', { entity });
+        else
+            players.set(entity.player.userKey, entity);
         output("log", '进入玩家', entity);
     });
 }

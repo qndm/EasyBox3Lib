@@ -1,5 +1,11 @@
 # 版本 & 更新日志
-## 0.0.11
+## Beta
+### 0.1.0
+修复若干bug
+
+## Dev
+
+### 0.0.11
 `StorageQueue`使用`Map`而不是`Array`实现  
 新增`Thing.dialog`方法  
 `StorageQueue`使用`Gameloops`实现而不是`setInterval`实现
@@ -18,7 +24,7 @@
 新增`translationError`方法  
 - 可以更改`enableAutoTranslation`的值为`true`来开启报错自动翻译
 
-## 0.0.10
+### 0.0.10
 为`Item`的成员添加了`JsDoc`  
 新增 `Thing.setData`、`Thing.createThingEntity`、`Thing.toString`、static `Thing.fromString`方法  
 更好看的开发文档  
@@ -35,7 +41,7 @@
 所有的`output("error", ...)`都替换成了`throwError(...)`  
 更新部分JsDoc
 
-## 0.0.9
+### 0.0.9
 新增 `tryExecuteSQL`
 调整数据库：
 - 现在所有数据库的操作都会在失败后执行多次（默认`5`次，在`config.EasyBox3Lib.maximumDatabaseRetries`中更改）
@@ -50,7 +56,7 @@
 调整 `onTick` 方法：
 - `automaticTps` 参数的默认值从`true`改为`false`
 
-## 0.0.8
+### 0.0.8
 新增 `Page`  
 新增 `changeVelocity`  
 优化 `DataStorage.list`，使其新旧编辑器返回值一致  
@@ -60,7 +66,7 @@
 - `automaticTps` 参数的默认值从`true`改为`false`
 - 修复`tps`的bug
 
-## 0.0.7
+### 0.0.7
 修复若干bug  
 允许在配置文件不全的情况下使用库  
 ~~尝试使用`TypeScript`~~ 已放弃：过于难修  
@@ -69,7 +75,7 @@
 `SQL`反注入  
 新增 实体组（已测试）
 
-## 0.0.6
+### 0.0.6
 `EasyBox3Lib.game.xxx` -> `EasyBox3Lib.xxx`  
 开了个实体组的坑  
 完全重写了数据库（但也完全没测试）
@@ -88,7 +94,7 @@
 - 添加了对新编辑器的支持
 - 移除了配置文件中的`EasyBox3Lib.enablePostgreSQL`
 
-## 0.0.5
+### 0.0.5
 优化`JsDoc`
 - 删除了一些不需要的`JsDoc`
 - 删除了内部的`@version`和不需要的`@author`
@@ -104,13 +110,13 @@
 - 使用`preprocess`方法添加
 - 使用`addEventHandler`监听`onStart方法`
 
-## 0.0.4
+### 0.0.4
 修复 `getTheCodeExecutionLocation` 方法的bug  
 优化 `output` 和 `getTheCodeExecutionLocation` 方法
 - 现在可以获取到调用该方法的函数名称了  
 可以通过配置 `getFunctionNameBlackList` 添加要忽略的函数
 
-## 0.0.3
+### 0.0.3
 新增 SQL缓存（测试）  
 将一些常量改为了大写（例如：`outputType` -> `OUTPUT_THPE`）  
 对Pro地图（`Arena`）提供支持：  
@@ -121,7 +127,7 @@
 `output`方法输出时会输出代码执行位置（测试，可配置）  
 `index.js`以外脚本调用库时不是重复使用`require`，而是直接使用`global.EasyBox3Lib`
 
-## 0.0.2
+### 0.0.2
 开了个SQL缓存的坑  
 修复了部分SQL方法中没有加`await`的bug  
 修复了`copyObject`中不能复制对象中类型为`undefined`或者`function`的属性的bug  
@@ -129,5 +135,5 @@
 修复了`Menu`无法打开上一级菜单的bug  
 修改部分`jsdoc`内容
 
-## 0.0.1
+### 0.0.1
 发布
