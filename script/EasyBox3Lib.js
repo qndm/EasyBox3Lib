@@ -135,6 +135,13 @@ function nullc(a, b) {
  */
 
 /**
+ * 物品对话框正文内容
+ * @callback ThingDialogCallback
+ * @param {Thing} thing 物品
+ * @returns {string} 对话框正文内容
+ */
+
+/**
  * 储存物品的格子
  * @typedef {?Thing} Tartan
  * @private
@@ -183,9 +190,6 @@ const
         SKIP: 'skip',
         FREE: 'free'
     },
-    /**
-     * @type {[[string | RegExp, string | Function]]}
-     */
     TRANSLATION_REGEXPS = [['too much recursion', '太多递归'], [/Permission denied to access property "(\w+)"/ig, '尝试访问无权访问的对象：$1'], [/Invalid code point (\w+)/ig, '无效码位：$1'], ['Invalid array length', '无效的数组长度'], ['Division by zero', '除以0'], ['Exponent must be positive', '指数必须为正数'], ['Invalid time value', '非法时间值'], [/(\w+\(\)) argument must be between (\d+) and (\d+)/ig, '$1 的参数必须在 $2 和 $3 之间'], [/(\w+\(\)) (\w+) argument must be between (\d+) and (\d+)/ig, '$1 的 $2 参数必须在 $3 和 $4 之间'], ['Invalid count value', '无效的计数参数'], [/The number (\d.+) cannot be converted to a BigInt because it is not an integer/ig, '数字 $1 不能被转换成 BigInt 类型，因为它不是整数'], [/"(\w+)" is not defined/ig, '$1 未定义'], [/Cannot access '(\w+)' before initialization/ig, '初始化前无法访问 $1'], [/'(\w+)', '(\w+)', and '(\w+)' properties may not be accessed on strict mode functions or the arguments objects for calls to them/ig, '$1、$2、$3 属性不能在严格模式函数或调用它们的参数对象上访问'], [/(\w+) literals are not allowed in strict mode./ig, '严格模式下不允许使用$1字面量。'], ['Illegal \'use strict\' directive in function with non-simple parameter list', '带有非简单参数列表的函数中的非法 "use strict" 指令'], ['Unexpected reserved word', '意外的保留字'], [/(\S+) loop variable declaration may not have an initializer./ig, '$1语句的变量声明不能有初始化表达式。'], ['Delete of an unqualified identifier in strict mode.', '在严格模式下，无法对标识符调用 "delete"。'], ['Function statements require a function name', '函数声明需要提供函数名称'], ['await is only valid in async functions and the top level bodies of modules', 'await 仅在异步函数和模块的顶层主体中有效'], [/Unexpected token '(\S+)'/ig, '意外标记 $1（不能在不使用括号的情况下混用 "||" 和 "??" 操作）'], ['Illegal continue statement: no surrounding iteration statement', '非法 continue 语句：周围没有迭代语句（"continue" 语句只能在封闭迭代语句内使用）'], ['Invalid or unexpected token', '无效或意外的标识符'], ['Invalid left-hand side in assignment', '赋值中的左值无效'], ['Invalid regular expression flags', '正则表达式修饰符无效'], [/Cannot convert (\d.+) to a BigInt/ig, '不能将 $1 转换成 BigInt 类型'], ['Unexpected identifier', '意外标识符'], [/(\w+) is not iterable/ig, '$1 是不可迭代的'], [/(\w+) has no properties/ig, '$1 没有属性'], [/Cannot read properties of (\w+) (reading '(\w+)')/ig, '不能从 $1 中读取属性 $2'], [/(\w+) is not a constructor/ig, '$1 不是构造器'], [/(\w+) is not a function/ig, '$1 不是函数'], [/Property description must be an object: (\w+)/ig, '属性描述必须是一个对象：$1'], [/Cannot assign to read only property '(\w+)' of object '(\S+)'/ig, '无法为对象\'$2\'的只读属性\'$1\'赋值'], [/Cannot create property '(\w+)' on string '(\S+)'/ig, '无法在字符串 \'$2\' 上创建属性 $1'], ['Cannot mix BigInt and other types, use explicit conversions', '不能混合 BigInt 和其他类型，应该使用显式转换'], ['Warning', '警告'], ['Reference', '引用'], ['Type', '类型'], ['Syntax', '语法'], ['Range', '范围'], ['Internal', '内部'], ['Error', '错误'], ['Uncaught', '未捕获的'], [/(at\b)/g, '在'], ['Octal', '八进制'], [/Unexpected/ig, '意外的'], [/Invalid/ig, '无效的'], [/token/ig, '标识符']];
 
 var
@@ -774,7 +778,7 @@ class EntityGroup {
  * @param {string[]} tags 该物品的标签，除了字母、数字、下划线以外的字符会被忽略
  * @param {object} data 该物品的默认数据
  * @param {Box3Wearable | boolean} wearable 该实体是否可穿戴。如果可以穿戴，那么填入一个`Box3Wearable`，表示玩家穿戴的部件；如果填入`true`，代表该实体可以穿戴但是没有模型；填入`false`，表示该物品不可穿戴
- * @param {string | (thing: Thing) => string} content 该物品打开对话框时，物品的默认对话框正文内容
+ * @param {string | ThingDialogCallback} content 该物品打开对话框时，物品的默认对话框正文内容
  */
 function Item(id, name = id, maxStackSize = Infinity, tags = [], data = {}, wearable = undefined, mesh = '', content = undefined) {
     /**
@@ -1045,7 +1049,7 @@ class Thing {
     /**
      * 打开物品对话框
      * @param {Box3Entity} entity 打开对话框的实体
-     * @param {string | (thing: Thing) => string} content 对话框正文内容。如果为空，则读取对应`Item`的内容
+     * @param {string | ThingDialogCallback} content 对话框正文内容。如果为空，则读取对应`Item`的内容
      * @param {string[]} options 对话框选项
      * @param {Box3SelectDialogParams} otherOptions 可选，对话框的其他选项
      * @returns {Box3DialogSelectResponse} 对话框选择结果
