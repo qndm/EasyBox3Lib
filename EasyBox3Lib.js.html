@@ -4,7 +4,7 @@
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.0.10
+ * @version 0.1.0
  * @author qndm Nomen
  * @license MIT
  */
@@ -20,7 +20,6 @@ if (!CONFIG) {
         Object.keys(global).forEach(v => {
             if (v.startsWith("Game")) {
                 global['Box3' + v.slice(4)] = global[v];
-                console.log(`Game${v.slice(4)} -> Box3${v.slice(4)}`);
             }
         })
     }
@@ -31,14 +30,14 @@ if (!CONFIG) {
  * @param {*} b 
  * @returns {*}
  */
-function nullishCoalescing(a, b) {
+function nullc(a, b) {
     if (a === null || a === undefined)
         return b;
     else return a;
 }
 /**
  * 事件回调函数
- * @callback eventCallBack
+ * @callback EventCallBack
  * @param {any} data 传递的参数
  * @returns {void}
  */
@@ -138,6 +137,13 @@ function nullishCoalescing(a, b) {
  */
 
 /**
+ * 物品对话框正文内容
+ * @callback ThingDialogCallback
+ * @param {Thing} thing 物品
+ * @returns {string} 对话框正文内容
+ */
+
+/**
  * 储存物品的格子
  * @typedef {?Thing} Tartan
  * @private
@@ -185,7 +191,8 @@ const
         FAILED: 'failed',
         SKIP: 'skip',
         FREE: 'free'
-    };
+    },
+    TRANSLATION_REGEXPS = [['too much recursion', '太多递归'], [/Permission denied to access property "(\w+)"/ig, '尝试访问无权访问的对象：$1'], [/Invalid code point (\w+)/ig, '无效码位：$1'], ['Invalid array length', '无效的数组长度'], ['Division by zero', '除以0'], ['Exponent must be positive', '指数必须为正数'], ['Invalid time value', '非法时间值'], [/(\w+\(\)) argument must be between (\d+) and (\d+)/ig, '$1 的参数必须在 $2 和 $3 之间'], [/(\w+\(\)) (\w+) argument must be between (\d+) and (\d+)/ig, '$1 的 $2 参数必须在 $3 和 $4 之间'], ['Invalid count value', '无效的计数参数'], [/The number (\d.+) cannot be converted to a BigInt because it is not an integer/ig, '数字 $1 不能被转换成 BigInt 类型，因为它不是整数'], [/"(\w+)" is not defined/ig, '$1 未定义'], [/Cannot access '(\w+)' before initialization/ig, '初始化前无法访问 $1'], [/'(\w+)', '(\w+)', and '(\w+)' properties may not be accessed on strict mode functions or the arguments objects for calls to them/ig, '$1、$2、$3 属性不能在严格模式函数或调用它们的参数对象上访问'], [/(\w+) literals are not allowed in strict mode./ig, '严格模式下不允许使用$1字面量。'], ['Illegal \'use strict\' directive in function with non-simple parameter list', '带有非简单参数列表的函数中的非法 "use strict" 指令'], ['Unexpected reserved word', '意外的保留字'], [/(\S+) loop variable declaration may not have an initializer./ig, '$1语句的变量声明不能有初始化表达式。'], ['Delete of an unqualified identifier in strict mode.', '在严格模式下，无法对标识符调用 "delete"。'], ['Function statements require a function name', '函数声明需要提供函数名称'], ['await is only valid in async functions and the top level bodies of modules', 'await 仅在异步函数和模块的顶层主体中有效'], [/Unexpected token '(\S+)'/ig, '意外标记 $1（不能在不使用括号的情况下混用 "||" 和 "??" 操作）'], ['Illegal continue statement: no surrounding iteration statement', '非法 continue 语句：周围没有迭代语句（"continue" 语句只能在封闭迭代语句内使用）'], ['Invalid or unexpected token', '无效或意外的标识符'], ['Invalid left-hand side in assignment', '赋值中的左值无效'], ['Invalid regular expression flags', '正则表达式修饰符无效'], [/Cannot convert (\d.+) to a BigInt/ig, '不能将 $1 转换成 BigInt 类型'], ['Unexpected identifier', '意外标识符'], [/(\w+) is not iterable/ig, '$1 是不可迭代的'], [/(\w+) has no properties/ig, '$1 没有属性'], [/Cannot read properties of (\w+) (reading '(\w+)')/ig, '不能从 $1 中读取属性 $2'], [/(\w+) is not a constructor/ig, '$1 不是构造器'], [/(\w+) is not a function/ig, '$1 不是函数'], [/Property description must be an object: (\w+)/ig, '属性描述必须是一个对象：$1'], [/Cannot assign to read only property '(\w+)' of object '(\S+)'/ig, '无法为对象\'$2\'的只读属性\'$1\'赋值'], [/Cannot create property '(\w+)' on string '(\S+)'/ig, '无法在字符串 \'$2\' 上创建属性 $1'], ['Cannot mix BigInt and other types, use explicit conversions', '不能混合 BigInt 和其他类型，应该使用显式转换'], ['Warning', '警告'], ['Reference', '引用'], ['Type', '类型'], ['Syntax', '语法'], ['Range', '范围'], ['Internal', '内部'], ['Error', '错误'], ['Uncaught', '未捕获的'], [/(at\b)/g, '在'], ['Octal', '八进制'], [/Unexpected/ig, '意外的'], [/Invalid/ig, '无效的'], [/token/ig, '标识符']];
 
 var
     /**
@@ -199,7 +206,10 @@ var
      * @private
      */
     dataStorages = new Map(),
-    gameLoops = {},
+    /**
+     * @type {Map&lt;string, {statu: "running" | "stop" | "awaiting_deletion" | "awaiting_stop", init: EventCallBack, times: number}>}
+     */
+    gameLoops = new Map(),
     events = {
         /**@type {OnTickHandlerToken[]} */
         onTick: [],
@@ -212,7 +222,7 @@ var
      * @private
      * @type {onTickEventToken[]}
      */
-    onTickHandlers = new Array(nullishCoalescing(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], timeSpent: 0 }),
+    onTickHandlers = new Array(nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], timeSpent: 0 }),
     /**
      * 预处理时调用的函数
      * @private
@@ -242,11 +252,11 @@ var
     /** 
      * Storage Queue - Storage任务队列
      * 队列只会在`start`方法调用时才会开始，或者手动调用`startStorageQueue`函数
-     * @type {StorageTask[]} 
+     * @type {Map&lt;string, StorageTask>} 
      */
-    storageQueue = [],
-    /**@type {number} */
-    storageQueueIntervalID;
+    storageQueue = new Map(),
+    /**@type {boolean} */
+    storageQueueStarted = false;
 /**
  * 日志信息
  * @private
@@ -330,10 +340,13 @@ class DataStorage {
             value: key,
             writable: false,
         });
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.enableSQLCache, false))
+        if (nullc(CONFIG.EasyBox3Lib.enableSQLCache, false))
             /**@type {Map&lt;string, ResultValue>}*/
             this.data = new Map();
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
+        if (nullc(CONFIG.EasyBox3Lib.inArena, false))
+            /**
+             * @type {GameDataStorage}
+             */
             this.gameDataStorage = gameDataStorage;
     }
     /**
@@ -346,18 +359,23 @@ class DataStorage {
      */
     async get(key) {
         output('log', '获取数据', this.key, ':', key);
-        var result = undefined;
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.enableSQLCache, false) &amp;&amp; this.data.has(key)) {
+        if (nullc(CONFIG.EasyBox3Lib.enableSQLCache, false) &amp;&amp; this.data.has(key)) {
             return copyObject(this.data.get(key));
         } else {
-            result = await tryExecuteSQL(async () => nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false) ?
-                await this.gameDataStorage.get(key) :
-                await executeSQLCode(`SELECT * FROM "${this.key}" WHERE "key" == '${key}'`)[0], '获取数据失败');
-            if (result instanceof Array &amp;&amp; result.length > 0) {
-                this.data[key] = result;
-                return copyObject(this.data[key]);
-            } else
-                return undefined;
+            if (!nullc(CONFIG.EasyBox3Lib.inArena, false)) {
+                result = await tryExecuteSQL(async () => {
+                    return await executeSQLCode(`SELECT * FROM "${encodeURIComponent(this.key)}" WHERE "key" == '${key}'`)[0], '获取数据失败'
+                });
+                if (result instanceof Array &amp;&amp; result.length > 0) {
+                    this.data[key] = result;
+                    return copyObject(this.data[key]);
+                } else
+                    return;
+            }
+            output('log', '使用Pro数据库');
+            let result = await this.gameDataStorage.get(key);
+            output('log', '读取完成，数据：', JSON.stringify(result))
+            return result;
         }
     }
     /**
@@ -368,15 +386,21 @@ class DataStorage {
      */
     async set(key, value) {
         output('log', '设置数据', this.key, ':', key, '=', value);
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false)) {
-            await tryExecuteSQL(async () => await this.gameDataStorage.set(key, value), '设置数据失败');
+        if (nullc(CONFIG.EasyBox3Lib.inArena, false)) {
+            await tryExecuteSQL(async () => {
+                var data = await tryExecuteSQL(async () => await this.get(key), '获取数据失败') || {};
+                this.data.set(key, {
+                    key, value, updateTime: Date.now(), createTime: data.createTime || Date.now(), version: data.version || ""
+                });
+                await this.gameDataStorage.set(key, value);
+            }, '设置数据失败');
             return;
         } else {
             var data = await tryExecuteSQL(async () => await this.get(key), '获取数据失败');//由于需要更新版本，所以先获取一遍旧数据
             if (data) {
                 data.updateTime = Date.now();
                 data.value = JSON.stringify(value);
-                await tryExecuteSQL(async () => await executeSQLCode(`UPDATE "${this.key}" SET ("value" = '${sqlAntiInjection(data.value)}', "updateTime" = ${data.updateTime}) WHERE "key" == '${sqlAntiInjection(key)}'`), '更新数据失败');
+                await tryExecuteSQL(async () => await executeSQLCode(`UPDATE "${encodeURIComponent(this.key)}" SET ("value" = '${sqlAntiInjection(data.value)}', "updateTime" = ${data.updateTime}) WHERE "key" == '${sqlAntiInjection(key)}'`), '更新数据失败');
             } else {
                 data = {
                     key,
@@ -385,11 +409,12 @@ class DataStorage {
                     updateTime: Date.now(),
                     version: ""
                 };
-                await tryExecuteSQL(async () => await executeSQLCode(`INSERT INTO "${this.key}" ("key", "value", "createTime", "updateTime", "version") VALUES ('${sqlAntiInjection(data.key)}', '${sqlAntiInjection(data.value)}', ${data.createTime}, ${data.updateTime}, '${sqlAntiInjection(data.version)}')`), '插入数据失败');
+                await tryExecuteSQL(async () => await executeSQLCode(`INSERT INTO "${encodeURIComponent(this.key)}" ("key", "value", "createTime", "updateTime", "version") VALUES ('${sqlAntiInjection(data.key)}', '${sqlAntiInjection(data.value)}', ${data.createTime}, ${data.updateTime}, '${sqlAntiInjection(data.version)}')`), '插入数据失败');
             }
         }
         output('log', this.key, ':', key, ':', this.data[key].value, '->', data.value);
-        this.data.set(key, data);
+        if (!storageQueueStarted)
+            this.data.set(key, data);
     }
     /**
      * 使用传入的方法更新键值对
@@ -398,8 +423,8 @@ class DataStorage {
      * @param {dataStorageUpdateCallBack} handler 处理更新的方法，接受一个参数，为当前键的值，返回一个更新后的值
      */
     async update(key, handler) {
-        if (CONFIG.EasyBox3Lib.inArena) {
-            this.gameDataStorage.update(key, handler);
+        if (nullc(CONFIG.EasyBox3Lib.inArena, false)) {
+            await this.gameDataStorage.update(key, handler);
             return;
         }
         var value = await handler(await this.get(key));
@@ -413,7 +438,7 @@ class DataStorage {
      */
     async list(options) {
         output('log', '获取数据', this.key, ':', options.cursor, '-', options.cursor + (options.pageSize || 100));
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false)) {
+        if (!nullc(CONFIG.EasyBox3Lib.inArena, false)) {
             return await tryExecuteSQL(async () => await this.gameDataStorage.list(options), '获取数据失败');
         } else {
             let data = await tryExecuteSQL(async () => await executeSQLCode(`SELECT * FROM "${this.key}"`), '获取数据失败');
@@ -427,7 +452,10 @@ class DataStorage {
     async remove(key) {
         output('log', '删除数据', this.key, ':', key);
         this.data.delete(key);
-        await tryExecuteSQL(async () => await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`), '删除数据失败');
+        if (!nullc(CONFIG.EasyBox3Lib.inArena, false))
+            await tryExecuteSQL(async () => await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`), '删除数据失败');
+        else
+            await this.gameDataStorage.remove(key);
     }
     /**
      * 删除表格  
@@ -435,7 +463,7 @@ class DataStorage {
      * 
      */
     async drop() {
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
+        if (nullc(CONFIG.EasyBox3Lib.inArena, false))
             output("error", '暂不支持Pro地图');
         else {
             output('warn', '删除表', this.key);
@@ -633,7 +661,7 @@ class EventHandlerToken {
         this.statu = STATUS.FREE;
     }
     async run(data = {}) {
-        if (this.statu != STATUS.NOT_RUNNING &amp;&amp; (nullishCoalescing(CONFIG.EasyBox3Lib.disableEventOptimization, false) || this.statu == STATUS.FREE)) {
+        if (this.statu != STATUS.NOT_RUNNING &amp;&amp; (nullc(CONFIG.EasyBox3Lib.disableEventOptimization, false) || this.statu == STATUS.FREE)) {
             this.statu = STATUS.RUNNING;
             await this.handler(Object.assign({ tick: world.currentTick }, data));
             this.statu = STATUS.FREE;
@@ -654,7 +682,7 @@ class OnTickHandlerToken extends EventHandlerToken {
      */
     constructor(handler, tps, enforcement = false, automaticTps = false) {
         super(handler);
-        this.tps = Math.max(Math.min(tps, nullishCoalescing(CONFIG.EasyBox3Lib.onTickCycleLength, 16)), 1);
+        this.tps = Math.max(Math.min(tps, nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)), 1);
         this.enforcement = enforcement;
         this.automaticTps = automaticTps;
         this.timeSpent = TIME.SECOND / tps;
@@ -724,30 +752,80 @@ class EntityGroup {
         delete entity.offset;
         this.entities.splice(index, 1);
     }
+    /**
+     * 实体组动画
+     * @param {Box3EntityKeyframe[]} keyframes 动画关键帧
+     * @param {Box3AnimationPlaybackConfig} playbackInfo 动画配置信息
+     */
+    animate(keyframes, playbackInfo) {
+        var position = this.position.clone();
+        for (const keyframe of keyframes)
+            if (Object.keys(keyframe).includes('position'))
+                position.copy(keyframe.position);
+        this.entities.forEach((entity) => {
+            entity.animate(keyframes, playbackInfo).onFinish(() => {
+                entity.position = position;
+            });
+        });
+        this.position = position;
+    }
 }
 /**
  * 定义一种物品
  * @class
  * @param {string} id 该物品的id，除了字母、数字、下划线以外的字符会被忽略
  * @param {string} name 该物品的显示名称，默认和id相同
- * @param {string} mesh 该物品的模型
+ * @param {string} mesh 该物品的模型。如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
  * @param {number} maxStackSize 该物品的最大堆叠数量，默认为`Infinity`。最小值为`1`。当`data`不为空对象时，为`1`.
  * @param {string[]} tags 该物品的标签，除了字母、数字、下划线以外的字符会被忽略
  * @param {object} data 该物品的默认数据
+ * @param {Box3Wearable | boolean} wearable 该实体是否可穿戴。如果可以穿戴，那么填入一个`Box3Wearable`，表示玩家穿戴的部件；如果填入`true`，代表该实体可以穿戴但是没有模型；填入`false`，表示该物品不可穿戴
+ * @param {string | ThingDialogCallback} content 该物品打开对话框时，物品的默认对话框正文内容
  */
-function Item(id, name = id, mesh = '', maxStackSize = Infinity, tags = [], data = {}) {
-    /**该物品的id @type {string} */
-    this.id = id.match(/[/w]/g);
-    /**该物品的显示名称 @type {string} */
+function Item(id, name = id, maxStackSize = Infinity, tags = [], data = {}, wearable = undefined, mesh = '', content = undefined) {
+    /**
+     * 该物品的id
+     * @type {string} 
+     */
+    this.id = encodeURI(id);
+    /**
+     * 该物品的显示名称
+     * @type {string}
+     */
     this.name = name;
-    /**该物品的最大堆叠数量 @type {string} */
+    /**
+     * 该物品的最大堆叠数量 
+     * @type {string}
+     */
     this.maxStackSize = Math.max(Object.keys(data).length ? 1 : maxStackSize, 1);
-    /**该物品的标签 @type {string} */
-    this.tags = tags.map(tag => tag.match(/[/w]/g).join(''));
-    /**该物品的默认数据 @type {string} */
+    /**
+     * 该物品的标签
+     * @type {string}
+     */
+    this.tags = tags.map(tag => encodeURI(tag));
+    /**
+     * 该物品的默认数据
+     * @type {string}
+     */
     this.data = data;
-    /**该物品的模型 @type {string} */
+    /**
+     * 该物品的穿戴配件
+     * @type {Box3Wearable}
+     */
+    this.wearable = wearable;
+    /**
+     * 该物品的模型  
+     * 如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
+     * @type {string}
+     */
     this.mesh = mesh;
+    if (!this.mesh &amp;&amp; typeof this.wearable == "object" &amp;&amp; this.mesh) {
+        this.mesh = this.wearable.mesh;
+    }
+    /**
+     * 该物品打开对话框时，物品的默认对话框正文内容
+     */
+    this.content = content;
 }
 /**
  * 一个（或一组）物品
@@ -755,7 +833,7 @@ function Item(id, name = id, mesh = '', maxStackSize = Infinity, tags = [], data
 class Thing {
     /**
      * 定义一个（或一组）物品
-     * @param {string} id 物品的id，除了字母、数字、下划线以外的字符会被忽略。应该是已经注册的物品id。如果`data`不为空对象时，最大为`1`
+     * @param {string} id 物品的id。应该是已经注册的物品id。如果`data`不为空对象时，最大为`1`
      * @param {number} stackSize 该物品的堆叠数量，最大为该物品的最大堆叠数量
      * @param {object} data 该物品的数据
      */
@@ -765,31 +843,82 @@ class Thing {
         }
         var item = itemRegistry.get(id);
         /**物品id @type {string} */
-        this.id = id;
+        this.id = encodeURI(id);
         /**最大堆叠数量 @type {number} */
         this.stackSize = Math.min(stackSize, item.maxStackSize);
         /**物品显示名称 @type {string} */
         this.name = item.name;
         /**物品数据，如果有数据将不能再堆叠 */
         this.data = copyObject(item.data);
+        /**该物品是否处于穿戴状态 @type {boolean} */
+        this._wearing = false;
         Thing.setData(this, copyObject(data));
         Object.seal(this.data);
     }
-    /**该物品的类型 @returns {Item} */
+    /**
+     * 该物品的类型
+     * @returns {Item} 
+     */
     get item() {
-        return itemRegistry.get(thing.id);
+        return itemRegistry.get(this.id);
     }
-    /**该物品的标签 @returns {string[]} */
+    /**
+     * 该物品的标签
+     * @returns {string[]}
+     */
     get tags() {
         return this.item.tags;
     }
-    /**该物品的最大堆叠数量 @returns {number} */
+    /**
+     * 该物品的最大堆叠数量 
+     * @returns {number} 
+     */
     get maxStackSize() {
         return this.item.maxStackSize;
     }
-    /**该物品是否可堆叠 @returns {boolean} */
+    /**
+     * 该物品是否可堆叠 
+     * @returns {boolean} 
+     */
     get stackable() {
         return Object.keys(this.data) &lt;= 0;
+    }
+    /**
+     * 该物品的穿戴部件
+     * 如果为`false`，则该部件不可穿戴
+     * @returns {Box3Wearable | true | false}
+     */
+    get wearable() {
+        return this.item.wearable;
+    }
+    /**
+     * 该物品是否处于穿戴状态
+     * @returns {boolean} 是否处于穿戴状态
+     */
+    get wearing() {
+        return this._wearing &amp;&amp; this.wearable;
+    }
+    /**
+     * 设置物品穿戴状态
+     */
+    set wearing(value) {
+        if (this.wearable)
+            this._wearing = value;
+    }
+    /**
+     * 对实体更新穿戴状态  
+     * 更新后的实体会显示穿戴部件
+     * @param {Box3Entity} entity 要更新的实体
+     */
+    updateWear(entity) {
+        if (!this.wearable)
+            throwError('该物品不可穿戴：', this.id);
+        if (this.wearable === true)
+            return;
+        if (this.wearing)
+            entity.player.addWearable(this.wearable);
+        else
+            entity.player.removeWearable(this.wearable);//qndm: 笑死，现在才知道removeWearable填的是穿戴部件而不是编号
     }
     /**
      * 测试该物品是否满足选择器的条件
@@ -831,7 +960,7 @@ class Thing {
      * @returns {boolean}
      */
     static testSelector(thing, selectorString) {
-        var selectors = selectorString.match(/[\w#!\.,&amp;]/g).join('').split(','), result = false;
+        var selectors = encodeURI(selectorString).split(','), result = false;
         for (let selector of selectors) {
             let test = false, must = false, not = false, index = 0;
             if (selector[index] == '&amp;') {
@@ -867,7 +996,7 @@ class Thing {
      * @param {boolean} allowedPickups 是否允许拾取
      * @returns {Box3Entity}
      */
-    createThingEntity(position, meshScale = nullishCoalescing(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), allowedPickups = true, interactRadius = 4, interactColor = new Box3RGBColor(1, 1, 1)) {
+    createThingEntity(position, meshScale = nullc(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), allowedPickups = true, interactRadius = 4, interactColor = new Box3RGBColor(1, 1, 1)) {
         var entity = createEntity(this.item.mesh, position, true, true, meshScale);
         entity.thing = this;
         if (allowedPickups) {
@@ -883,14 +1012,14 @@ class Thing {
      * @returns {ThingString}
      */
     toString() {
-        return `i${this.id}${this.name != this.item.name ? ('|n' + this.name) : ''}|s${this.stackSize.toString(16)}|d${JSON.stringify(this.data)}`;
+        return `i${this.id}${this.name != this.item.name ? ('|n' + this.name) : ''}|s${this.stackSize.toString(16)}|d${encodeURIComponent(JSON.stringify(this.data))}${this.wearing ? 'w' : ''}`;
     }
     /**
      * 从字符串中获取物品数据
      * @param {ThingString} string 物品数据的字符串
      */
     static fromString(string) {
-        var /**@type {string[]}*/source = string.split('|'), id = '', name = '', stackSize = 1, data = {};
+        var /**@type {string[]}*/source = string.split('|'), id = '', name = '', stackSize = 1, data = {}, wearing = false;
         for (const item of source) {
             switch (item[0]) {
                 case 'i':
@@ -903,7 +1032,10 @@ class Thing {
                     stackSize = parseInt(item.substring(1), 16);
                     break;
                 case 'd':
-                    data = JSON.parse(item.substring(1));
+                    data = JSON.parse(decodeURIComponent(item.substring(1)));
+                    break;
+                case 'w':
+                    wearing = true;
                     break;
             }
         }
@@ -911,7 +1043,24 @@ class Thing {
             throwError('未知的物品id', id);
         if (!name)
             name = itemRegistry.get(id).name;
-        return new Thing(id, name, Math.max(Math.min(stackSize, itemRegistry.get(id).maxStackSize), 1), data);
+        var thing = new Thing(id, name, Math.max(Math.min(stackSize, itemRegistry.get(id).maxStackSize), 1), data);
+        thing.wearing = wearing;
+        thing.name = name;
+        return thing;
+    }
+    /**
+     * 打开物品对话框
+     * @param {Box3Entity} entity 打开对话框的实体
+     * @param {string | ThingDialogCallback} content 对话框正文内容。如果为空，则读取对应`Item`的内容
+     * @param {string[]} options 对话框选项
+     * @param {Box3SelectDialogParams} otherOptions 可选，对话框的其他选项
+     * @returns {Box3DialogSelectResponse} 对话框选择结果
+     */
+    async dialog(entity, content, options = [], otherOptions = {}) {
+        return await selectDialog(entity, this.name, nullc(
+            typeof content == "function" ? content(this) : content,
+            typeof this.item.content == "function" ? content(this) : content
+        ), options, otherOptions);
     }
 }
 /**
@@ -1097,6 +1246,25 @@ class ThingStorage {
         var result = await selectDialog(entity, title, content, arr.map(x => x[1]), otherOptions);
         return arr[result.index][0];
     }
+    /**
+     * 将物品储存空间转换成字符串  
+     * 空物品和数量小于0的物品会被忽略
+     * @returns {string} 转换结果
+     */
+    toString() {
+        return this.thingStorage.filter(thing => thing !== null &amp;&amp; thing.stackSize > 0).map(thing => thing.toString()).join(',');
+    }
+    /**
+     * 从字符串中读取物品储存空间
+     * @param {string} str 要读取的字符串
+     * @param {number} size 储存空间大小。如果存储空间不能放下，则剩余的数据会被舍弃
+     * @param {number} stackSizeMultiplier 堆叠数量倍率。默认为1
+     */
+    static fromString(str, size, stackSizeMultiplier = 1) {
+        var thingStorage = new ThingStorage(size, stackSizeMultiplier), things = str.split(',').filter(thing => thing).map(thing => Thing.fromString(thing));
+        thingStorage.putInto(...things);
+        return thingStorage;
+    }
 }
 /**
  * 复制一个`object`
@@ -1120,7 +1288,7 @@ function copyObject(obj) {
 function getEntity(id) {
     var entity = world.querySelector('#' + id);
     if (entity) return entity;
-    else console.warn('错误：没有ID为', id, '的实体');
+    else output('warn', '错误：没有ID为', id, '的实体');
 }
 /**
  * 使用实体标签获取一组实体
@@ -1130,7 +1298,7 @@ function getEntity(id) {
 function getEntities(tag) {
     var entities = world.querySelectorAll('.' + tag);
     if (entities.length > 0) return entities;
-    else console.warn('错误：没有标签为', tag, '的实体');
+    else output('warn', '错误：没有标签为', tag, '的实体');
 }
 /**
  * 通过玩家的昵称/BoxID/userKey找到一个玩家  
@@ -1152,7 +1320,7 @@ function getAllLogs() {
 }
 /**
  * 获取当前代码的执行位置
- * @returns {{locations: string, functions: string}}
+ * @returns {{locations: string[], functions: string[]}}
  */
 function getTheCodeExecutionLocation() {
     var stack = new Error().stack.match(/[\w$]+ \([\w$]+\.js:\d+:\d+\)/g);
@@ -1168,17 +1336,18 @@ function getTheCodeExecutionLocation() {
  * @returns {string}
  */
 function output(type, ...data) {
+    const BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output']);
     let str = data.join(' ');
-    if (nullishCoalescing(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
+    if (nullc(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
         let locations = getTheCodeExecutionLocation();
-        let location = (locations.locations.filter(location => !location.startsWith(__filename))[0] || locations.locations[0]).split(':');
-        console[type](`(${location[0]}:${location[1]}) -> ${locations.functions.filter(func => !nullishCoalescing(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output']).includes(func))[0] || 'unknown'}`, str);
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) &amp;&amp; (!nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false) || type == 'warn' || type == 'error'))
+        let location = (locations.locations.filter((location, index) => !BLACKLIST.includes(locations.functions[index]))[0] || (locations.locations[1] || locations.locations[0])).split(':');
+        console[type](`(${location[0]}:${location[1]}) -> ${locations.functions.filter(func => !BLACKLIST.includes(func))[0] || 'unknown'}`, nullc(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str);
+        if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) &amp;&amp; (!nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false) || type == 'warn' || type == 'error'))
             logs.push(new Output(type, str, location.join(':')));
         return `(${location[0]}:${location[1]}) [${type}] ${str}`;
     } else {
         console[type](str);
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) &amp;&amp; !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
+        if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) &amp;&amp; !nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
             logs.push(new Output(type, str, ['unknown', -1, -1]));
         return `[${type}] ${str}`;
     }
@@ -1189,16 +1358,16 @@ function output(type, ...data) {
  */
 function throwError(...data) {
     let str = data.join(' ');
-    if (nullishCoalescing(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
+    if (nullc(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
         let locations = getTheCodeExecutionLocation();
         let location = (locations.locations.filter(location => !location.startsWith(__filename))[0] || locations.locations[0]).split(':');
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) &amp;&amp; !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
+        if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) &amp;&amp; !nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
             logs.push(new Output('error', str, location.join(':')));
         throw `(${location[0]}:${location[1]}) [${type}] ${str}`;
     } else {
-        if (nullishCoalescing(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) &amp;&amp; !nullishCoalescing(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
+        if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) &amp;&amp; !nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
             logs.push(new Output('error', str, ['unknown', -1, -1]));
-        throw `[${type}] ${str}`;
+        throw `[ERROR] ${nullc(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str}`;
     }
 }
 /**
@@ -1212,7 +1381,7 @@ function throwError(...data) {
  * @returns {boolean}
  */
 function isAdmin(entity) {
-    return nullishCoalescing(CONFIG.admin, []).includes(entity.player.userKey);
+    return nullc(CONFIG.admin, []).includes(entity.player.userKey);
 }
 /**
  * 设置一个玩家是否是管理员
@@ -1253,10 +1422,10 @@ function resizePlayer(entity, size) {
  * @param {Box3Quaternion} meshOrientation 实体的旋转角度
  * @returns {Box3Entity | null}
  */
-function createEntity(mesh, position, collides, gravity, meshScale = nullishCoalescing(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), meshOrientation = nullishCoalescing(CONFIG.EasyBox3Lib.defaultMeshOrientation, new Box3Quaternion(0, 0, 0, 1))) {
+function createEntity(mesh, position, collides, gravity, meshScale = nullc(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), meshOrientation = nullc(CONFIG.EasyBox3Lib.defaultMeshOrientation, new Box3Quaternion(0, 0, 0, 1))) {
     if (world.entityQuota() >= 1) {
         output('log', '创建实体', mesh, position, collides, gravity);
-        if (world.entityQuota() &lt;= nullishCoalescing(CONFIG.EasyBox3Lib.numberOfEntitiesRemainingToBeCreatedForSecurity, 500))
+        if (world.entityQuota() &lt;= nullc(CONFIG.EasyBox3Lib.numberOfEntitiesRemainingToBeCreatedForSecurity, 500))
             output('warn', '实体创建超出安全上限', `剩余可创建实体数量：${world.entityQuota()} `);
         return world.createEntity({
             mesh,
@@ -1283,17 +1452,17 @@ function createEntity(mesh, position, collides, gravity, meshScale = nullishCoal
  * @param {object} otherOptions 对话框的其他选项
  * @returns {'success' | number | null} 如果完成了所有对话，则返回`success`（只有一个对话框）或者完成对话框的数量（有多个对话框）；否则返回`null`（只有一个对话框）
  */
-async function textDialog(entity, title, content, hasArrow = nullishCoalescing(CONFIG.EasyBox3Lib.defaultHasArrow, 'auto'), otherOptions = nullishCoalescing(CONFIG.EasyBox3Lib.defaultDialogOtherOptions, {})) {
+async function textDialog(entity, title, content, hasArrow = nullc(CONFIG.EasyBox3Lib.defaultHasArrow, 'auto'), otherOptions = nullc(CONFIG.EasyBox3Lib.defaultDialogOtherOptions, {})) {
     if (typeof content == "string") {
         return await entity.player.dialog(Object.assign({
             type: Box3DialogType.TEXT,
             content,
             title,
             hasArrow: typeof hasArrow == "boolean" ? hasArrow : false,
-            titleTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-            titleBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
-            contentTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-            contentBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
+            titleTextColor: nullc(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+            titleBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
+            contentTextColor: nullc(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+            contentBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
         }, otherOptions));
     } else {
         var cnt = 0, length = content.length - 1;
@@ -1303,10 +1472,10 @@ async function textDialog(entity, title, content, hasArrow = nullishCoalescing(C
                 content: content[index],
                 title,
                 hasArrow: index &lt; length,
-                titleTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-                titleBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
-                contentTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-                contentBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
+                titleTextColor: nullc(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+                titleBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
+                contentTextColor: nullc(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+                contentBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
             }, otherOptions));
             if (result == 'success') cnt++;
         }
@@ -1331,10 +1500,10 @@ async function inputDialog(entity, title, content, confirmText = undefined, plac
         title,
         confirmText,
         placeholder,
-        titleTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-        titleBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
-        contentTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-        contentBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
+        titleTextColor: nullc(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+        titleBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
+        contentTextColor: nullc(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+        contentBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
     }, otherOptions));
 }
 /**
@@ -1358,10 +1527,10 @@ async function selectDialog(entity, title, content, options, otherOptions = CONF
             }
             return text;
         }),
-        titleTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-        titleBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
-        contentTextColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
-        contentBackgroundColor: nullishCoalescing(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
+        titleTextColor: nullc(CONFIG.EasyBox3Lib.defaultTitleTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+        titleBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultTitleBackgroundColor, new Box3RGBAColor(0.968, 0.702, 0.392, 1)),
+        contentTextColor: nullc(CONFIG.EasyBox3Lib.defaultContentTextColor, new Box3RGBAColor(0, 0, 0, 1)),
+        contentBackgroundColor: nullc(CONFIG.EasyBox3Lib.defaultContentBackgroundColor, new Box3RGBAColor(1, 1, 1, 1))
     }, otherOptions));
 }
 /**
@@ -1441,7 +1610,7 @@ function sqlAntiInjection(value) {
  */
 async function tryExecuteSQL(func, msg = '') {
     var count = 0, lastError = '', data;
-    while (count &lt;= nullishCoalescing(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5))
+    while (count &lt;= nullc(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5))
         try {
             data = await func();
             return data;
@@ -1450,7 +1619,7 @@ async function tryExecuteSQL(func, msg = '') {
             count++;
             lastError = error;
         }
-    if (count > nullishCoalescing(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5)) {
+    if (count > nullc(CONFIG.EasyBox3Lib.maximumDatabaseRetries, 5)) {
         throwError(msg, lastError);
     }
 }
@@ -1467,7 +1636,7 @@ async function getDataStorage(key) {
     }
     output('log', '连接数据存储空间', key);
     var gameDataStorage;
-    if (nullishCoalescing(CONFIG.EasyBox3Lib.inArena, false))
+    if (nullc(CONFIG.EasyBox3Lib.inArena, false))
         gameDataStorage = await tryExecuteSQL(async () => await storage.getDataStorage(key), '数据存储空间连接失败');
     else
         await tryExecuteSQL(async () => await executeSQLCode(`CREATE TABLE IF NOT EXISTS "${key}"("key" TEXT PRIMARY KEY, "value" TEXT NOT NULL, "version" TEXT NOT NULL, "updateTime" INTEGER NOT NULL, "createTime" INTEGER NOT NULL)`), '数据存储空间连接失败');
@@ -1493,8 +1662,15 @@ function getDataStorageInCache(storageKey) {
  * @param {string} key 需要设置的键
  * @param {string} value 需要设置的值
  */
-function setData(storageKey, key, value) {
-    storageQueue.push({ type: "set", storageKey, key, value });
+async function setData(storageKey, key, value) {
+    startStorageQueue();
+    /**@type {StorageTask} */
+    var task = { type: "set", storageKey, key, value }, dataStorage = await getDataStorage(storageKey);
+    storageQueue.set(JSON.stringify(task), task);
+    var data = await dataStorage.get(key) || {};
+    dataStorage.data.set(key, {
+        key, value, updateTime: Date.now(), createTime: data.createTime || Date.now(), version: data.version || ""
+    });
 }
 /**
  * 查找一个键值对
@@ -1504,7 +1680,13 @@ function setData(storageKey, key, value) {
  * @returns {ReturnValue}
  */
 async function getData(storageKey, key) {
-    await getDataStorage(storageKey).get(key);
+    var dataStorage = await getDataStorage(storageKey), result;
+    try {
+        result = await dataStorage.get(key);
+    } catch (error) {
+        output('warn', error);
+    }
+    return result;
 }
 /**
  * 批量获取键值对  
@@ -1514,7 +1696,8 @@ async function getData(storageKey, key) {
  * @returns {QueryList}
  */
 async function listData(storageKey, options) {
-    return await getDataStorage(storageKey).list(options);
+    var dataStorage = await getDataStorage(storageKey);
+    return dataStorage.list(options);
 }
 /**
  * 删除表中的键值对
@@ -1523,7 +1706,10 @@ async function listData(storageKey, options) {
  * @param {string} key 指定的键
  */
 function removeData(storageKey, key) {
-    storageQueue.push({ type: "set", storageKey, key });
+    startStorageQueue();
+    /**@type {StorageTask} */
+    var task = { type: "remove", storageKey, key, value };
+    storageQueue.set(JSON.stringify(task), task);
 }
 /**
  * 删除指定数据存储空间  
@@ -1536,47 +1722,83 @@ async function dropDataStorage(storageKey) {
 }
 /**
  * 创建游戏循环  
- * 单次循环会在执行完成后再次开始  
+ * 需要手动运行
  * @param {string} name 循环名称
- * @param {onTickEventCallBack} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数
+ * @param {EventCallBack} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数
  */
-async function createGameLoop(name, callbackfn) {
-    output('log', '创建游戏循环', name);
-    var time = 1;
-    gameLoops[name] = true;
-    while (true) {
-        if (gameLoops[name])
-            await callbackfn(time++);
-        else if (gameLoops[name] == undefined)
-            break;
+function createGameLoop(name, callbackfn) {
+    if (gameLoops.has(name)) {
+        output('error', name, '循环已存在');
+        return;
     }
+    output('log', '创建游戏循环', name);
+    gameLoops.set(name, { statu: "stop", init: callbackfn, times: 0 });
 }
 /**
- * 暂停游戏循环
+ * 创建并运行游戏循环  
  * @param {string} name 循环名称
+ * @param {EventCallBack | undefined} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数。如果为空且循环存在，则继续循环
  */
-function pauseGameLoop(name) {
-    output('log', '暂停游戏循环', name);
-    gameLoops[name] = false;
+async function startGameLoop(name, callbackfn = undefined) {
+    if (gameLoops[name] &amp;&amp; callbackfn === undefined) {
+        await runGameLoop(name);
+        return;
+    }
+    output('log', '创建并运行游戏循环', name);
+    createGameLoop(name, callbackfn);
+    await runGameLoop(name);
 }
 /**
- * 继续游戏循环
- * @param {string} name 循环名称
- */
-function continueGameLoop(name) {
-    output('log', '继续游戏循环', name);
-    if (gameLoops[name] != undefined)
-        gameLoops[name] = true;
-    else
-        output('warn', '未知游戏循环', name);
-}
-/**
- * 停止游戏循环，之后不能再对该循环进行操作
+ * 停止游戏循环
  * @param {string} name 循环名称
  */
 function stopGameLoop(name) {
     output('log', '停止游戏循环', name);
-    delete gameLoops[name];
+    gameLoops.get(name).statu = 'awaiting_stop';
+}
+/**
+ * 运行游戏循环
+ * @param {string} name 循环名称
+ */
+async function runGameLoop(name) {
+    if (!gameLoops.has(name)) {
+        output('error', '未知游戏循环', name);
+        return;
+    }
+    var gameLoop = gameLoops.get(name);
+    if (gameLoop.statu != 'stop') {
+        if (name != '$StorageQueue')
+            output('warn', '该游戏循环已经在运行中或等待删除/停止，当前状态：', gameLoop.statu);
+        return;
+    }
+    output('log', '运行游戏循环', name);
+    gameLoop.statu = 'running';
+    while (true) {
+        if (!gameLoops.has(name) &amp;&amp; gameLoop.statu != 'running')
+            break;
+        await gameLoop.init(++gameLoop.times);
+    }
+    if (gameLoops.has(name))
+        if (gameLoop.statu == 'awaiting_deletion')
+            gameLoops.delete(name);
+        else if (gameLoop.statu == 'awaiting_stop')
+            gameLoop.statu == 'stop';
+}
+/**
+ * 删除游戏循环，之后不能再对该循环进行操作  
+ * 如果循环正在运行中，那么循环结束后才会删除
+ * @param {string} name 循环名称
+ */
+function deleteGameLoop(name) {
+    if (['$StorageQueue'].includes(name))
+        throwError('受保护的GameLoop：', name);
+    output('log', '停止游戏循环', name);
+    var gameLoop = gameLoops.get(name);
+    if (gameLoop.statu == 'stop') {
+        gameLoops.delete(name);
+        return;
+    }
+    gameLoop.statu = 'awaiting_deletion';
 }
 /**
  * 注册一个事件
@@ -1600,7 +1822,7 @@ function registerEvent(name) {
  *     output("log", '触发事件');
  * });
  * @param {string} eventName 事件名称
- * @param {eventCallBack} handler 事件监听器
+ * @param {EventCallBack} handler 事件监听器
  */
 function addEventHandler(eventName, handler) {
     if (eventName == 'onTick') {
@@ -1688,7 +1910,7 @@ function preprocess(callbackfn, priority) {
  */
 async function planningOnTickEvents() {
     output('log', '开始规划onTick……');
-    onTickHandlers = new Array(nullishCoalescing(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], timeSpent: 0 });
+    onTickHandlers = new Array(nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], timeSpent: 0 });
     for (let event of events.onTick) { //先运行一次，记录时间
         await event.run();
         onTickHandlers.sort((a, b) => a.timeSpent &lt; b.timeSpent);
@@ -1721,16 +1943,15 @@ async function start() {
         onTickHandlers[tick].events.forEach(async token => {
             token.run();
         });
-        tick = (tick + 1) % onTickCycleLength;
-        if (tick &lt;= 0) {
+        tick = (tick + 1) % nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16);
+        if (tick &lt;= 0)
             output('log', '开始新的onTick周期', ++cycleNumber);
-            if (cycleNumber % nullishCoalescing(CONFIG.EasyBox3Lib.planningOnTickFrequency, 4)) {
-                planningOnTickEvents();
-            }
-        }
     });
-    for (let [userKey, entity] of players)
+    output('log', '开始处理玩家', '玩家数量：', players.size)
+    for (let [userKey, entity] of players) {
+        output('log', '处理玩家', userKey);
         await triggerEvent('onPlayerJoin', { entity });
+    }
     players.clear();
     started = true;
     output('log', '地图启动完成');
@@ -1770,13 +1991,23 @@ function registerItem(item) {
  * 只有启动了Storage Queue，`setData`和`removeData`的任务才会被处理
  */
 function startStorageQueue() {
-    storageQueueIntervalID = setInterval(async () => {
-        if (storageQueue.length &lt;= 0)
+    if (storageQueueStarted)
+        return;
+    storageQueueStarted = true;
+    output('log', '启动Storage Queue');
+    if (gameLoops.has('$StorageQueue')) {
+        runGameLoop('$StorageQueue');
+        return;
+    }
+    startGameLoop('$StorageQueue', async () => {
+        if (storageQueue.size &lt;= 0) {
+            stopStorageQueue();
             return;
-        var task = storageQueue[0];
+        }
+        var task = storageQueue.values().next().value;
         await tryExecuteSQL(async () => {
             var dataStorage = await getDataStorage(task.storageKey);
-            switch(task.type){
+            switch (task.type) {
                 case "set":
                     await dataStorage.set(task.key, task.value);
                     break;
@@ -1787,8 +2018,8 @@ function startStorageQueue() {
                     output("warn", '未知的type', task.type, `\n数据：${task.storageKey}.${task.key}=${task.value}`);
             }
         });
-        storageQueue.splice(0, 1);
-    }, 256);
+        storageQueue.delete(storageQueue.keys().next().value);
+    });
     output("log", '已启动Storage Queue');
 }
 /**
@@ -1796,10 +2027,23 @@ function startStorageQueue() {
  * `setData`和`removeData`仍会将任务放到队列中，但不会再次处理，除非运行`startStorageQueue`
  */
 function stopStorageQueue() {
-    if (typeof storageQueueIntervalID != "number")
-        throwError('未启动Storage Queue')
-    clearInterval(storageQueueIntervalID);
+    if (!storageQueueStarted)
+        return;
+    storageQueueStarted = false;
+    stopGameLoop('$StorageQueue');
     output("log", '已停止Storage Queue\n若要重新启动Storage Queue，请使用startStorageQueue方法');
+}
+/**
+ * 翻译报错信息
+ * @param {string} message 报错内容
+ * @returns {string} 翻译后的信息
+ */
+function translationError(msg) {
+    var message = msg;
+    for (let tr of TRANSLATION_REGEXPS) {
+        message = message.replaceAll(...tr);
+    }
+    return message;
 }
 const EasyBox3Lib = {
     copyObject,
@@ -1835,9 +2079,10 @@ const EasyBox3Lib = {
         stopStorageQueue
     },
     createGameLoop,
+    startGameLoop,
+    deleteGameLoop,
     stopGameLoop,
-    pauseGameLoop,
-    continueGameLoop,
+    runGameLoop,
     onTick,
     preprocess,
     start,
@@ -1852,20 +2097,21 @@ const EasyBox3Lib = {
     Thing,
     ThingStorage,
     throwError,
+    translationError,
     TIME,
     started,
-    version: [0, 0, 10]
+    version: [0, 1, 0]
 };
-if (nullishCoalescing(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
+if (nullc(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
     Object.assign(global, EasyBox3Lib);
     output('log', '已成功暴露到全局');
 }
 if (CONFIG.EasyBox3Lib.enableOnPlayerJoin) {
     world.onPlayerJoin(({ entity }) => {
         if (started)
-            players.set(entity.player.userKey, entity);
-        else
             triggerEvent('onPlayerJoin', { entity });
+        else
+            players.set(entity.player.userKey, entity);
         output("log", '进入玩家', entity);
     });
 }
