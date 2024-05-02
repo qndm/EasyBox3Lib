@@ -4,7 +4,7 @@
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.1.0
+ * @version 0.1.1
  * @author qndm Nomen
  * @license MIT
  */
@@ -147,6 +147,13 @@ function nullc(a, b) {
  * 储存物品的格子
  * @typedef {?Thing} Tartan
  * @private
+ */
+/**
+ * 物品被使用回调函数
+ * @callback ThingUseCallback
+ * @async
+ * @param {Box3Entity} entity 使用物品的玩家
+ * @param {Thing} thing 使用的物品
  */
 const
     /**
@@ -374,7 +381,7 @@ class DataStorage {
             }
             output('log', '使用Pro数据库');
             let result = await this.gameDataStorage.get(key);
-            output('log', '读取完成，数据：', JSON.stringify(result))
+            output('log', '读取完成，key：', key)
             return result;
         }
     }
@@ -542,16 +549,20 @@ class Menu {
     /**
      * 当该菜单被打开时执行的操作
      * @param {dialogCallBack} handler 当该菜单被打开时执行的操作。
+     * @return {Menu} 该菜单本身
      */
     onOpen(handler) {
         this.handler.onOpen = handler;
+        return this;
     }
     /**
      * 当该菜单被关闭时执行的操作
      * @param {dialogCallBack} handler 当该菜单被关闭时执行的操作。
+     * @return {Menu} 该菜单本身
      */
     onClose(handler) {
         this.handler.onClose = handler;
+        return this;
     }
 }
 class Pages {
@@ -826,6 +837,21 @@ function Item(id, name = id, maxStackSize = Infinity, tags = [], data = {}, wear
      * 该物品打开对话框时，物品的默认对话框正文内容
      */
     this.content = content;
+    /**
+     * 当物品被使用时，调用的函数
+     * @type {ThingUseCallback}
+     */
+    this.onUse = async () => {};
+    /**
+     * 当物品被穿戴时，调用的函数
+     * @type {ThingUseCallback}
+     */
+    this.onWear = async () => {};
+    /**
+     * 当物品被卸下时，调用的函数
+     * @type {ThingUseCallback}
+     */
+    this.onDiswear = async () => {};
 }
 /**
  * 一个（或一组）物品
@@ -1062,6 +1088,26 @@ class Thing {
             typeof this.item.content == "function" ? content(this) : content
         ), options, otherOptions);
     }
+    /**
+     * 使用/穿戴/卸下物品
+     * @param {Box3Entity} entity 使用物品的玩家
+     * @returns {any} `onUse`/`onWear`/`onDiswear`函数返回的值
+     */
+    async use(entity){
+        if (!item.wearable) {
+            entity.player.itemList.takeOut(itemIndex, 1);
+            return await this.item.onUse(entity, this);
+        }
+        if(this.wearing){
+            this.wearing = false;
+            this.updateWear(entity);
+            return await this.item.onDiswear(entity, this);
+        } else {
+            this.wearing = true;
+            this.updateWear(entity);
+            return await this.item.onWear(entity, this);
+        }
+    }
 }
 /**
  * 物品储存空间  
@@ -1132,7 +1178,7 @@ class ThingStorage {
         /**@type {Thing[]} */
         var things = Thing.from(copyObject(source)), surplus = [];
         for (let thing of things) {
-            if (thing === null || thing.stackSize &lt;= 0)
+            if (thing === null || thing.stackSize &lt;= 0 || thing === undefined)
                 continue;
             for (let i = 0; i &lt; this.size &amp;&amp; thing.stackSize &lt;= 0; i++) {
                 thing = this.putTo(thing, i);
@@ -1244,7 +1290,10 @@ class ThingStorage {
         var arr = [];
         this.querySelectorAll('!null').forEach(index => arr.push([index, this.thingStorage[index].name]));
         var result = await selectDialog(entity, title, content, arr.map(x => x[1]), otherOptions);
-        return arr[result.index][0];
+        if(result)
+            return arr[result.index][0];
+        else
+            return;
     }
     /**
      * 将物品储存空间转换成字符串  
@@ -1261,8 +1310,10 @@ class ThingStorage {
      * @param {number} stackSizeMultiplier 堆叠数量倍率。默认为1
      */
     static fromString(str, size, stackSizeMultiplier = 1) {
-        var thingStorage = new ThingStorage(size, stackSizeMultiplier), things = str.split(',').filter(thing => thing).map(thing => Thing.fromString(thing));
-        thingStorage.putInto(...things);
+        var thingStorage = new ThingStorage(size, stackSizeMultiplier),
+            things = (str ? str.split(',') : []).filter(thing => thing).map(thing => Thing.fromString(thing));
+        if (things.length)
+            thingStorage.putInto(...things);
         return thingStorage;
     }
 }
@@ -1663,14 +1714,14 @@ function getDataStorageInCache(storageKey) {
  * @param {string} value 需要设置的值
  */
 async function setData(storageKey, key, value) {
-    startStorageQueue();
     /**@type {StorageTask} */
     var task = { type: "set", storageKey, key, value }, dataStorage = await getDataStorage(storageKey);
-    storageQueue.set(JSON.stringify(task), task);
+    storageQueue.set(`set-${storageKey}:${key}`, task);
     var data = await dataStorage.get(key) || {};
     dataStorage.data.set(key, {
         key, value, updateTime: Date.now(), createTime: data.createTime || Date.now(), version: data.version || ""
     });
+    startStorageQueue();
 }
 /**
  * 查找一个键值对
@@ -1706,10 +1757,10 @@ async function listData(storageKey, options) {
  * @param {string} key 指定的键
  */
 function removeData(storageKey, key) {
-    startStorageQueue();
     /**@type {StorageTask} */
     var task = { type: "remove", storageKey, key, value };
-    storageQueue.set(JSON.stringify(task), task);
+    storageQueue.set(`remove-${storageKey}:${key}`, task);
+    startStorageQueue();
 }
 /**
  * 删除指定数据存储空间  
@@ -1744,7 +1795,6 @@ async function startGameLoop(name, callbackfn = undefined) {
         await runGameLoop(name);
         return;
     }
-    output('log', '创建并运行游戏循环', name);
     createGameLoop(name, callbackfn);
     await runGameLoop(name);
 }
@@ -1774,7 +1824,9 @@ async function runGameLoop(name) {
     output('log', '运行游戏循环', name);
     gameLoop.statu = 'running';
     while (true) {
-        if (!gameLoops.has(name) &amp;&amp; gameLoop.statu != 'running')
+        gameLoop = gameLoops.get(name);
+        output("log", '[LOG][GAMELOOP]', name, gameLoop.statu);
+        if (!gameLoops.has(name) || gameLoop.statu != 'running')
             break;
         await gameLoop.init(++gameLoop.times);
     }
@@ -1944,7 +1996,7 @@ async function start() {
             token.run();
         });
         tick = (tick + 1) % nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16);
-        if (tick &lt;= 0)
+        if (tick &lt;= 0 &amp;&amp; nullc(CONFIG.EasyBox3Lib.debug, false))
             output('log', '开始新的onTick周期', ++cycleNumber);
     });
     output('log', '开始处理玩家', '玩家数量：', players.size)
@@ -1993,18 +2045,19 @@ function registerItem(item) {
 function startStorageQueue() {
     if (storageQueueStarted)
         return;
-    storageQueueStarted = true;
     output('log', '启动Storage Queue');
     if (gameLoops.has('$StorageQueue')) {
         runGameLoop('$StorageQueue');
         return;
     }
     startGameLoop('$StorageQueue', async () => {
+        storageQueueStarted = true;
         if (storageQueue.size &lt;= 0) {
+            output("log", '无任务，停止Storage Queue');
             stopStorageQueue();
             return;
         }
-        var task = storageQueue.values().next().value;
+        var task = storageQueue.values().next().value, taskId = storageQueue.keys().next().value;
         await tryExecuteSQL(async () => {
             var dataStorage = await getDataStorage(task.storageKey);
             switch (task.type) {
@@ -2018,7 +2071,8 @@ function startStorageQueue() {
                     output("warn", '未知的type', task.type, `\n数据：${task.storageKey}.${task.key}=${task.value}`);
             }
         });
-        storageQueue.delete(storageQueue.keys().next().value);
+        storageQueue.delete(taskId);
+        output("log", 'Storage Queue完成任务', taskId, '还剩', storageQueue.size, '个任务');
     });
     output("log", '已启动Storage Queue');
 }
@@ -2027,11 +2081,13 @@ function startStorageQueue() {
  * `setData`和`removeData`仍会将任务放到队列中，但不会再次处理，除非运行`startStorageQueue`
  */
 function stopStorageQueue() {
-    if (!storageQueueStarted)
+    if (!storageQueueStarted) {
+        output("warn", 'Storage Queue未启动，无法停止');
         return;
+    }
     storageQueueStarted = false;
     stopGameLoop('$StorageQueue');
-    output("log", '已停止Storage Queue\n若要重新启动Storage Queue，请使用startStorageQueue方法');
+    output("log", '已停止Storage Queue');
 }
 /**
  * 翻译报错信息
@@ -2100,7 +2156,7 @@ const EasyBox3Lib = {
     translationError,
     TIME,
     started,
-    version: [0, 1, 0]
+    version: [0, 1, 1]
 };
 if (nullc(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
     Object.assign(global, EasyBox3Lib);
@@ -2112,7 +2168,7 @@ if (CONFIG.EasyBox3Lib.enableOnPlayerJoin) {
             triggerEvent('onPlayerJoin', { entity });
         else
             players.set(entity.player.userKey, entity);
-        output("log", '进入玩家', entity);
+        output("log", '进入玩家', entity.player.name);
     });
 }
 /**
