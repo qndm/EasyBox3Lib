@@ -1,5 +1,11 @@
 # 版本 & 更新日志
 ## Beta
+### 0.1.1
+【重要】修复 `Storage Queue` bug  
+【重要】 修复 `gameLoop` bug  
+优化`Storage Queue`中`Map`的`key`  
+新增`Thing.use`方法  
+新增`Item.onUse`、`Item.onWear`、`Item.onDiswear`属性
 ### 0.1.0
 修复若干bug
 
