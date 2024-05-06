@@ -2,7 +2,7 @@
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.1.1
+ * @version 0.1.2
  * @author qndm Nomen
  * @license MIT
  */
@@ -10,6 +10,11 @@
  * 配置文件
  */
 const CONFIG = require('./config.js');
+
+if(global.EasyBox3Lib){
+    throw '请勿重复加载 EasyBox3Lib';
+}
+
 if (!CONFIG) {
     console.warn('警告：未找到配置文件\n请检查config.js文件');
 } else {
@@ -116,7 +121,7 @@ function nullc(a, b) {
  * 物品（`Thing`）转换为`string`的结果  
  * 格式为：
  * ```text
- * i[id](|n[name])|s[stackSize]|d[data]
+ * i[id](|n[name])|s[stackSize]|d[data](|w)
  * ```
  * 例如：  
  * itest1|n测试物品1|s114514|d{}  
@@ -472,7 +477,8 @@ class DataStorage {
             output("error", '暂不支持Pro地图');
         else {
             output('warn', '删除表', this.key);
-            delete this.data;
+            if(CONFIG.EasyBox3Lib.enableSQLCache) 
+                delete this.data;
             await tryExecuteSQL(async () => await executeSQLCode(`DROP TABLE ${this.key}`));
         }
     }
@@ -685,31 +691,23 @@ class OnTickHandlerToken extends EventHandlerToken {
     /**
      * 定义一个`onTick`监听器事件
      * @param {onTickEventCallBack} handler 监听器
-     * @param {number} tps 每周期运行多少次，最大为`config.EasyBox3Lib.onTickCycleLength`，最小为`1`
+     * @param {number} tpc 每周期运行多少次，最大为`config.EasyBox3Lib.onTickCycleLength`，最小为`1`
+     * @param {number} performanceImpact 性能影响程度
      * @param {boolean} enforcement 是否强制运行，如果为true，则会在每个tick都运行
-     * @param {boolean} automaticTps 是否自动调整tps
      */
-    constructor(handler, tps, enforcement = false, automaticTps = false) {
+    constructor(handler, tpc, performanceImpact = 1, enforcement = false) {
         super(handler);
-        this.tps = Math.max(Math.min(tps, nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)), 1);
+        this.tpc = Math.max(Math.min(tpc, nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)), 1);
         this.enforcement = enforcement;
-        this.automaticTps = automaticTps;
-        this.timeSpent = TIME.SECOND / tps;
+        this.performanceImpact = performanceImpact;
     }
     async run() {
         if (this.statu == STATUS.NOT_RUNNING)
             return;
         if (this.enforcement || this.statu == STATUS.FREE) {
-            var startTime = Date.now();
             this.statu = STATUS.RUNNING;
             await this.handler({ tick: world.currentTick });
             this.statu = STATUS.FREE;
-            if (this.automaticTps) {
-                var timeSpent = Date.now() - startTime;
-                this.timeSpent += timeSpent;
-                this.timeSpent >>= 2;
-                this.tps = TIME.SECOND / this.timeSpent;
-            }
         }
     }
 }
@@ -782,7 +780,7 @@ class EntityGroup {
 /**
  * 定义一种物品
  * @class
- * @param {string} id 该物品的id，除了字母、数字、下划线以外的字符会被忽略
+ * @param {string} id 该物品的id
  * @param {string} name 该物品的显示名称，默认和id相同
  * @param {string} mesh 该物品的模型。如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
  * @param {number} maxStackSize 该物品的最大堆叠数量，默认为`Infinity`。最小值为`1`。当`data`不为空对象时，为`1`.
@@ -839,17 +837,17 @@ function Item(id, name = id, maxStackSize = Infinity, tags = [], data = {}, wear
      * 当物品被使用时，调用的函数
      * @type {ThingUseCallback}
      */
-    this.onUse = async () => {};
+    this.onUse = async () => { };
     /**
      * 当物品被穿戴时，调用的函数
      * @type {ThingUseCallback}
      */
-    this.onWear = async () => {};
+    this.onWear = async () => { };
     /**
      * 当物品被卸下时，调用的函数
      * @type {ThingUseCallback}
      */
-    this.onDiswear = async () => {};
+    this.onDiswear = async () => { };
 }
 /**
  * 一个（或一组）物品
@@ -1091,12 +1089,12 @@ class Thing {
      * @param {Box3Entity} entity 使用物品的玩家
      * @returns {any} `onUse`/`onWear`/`onDiswear`函数返回的值
      */
-    async use(entity){
+    async use(entity) {
         if (!item.wearable) {
             entity.player.itemList.takeOut(itemIndex, 1);
             return await this.item.onUse(entity, this);
         }
-        if(this.wearing){
+        if (this.wearing) {
             this.wearing = false;
             this.updateWear(entity);
             return await this.item.onDiswear(entity, this);
@@ -1288,7 +1286,7 @@ class ThingStorage {
         var arr = [];
         this.querySelectorAll('!null').forEach(index => arr.push([index, this.thingStorage[index].name]));
         var result = await selectDialog(entity, title, content, arr.map(x => x[1]), otherOptions);
-        if(result)
+        if (result)
             return arr[result.index][0];
         else
             return;
@@ -1706,7 +1704,9 @@ function getDataStorageInCache(storageKey) {
 }
 /**
  * 设置一个键值对  
- * 与`DataStorage.set`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中，所以不是异步函数
+ * 与`DataStorage.set`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中  
+ * 建议添加 `await`
+ * @async
  * @param {string} storageKey 指定空间的名称
  * @param {string} key 需要设置的键
  * @param {string} value 需要设置的值
@@ -1716,7 +1716,7 @@ async function setData(storageKey, key, value) {
     var task = { type: "set", storageKey, key, value }, dataStorage = await getDataStorage(storageKey);
     storageQueue.set(`set-${storageKey}:${key}`, task);
     var data = await dataStorage.get(key) || {};
-    dataStorage.data.set(key, {
+    if(CONFIG.EasyBox3Lib.enableSQLCache) dataStorage.data.set(key, {
         key, value, updateTime: Date.now(), createTime: data.createTime || Date.now(), version: data.version || ""
     });
     startStorageQueue();
@@ -1750,14 +1750,18 @@ async function listData(storageKey, options) {
 }
 /**
  * 删除表中的键值对
- * 与`DataStorage.remove`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中，所以不是异步函数
+ * 与`DataStorage.remove`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中  
+ * 建议添加 `await`
+ * @async
  * @param {string} storageKey 指定空间的名称
  * @param {string} key 指定的键
  */
-function removeData(storageKey, key) {
+async function removeData(storageKey, key) {
     /**@type {StorageTask} */
-    var task = { type: "remove", storageKey, key, value };
+    var task = { type: "remove", storageKey, key, value }, dataStorage = await getDataStorage(storageKey);
     storageQueue.set(`remove-${storageKey}:${key}`, task);
+    if(CONFIG.EasyBox3Lib.enableSQLCache) 
+        dataStorage.data.delete(key);
     startStorageQueue();
 }
 /**
@@ -1904,7 +1908,8 @@ function addEventHandler(eventName, handler) {
  * @param {object} data 监听器使用的参数
  */
 async function triggerEvent(eventName, data) {
-    output('log', '触发事件', eventName);
+    if (nullc(CONFIG.EasyBox3Lib.debug, false)) 
+        output('log', '触发事件', eventName);
     for (let event of events[eventName])
         await event.run(data);
 }
@@ -1926,13 +1931,13 @@ function removeEvent(eventName) {
  *     output("log", 'tick', tick);
  * }, 16);
  * @param {onTickEventCallBack} handler 要执行的函数
- * @param {number} tps 每个循环的执行次数
+ * @param {number} tpc 每个循环的执行次数（times per cycles）
+ * @param {number} performanceImpact 性能影响程度
  * @param {boolean} enforcement 如果为false，则如果上一次未执行完，则不会执行
- * @param {boolean} automaticTps 是否自动调整tps
  * @returns {OnTickHandlerToken}
  */
-function onTick(handler, tps, enforcement = false, automaticTps = false) {
-    var event = new OnTickHandlerToken(handler, tps, enforcement, automaticTps);
+function onTick(handler, tpc, performanceImpact = 1, enforcement = false) {
+    var event = new OnTickHandlerToken(handler, tpc, performanceImpact, enforcement);
     events.onTick.push(event);
     return event;
 }
@@ -1953,24 +1958,22 @@ function onTick(handler, tps, enforcement = false, automaticTps = false) {
  */
 function preprocess(callbackfn, priority) {
     preprocessFunctions.push({ callbackfn, priority });
-    output('log', '注册函数成功');
+    if (CONFIG.EasyBox3Lib.debug)
+        output('log', '[LOG][PREPROCESS]', '注册预处理函数成功');
 }
 /**
  * 规划onTick事件
  */
 async function planningOnTickEvents() {
     output('log', '开始规划onTick……');
-    onTickHandlers = new Array(nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], timeSpent: 0 });
+    onTickHandlers = new Array(nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16)).fill({ events: [], performanceImpact: 0 });
     for (let event of events.onTick) { //先运行一次，记录时间
         await event.run();
-        onTickHandlers.sort((a, b) => a.timeSpent < b.timeSpent);
-        for (let i = 0; i < event.tps; i++) { //tps为1~16之间，且一个tick不能用两个相同的事件
+        onTickHandlers.sort((a, b) => a.performanceImpact < b.performanceImpact);
+        for (let i = 0; i < event.tpc; i++) { //tpc为1~16之间，且一个tick不能用两个相同的事件
             onTickHandlers[i].events.push(event);
-            onTickHandlers[i].timeSpent += event.timeSpent;
+            onTickHandlers[i].performanceImpact += event.performanceImpact;
         }
-    }
-    for (let index in onTickHandlers) {
-        output('log', 'tick', index, ':', onTickHandlers[index].timeSpent, 'ms');
     }
     output('log', 'onTick事件规划完成');
 }
@@ -1994,12 +1997,16 @@ async function start() {
             token.run();
         });
         tick = (tick + 1) % nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16);
-        if (tick <= 0 && nullc(CONFIG.EasyBox3Lib.debug, false))
-            output('log', '开始新的onTick周期', ++cycleNumber);
+        if (tick <= 0) {
+            ++cycleNumber;
+            if (nullc(CONFIG.EasyBox3Lib.debug, false)) 
+                output('log', '开始新的onTick周期', cycleNumber);
+        }
     });
     output('log', '开始处理玩家', '玩家数量：', players.size)
     for (let [userKey, entity] of players) {
-        output('log', '处理玩家', userKey);
+        if (nullc(CONFIG.EasyBox3Lib.debug, false)) 
+            output('log', '处理玩家', userKey);
         await triggerEvent('onPlayerJoin', { entity });
     }
     players.clear();
@@ -2153,9 +2160,14 @@ const EasyBox3Lib = {
     throwError,
     translationError,
     TIME,
-    started,
-    version: [0, 1, 1]
+    version: [0, 1, 2]
 };
+Object.defineProperty(EasyBox3Lib, 'started', {
+    get: () => started,
+    set: () => {
+        output("error", 'EasyBox3Lib.started 是只读属性，无法写入');
+    }
+});
 if (nullc(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
     Object.assign(global, EasyBox3Lib);
     output('log', '已成功暴露到全局');

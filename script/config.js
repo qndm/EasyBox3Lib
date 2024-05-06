@@ -40,20 +40,21 @@ module.exports = {
      */
     EasyBox3Lib: {
         /**
-         * 如果是在编辑端运行，请启用本选项
-         * @default true
+         * 启用调试模式  
+         * 非必要建议不要开启，否则可能造成控制台刷屏
+         * @default false
          */
-        debug: true,
+        debug: false,
         /**
-         * 是否自动将输出写入日志里，建议在debug为false的时候启用
+         * 是否自动将输出写入日志里，建议启用
          * @default true
          */
         automaticLoggingOfOutputToTheLog: true,
         /**
-         * 是否只记录警告和错误
+         * 日志是否只记录警告和错误
          * @default false
          */
-        logOnlyWarningsAndErrors: false,
+        logOnlyWarningsAndErrors: true,
         /**
          * 是否暴露到全局
          * @default false
@@ -108,9 +109,9 @@ module.exports = {
          * 启用SQL缓存，以加快读取速度  
          * 警告：如果直接使用`db.sql`或者`EasyBox3Lib.storage.executeSQLCode`方法来写入数据，可能会出现问题（读取时使用缓存会失效，即不起作用）  
          * 请确保使用了`DataStorage.set`、`DataStorage.update`、`DataStorage.remove`方法来写入数据
-         * @default false
+         * @default true
          */
-        enableSQLCache: false,
+        enableSQLCache: true,
         /**
          * 是否在Pro地图中
          */
@@ -124,7 +125,7 @@ module.exports = {
          * 获取代码执行函数时，要忽略的函数名称
          * @default ['eval', 'getTheCodeExecutionLocation', 'output']
          */
-        getFunctionNameBlackList: ['eval', 'getTheCodeExecutionLocation', 'output'],
+        getFunctionNameBlackList: ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL'],
         /**
          * onTick事件的每个周期的长度（单位：tick）
          * @default 16
@@ -152,10 +153,11 @@ module.exports = {
          * 如果为`true`，则会调用`world.onPlayerJoin`
          * @default false
          */
-        enableOnPlayerJoin: false,
+        enableOnPlayerJoin: true,
         /**
          * 是否启用自动翻译  
          * 如果为`true`，那么output和throwError的报错内容将会自动翻译成中文（日志仍为原文）
+         * @default false
          */
         enableAutoTranslation: false
     }
