@@ -54,7 +54,7 @@ module.exports = {
          * 日志是否只记录警告和错误
          * @default false
          */
-        logOnlyWarningsAndErrors: true,
+        logOnlyWarningsAndErrors: false,
         /**
          * 是否暴露到全局
          * @default false
@@ -123,9 +123,9 @@ module.exports = {
         getCodeExecutionLocationOnOutput: true,
         /**
          * 获取代码执行函数时，要忽略的函数名称
-         * @default ['eval', 'getTheCodeExecutionLocation', 'output']
+         * @default ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL', 'throwError']
          */
-        getFunctionNameBlackList: ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL'],
+        getFunctionNameBlackList: ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL', 'throwError'],
         /**
          * onTick事件的每个周期的长度（单位：tick）
          * @default 16
@@ -151,7 +151,7 @@ module.exports = {
         /**
          * 是否启用`onPlayerJoin`事件  
          * 如果为`true`，则会调用`world.onPlayerJoin`
-         * @default false
+         * @default true
          */
         enableOnPlayerJoin: true,
         /**

@@ -1,5 +1,14 @@
 # 版本 & 更新日志
 ## Beta
+### 0.1.3
+【重要】修复物品系统bug  
+修复`throwError`无法正确找到报错位置的bug  
+新增`Item.staticData`  
+修复`copyObject`的bug  
+`ThingStorage.dialog`支持使用选择器  
+`throwError`支持查看全部堆栈  
+物品系统中各种奇怪的bug
+
 ### 0.1.2
 【重要】修复`setData`在关闭缓存时报错的bug  
 `setData`、`removeData`为异步函数了  
@@ -90,7 +99,7 @@
 ### 0.0.6
 `EasyBox3Lib.game.xxx` -> `EasyBox3Lib.xxx`  
 开了个实体组的坑  
-完全重写了数据库（但也完全没测试）
+完全重写了数据库~~（但也完全没测试）~~
 - 现在使用键值对来储存数据
 - `sql` -> `storage`
 - 移除除了`executeSQLCode`的所有方法

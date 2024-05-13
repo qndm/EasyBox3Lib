@@ -2,7 +2,7 @@
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.1.2
+ * @version 0.1.3
  * @author qndm Nomen
  * @license MIT
  */
@@ -11,7 +11,7 @@
  */
 const CONFIG = require('./config.js');
 
-if(global.EasyBox3Lib){
+if (global.EasyBox3Lib) {
     throw '请勿重复加载 EasyBox3Lib';
 }
 
@@ -27,6 +27,8 @@ if (!CONFIG) {
         })
     }
 }
+const DEBUGMODE = nullc(CONFIG.EasyBox3Lib.debug, false);
+const BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL', 'throwError']);
 /**
  * 空值合并
  * @param {*} a 
@@ -98,7 +100,7 @@ function nullc(a, b) {
  * 如果为`null`，则检测物品是否为`null`；前缀为`!`时，返回所有非`null`物品  
  * 选择器前后不能有其他字符  
  * `id`的优先级比`tag`高  
- * 所有非法字符将会被忽略
+ * 不允许有任何无意义的空格和非法字符
  * @typedef {string} ItemSelectorString
  */
 
@@ -477,7 +479,7 @@ class DataStorage {
             output("error", '暂不支持Pro地图');
         else {
             output('warn', '删除表', this.key);
-            if(CONFIG.EasyBox3Lib.enableSQLCache) 
+            if (CONFIG.EasyBox3Lib.enableSQLCache)
                 delete this.data;
             await tryExecuteSQL(async () => await executeSQLCode(`DROP TABLE ${this.key}`));
         }
@@ -503,8 +505,10 @@ class Menu {
         this.previousLevelMenu = undefined;
         /**事件监听器 */
         this.handler = {
-            onOpen: (() => { }),
-            onClose: (() => { })
+            /**当该页被打开时执行的操作 @type {dialogCallBack[]}*/
+            onOpen: [],
+            /**当该菜单被关闭时执行的操作 @type {dialogCallBack[]}*/
+            onClose: []
         };
     }
     /**
@@ -535,16 +539,16 @@ class Menu {
      */
     async open(entity) {
         if (this.options.length <= 0) {
-            await this.handler.onOpen(entity, value);
+            await this.handler.onOpen.forEach(async callback => await callback(entity, value))
             return true;
         }
         var value = await selectDialog(entity, this.title, this.content, this.options.map(option => option.title));
         if (value) {
-            await this.handler.onOpen(entity, value);
+            await this.handler.onOpen.forEach(async callback => await callback(entity, value));
             await this.options[value.index].open(entity);
             return true;
         } else {
-            await this.handler.onClose(entity, value);
+            await this.handler.onClose.forEach(async callback => await callback(entity, value));
             if (this.previousLevelMenu) //打开上一级菜单
                 this.previousLevelMenu.open(entity);
             return false;
@@ -556,7 +560,7 @@ class Menu {
      * @return {Menu} 该菜单本身
      */
     onOpen(handler) {
-        this.handler.onOpen = handler;
+        this.handler.onOpen.push(handler);
         return this;
     }
     /**
@@ -565,7 +569,7 @@ class Menu {
      * @return {Menu} 该菜单本身
      */
     onClose(handler) {
-        this.handler.onClose = handler;
+        this.handler.onClose.push(handler);
         return this;
     }
 }
@@ -586,8 +590,10 @@ class Pages {
         this.page = 0;
         /**事件监听器 */
         this.handler = {
-            onOpen: (() => { }),
-            onClose: (() => { })
+            /**当该页被打开时执行的操作 @type {dialogCallBack[]}*/
+            onOpen: [],
+            /**当该菜单被关闭时执行的操作 @type {dialogCallBack[]}*/
+            onClose: []
         };
     }
     get isFirstPage() {
@@ -620,7 +626,7 @@ class Pages {
     async open(entity) {
         var value = await selectDialog(entity, this.title, this.contents[this.page], [this.isFirstPage ? '上一页' : '返回', this.isLastPage ? '关闭' : '下一页']);
         if (value) {
-            await this.handler.onOpen(entity, value);
+            await this.handler.onOpen.forEach(async callback => await callback(entity, value));
             switch (value.value) {
                 case '下一页':
                     this.nextPage();
@@ -633,23 +639,27 @@ class Pages {
             }
             return true;
         } else {
-            await this.handler.onClose(entity, value);
+            await this.handler.onClose.forEach(async callback => await callback(entity, value))
             return false;
         }
     }
     /**
      * 当该页被打开时执行的操作
      * @param {dialogCallBack} handler 当该页被打开时执行的操作。
+     * @returns {Pages} 自身
      */
     onOpen(handler) {
-        this.handler.onOpen = handler;
+        this.handler.onOpen.push(handler);
+        return this;
     }
     /**
      * 当该页被关闭时执行的操作
      * @param {dialogCallBack} handler 当该页被关闭时执行的操作。
+     * @returns {Pages} 自身
      */
     onClose(handler) {
-        this.handler.onClose = handler;
+        this.handler.onClose.push(handler);
+        return this;
     }
 }
 /**
@@ -777,77 +787,112 @@ class EntityGroup {
         this.position = position;
     }
 }
-/**
- * 定义一种物品
- * @class
- * @param {string} id 该物品的id
- * @param {string} name 该物品的显示名称，默认和id相同
- * @param {string} mesh 该物品的模型。如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
- * @param {number} maxStackSize 该物品的最大堆叠数量，默认为`Infinity`。最小值为`1`。当`data`不为空对象时，为`1`.
- * @param {string[]} tags 该物品的标签，除了字母、数字、下划线以外的字符会被忽略
- * @param {object} data 该物品的默认数据
- * @param {Box3Wearable | boolean} wearable 该实体是否可穿戴。如果可以穿戴，那么填入一个`Box3Wearable`，表示玩家穿戴的部件；如果填入`true`，代表该实体可以穿戴但是没有模型；填入`false`，表示该物品不可穿戴
- * @param {string | ThingDialogCallback} content 该物品打开对话框时，物品的默认对话框正文内容
- */
-function Item(id, name = id, maxStackSize = Infinity, tags = [], data = {}, wearable = undefined, mesh = '', content = undefined) {
+
+class Item {
     /**
-     * 该物品的id
-     * @type {string} 
+     * 定义一种物品
+     * @param {string} id 该物品的id
+     * @param {string} name 该物品的显示名称，默认和id相同
+     * @param {string} mesh 该物品的模型。如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
+     * @param {number} maxStackSize 该物品的最大堆叠数量，默认为`Infinity`。最小值为`1`。当`data`不为空对象时，为`1`.
+     * @param {string[]} tags 该物品的标签
+     * @param {object} data 该物品的默认数据
+     * @param {object} staticData 该物品的静态数据
+     * @param {Box3Wearable | boolean} wearable 该实体是否可穿戴。如果可以穿戴，那么填入一个`Box3Wearable`，表示玩家穿戴的部件；如果填入`true`，代表该实体可以穿戴但是没有模型；填入`false`，表示该物品不可穿戴
+     * @param {string | ThingDialogCallback} content 该物品打开对话框时，物品的默认对话框正文内容
      */
-    this.id = encodeURI(id);
-    /**
-     * 该物品的显示名称
-     * @type {string}
-     */
-    this.name = name;
-    /**
-     * 该物品的最大堆叠数量 
-     * @type {string}
-     */
-    this.maxStackSize = Math.max(Object.keys(data).length ? 1 : maxStackSize, 1);
-    /**
-     * 该物品的标签
-     * @type {string}
-     */
-    this.tags = tags.map(tag => encodeURI(tag));
-    /**
-     * 该物品的默认数据
-     * @type {string}
-     */
-    this.data = data;
-    /**
-     * 该物品的穿戴配件
-     * @type {Box3Wearable}
-     */
-    this.wearable = wearable;
-    /**
-     * 该物品的模型  
-     * 如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
-     * @type {string}
-     */
-    this.mesh = mesh;
-    if (!this.mesh && typeof this.wearable == "object" && this.mesh) {
-        this.mesh = this.wearable.mesh;
+    constructor(id, name = id, maxStackSize = Infinity, tags = [], data = {}, staticData = {}, wearable = undefined, mesh = '', content = undefined) {
+        /**
+         * 该物品的id
+         * @type {string} 
+         */
+        this.id = encodeURI(id);
+        /**
+         * 该物品的显示名称
+         * @type {string}
+         */
+        this.name = name;
+        /**
+         * 该物品的最大堆叠数量 
+         * @type {string}
+         */
+        this.maxStackSize = Math.max(Object.keys(data).length ? 1 : maxStackSize, 1);
+        /**
+         * 该物品的标签
+         * @type {string}
+         */
+        this.tags = tags.map(tag => encodeURI(tag));
+        /**
+         * 该物品的默认数据
+         * @type {string}
+         */
+        this.data = data;
+        /**
+         * 该物品的静态数据
+         * @type {string}
+         */
+        this.staticData = staticData;
+        /**
+         * 该物品的穿戴配件
+         * @type {Box3Wearable}
+         */
+        this.wearable = wearable;
+        /**
+         * 该物品的模型  
+         * 如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
+         * @type {string}
+         */
+        this.mesh = mesh;
+        if (!this.mesh && typeof this.wearable == "object" && this.mesh) {
+            this.mesh = this.wearable.mesh;
+        }
+        /**
+         * 该物品打开对话框时，物品的默认对话框正文内容
+         */
+        this.content = content;
+        /**
+         * 当物品被使用时，调用的函数
+         * @type {ThingUseCallback[]}
+         */
+        this._onUse = [];
+        /**
+         * 当物品被穿戴时，调用的函数
+         * @type {ThingUseCallback[]}
+         */
+        this._onWear = [];
+        /**
+         * 当物品被卸下时，调用的函数
+         * @type {ThingUseCallback[]}
+         */
+        this._onDiswear = [];
     }
     /**
-     * 该物品打开对话框时，物品的默认对话框正文内容
-     */
-    this.content = content;
-    /**
      * 当物品被使用时，调用的函数
-     * @type {ThingUseCallback}
+     * @param {ThingUseCallback} callback 监听器回调函数
+     * @returns {Item} 自身
      */
-    this.onUse = async () => { };
+    onUse(callback) {
+        this._onUse.push(callback);
+        return this;
+    }
     /**
      * 当物品被穿戴时，调用的函数
-     * @type {ThingUseCallback}
+     * @param {ThingUseCallback} callback 监听器回调函数
+     * @returns {Item} 自身
      */
-    this.onWear = async () => { };
+    onWear(callback) {
+        this._onWear.push(callback);
+        return this;
+    }
     /**
      * 当物品被卸下时，调用的函数
-     * @type {ThingUseCallback}
+     * @param {ThingUseCallback} callback 监听器回调函数
+     * @returns {Item} 自身
      */
-    this.onDiswear = async () => { };
+    onDiswear(callback) {
+        this._onDiswear.push(callback);
+        return this;
+    }
 }
 /**
  * 一个（或一组）物品
@@ -860,10 +905,12 @@ class Thing {
      * @param {object} data 该物品的数据
      */
     constructor(id, stackSize = 1, data = {}) {
-        if (!itemRegistry.has(id)) {
-            throwError('未注册的物品', id);
+        if (DEBUGMODE)
+            output('log', '创建物品', id, '*', stackSize, 'data: ', JSON.stringify(data));
+        if (!itemRegistry.has(encodeURI(id))) {
+            throwError('[THING] 未注册的物品：', id, '编码：', encodeURI(id));
         }
-        var item = itemRegistry.get(id);
+        var item = itemRegistry.get(encodeURI(id));
         /**物品id @type {string} */
         this.id = encodeURI(id);
         /**最大堆叠数量 @type {number} */
@@ -883,6 +930,9 @@ class Thing {
      */
     get item() {
         return itemRegistry.get(this.id);
+    }
+    get staticData() {
+        return this.item.staticData;
     }
     /**
      * 该物品的标签
@@ -993,7 +1043,10 @@ class Thing {
                 not = true;
                 index++;
             }
-            test = thing === null ? selector.substring(index) == 'null' : ((selector[index] == '#') ? (thing.id == selector.substring(index + 1)) : (thing.tags.includes(selector.substring(index + 1))));
+            test = (thing === null || thing === undefined) ? selector.substring(index) == 'null' :
+                ((selector[index] == '#') ?
+                    (thing.id == encodeURI(selector.substring(index + 1))) :
+                    (thing.tags.includes(encodeURI(selector.substring(index + 1)))));
             test ^= not;//虽然是number类型，不过无所谓了（）
             if (test)
                 result = true;
@@ -1009,7 +1062,7 @@ class Thing {
      * @returns {Thing}
      */
     static from(source) {
-        return new Thing(source.id, source.stackingNumber, source.data);
+        return new Thing(decodeURI(source.id), source.stackingNumber, copyObject(source.data));
     }
     /**
      * 为该物品创建对应的实体
@@ -1061,13 +1114,13 @@ class Thing {
                     break;
             }
         }
-        if (itemRegistry.has(id))
+        if (!itemRegistry.has(id))
             throwError('未知的物品id', id);
         if (!name)
             name = itemRegistry.get(id).name;
-        var thing = new Thing(id, name, Math.max(Math.min(stackSize, itemRegistry.get(id).maxStackSize), 1), data);
+        var thing = new Thing(decodeURI(id), Math.max(Math.min(stackSize, itemRegistry.get(id)).maxStackSize, 1), data);
         thing.wearing = wearing;
-        thing.name = name;
+        thing.name = name || thing.name;
         return thing;
     }
     /**
@@ -1085,23 +1138,23 @@ class Thing {
         ), options, otherOptions);
     }
     /**
-     * 使用/穿戴/卸下物品
+     * 使用/穿戴/卸下物品  
+     * 需要自行使用`takeOut`取出`ThingStorage`（如果有）的物品
      * @param {Box3Entity} entity 使用物品的玩家
      * @returns {any} `onUse`/`onWear`/`onDiswear`函数返回的值
      */
     async use(entity) {
-        if (!item.wearable) {
-            entity.player.itemList.takeOut(itemIndex, 1);
-            return await this.item.onUse(entity, this);
+        if (!this.wearable) {
+            return await this.item._onUse.forEach(async callback => await callback(entity, this));
         }
         if (this.wearing) {
             this.wearing = false;
             this.updateWear(entity);
-            return await this.item.onDiswear(entity, this);
+            return await this.item._onDiswear.forEach(async callback => await callback(entity, this));
         } else {
             this.wearing = true;
             this.updateWear(entity);
-            return await this.item.onWear(entity, this);
+            return await this.item._onWear.forEach(async callback => await callback(entity, this));
         }
     }
 }
@@ -1139,14 +1192,17 @@ class ThingStorage {
             return source;
         }
         /**@type {Thing} */
-        var thing = Thing.from(copyObject(source)), maxStackSize = this.thingStorage[i].maxStackSize * this.stackSizeMultiplier;
+        var thing = Thing.from(source),
+            maxStackSize = thing.maxStackSize * this.stackSizeMultiplier;
         if (thing === null || thing.stackSize <= 0)
             return null;
         for (let itemSelector of this.blacklist)
             if (Thing.testSelector(source, itemSelector))
                 return thing;
         if (this.thingStorage[index] === null) {
-            this.thingStorage[index] = copyObject(thing);
+            if (DEBUGMODE)
+                output('log', '[LOG][THINGSTORAGE]', '槽位为空');
+            this.thingStorage[index] = Thing.from(thing);
             if (thing.stackSize > maxStackSize) {
                 this.thingStorage[index].stackSize = maxStackSize;
                 thing.stackSize -= maxStackSize;
@@ -1154,13 +1210,15 @@ class ThingStorage {
             }
             return null;
         }
-        if (this.thingStorage[i].id == thing.id && this.thingStorage[i].stackable && thing.stackable) {
-            if (this.thingStorage[i].stackSize + thing.stackSize <= maxStackSize) {
-                this.thingStorage[i].stackSize += thing.stackSize;
+        if (this.thingStorage[index].id == thing.id && this.thingStorage[index].stackable && thing.stackable) {
+            if (DEBUGMODE)
+                output('log', '[LOG][THINGSTORAGE]', '槽位不为空');
+            if (this.thingStorage[index].stackSize + thing.stackSize <= maxStackSize) {
+                this.thingStorage[index].stackSize += thing.stackSize;
                 return null;
             }
-            let x = maxStackSize - this.thingStorage[i].stackSize;
-            this.thingStorage[i].stackSize += x;
+            let x = maxStackSize - this.thingStorage[index].stackSize;
+            this.thingStorage[index].stackSize += x;
             thing.stackSize -= x;
         }
         return thing.stackSize > 0 ? thing : null;
@@ -1171,13 +1229,22 @@ class ThingStorage {
      * @returns {Thing[]} 剩余的物品
      */
     putInto(...source) {
+        if (DEBUGMODE)
+            output('log', '[LOG][THINGSTORAGE] 放入', source.length, '件物品');
         /**@type {Thing[]} */
-        var things = Thing.from(copyObject(source)), surplus = [];
+        var things = source.filter(thing => thing !== null && thing !== undefined && thing.id !== undefined).map(thing => Thing.from(thing)), surplus = [];
         for (let thing of things) {
-            if (thing === null || thing.stackSize <= 0 || thing === undefined)
+            if (DEBUGMODE)
+                output('log', '[LOG][THINGSTORAGE] 放入物品', decodeURI(thing.id), '*', thing.stackSize);
+            if (thing.stackSize <= 0 || thing === undefined) {
+                if (DEBUGMODE)
+                    output('warn', '[WARN][THINGSTORAGE] 物品无效');
                 continue;
-            for (let i = 0; i < this.size && thing.stackSize <= 0; i++) {
+            }
+            for (let i = 0; i < this.size; i++) {
                 thing = this.putTo(thing, i);
+                if (thing === null || thing.stackSize <= 0)
+                    break;
             }
             if (thing !== null && thing.stackSize > 0)
                 surplus.push(thing);
@@ -1188,11 +1255,11 @@ class ThingStorage {
      * 从该物品储存空间中拿取物品
      * @param {number} index 拿取物品的位置
      * @param {number} quantity 拿取数量
-     * @returns {?Thing}
+     * @returns {?Thing} 成功拿取的物品
      */
     takeOut(index, quantity = 1) {
         if (!Number.isInteger(index) || index < 0 || index >= this.size) {
-            output("error", '未知的index', index);
+            output("error", '未知的index', JSON.stringify(index), '类型', typeof index);
             return null;
         }
         /**@type {?Thing} */
@@ -1242,7 +1309,7 @@ class ThingStorage {
             if (this.thingStorage[index] === null || this.thingStorage[index].stackSize <= 0)
                 continue;
             if (Thing.testSelector(this.thingStorage[index], selector))
-                return index;
+                return Number(index);
         }
         return -1;
     }
@@ -1258,7 +1325,7 @@ class ThingStorage {
             if (this.thingStorage[index] === null || this.thingStorage[index].stackSize <= 0)
                 continue;
             if (Thing.testSelector(this.thingStorage[index], selector))
-                result.push(index);
+                result.push(Number(index));
         }
         return result;
     }
@@ -1279,17 +1346,18 @@ class ThingStorage {
      * @param {Box3PlayerEntity} entity 打开对话框的实体
      * @param {string} title 对话框的标题
      * @param {string} content 对话框的正文
+     * @param {ItemSelectorString} filter 用来筛选的选择器，默认为`!null`
      * @param {object} otherOptions 对话框的其他选项
-     * @returns {number} 玩家选择的物品在该物品储存空间的位置
+     * @returns {number | null} 玩家选择的物品在该物品储存空间的位置。没有选择，返回`null`
      */
-    async dialog(entity, title, content, otherOptions) {
+    async dialog(entity, title, content, filter = '!null', otherOptions) {
         var arr = [];
-        this.querySelectorAll('!null').forEach(index => arr.push([index, this.thingStorage[index].name]));
+        this.querySelectorAll(filter).forEach(index => arr.push([index, this.thingStorage[index].name]));
         var result = await selectDialog(entity, title, content, arr.map(x => x[1]), otherOptions);
         if (result)
             return arr[result.index][0];
         else
-            return;
+            return null;
     }
     /**
      * 将物品储存空间转换成字符串  
@@ -1325,7 +1393,7 @@ function copyObject(obj) {
     for (let key in newObj) {
         newObj[key] = copyObject(obj[key]);
     }
-    return JSON.parse(JSON.stringify(obj));
+    return newObj;
 }
 /**
  * 使用实体ID获取一个实体
@@ -1383,14 +1451,13 @@ function getTheCodeExecutionLocation() {
  * @returns {string}
  */
 function output(type, ...data) {
-    const BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output']);
     let str = data.join(' ');
     if (nullc(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
         let locations = getTheCodeExecutionLocation();
         let location = (locations.locations.filter((location, index) => !BLACKLIST.includes(locations.functions[index]))[0] || (locations.locations[1] || locations.locations[0])).split(':');
         console[type](`(${location[0]}:${location[1]}) -> ${locations.functions.filter(func => !BLACKLIST.includes(func))[0] || 'unknown'}`, nullc(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str);
         if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && (!nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false) || type == 'warn' || type == 'error'))
-            logs.push(new Output(type, str, location.join(':')));
+            logs.push(new Output(type, str, locations));
         return `(${location[0]}:${location[1]}) [${type}] ${str}`;
     } else {
         console[type](str);
@@ -1407,14 +1474,13 @@ function throwError(...data) {
     let str = data.join(' ');
     if (nullc(CONFIG.EasyBox3Lib.getCodeExecutionLocationOnOutput, true)) {
         let locations = getTheCodeExecutionLocation();
-        let location = (locations.locations.filter(location => !location.startsWith(__filename))[0] || locations.locations[0]).split(':');
         if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
-            logs.push(new Output('error', str, location.join(':')));
-        throw `(${location[0]}:${location[1]}) [${type}] ${str}`;
+            logs.push(new Output('error', str, locations));
+        throw `[THROW] ${nullc(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str} ` + locations.locations.map((loc, index) => `在 ${loc} -> ${locations.functions[index]}`).join(', ');
     } else {
         if (nullc(CONFIG.EasyBox3Lib.automaticLoggingOfOutputToTheLog, true) && !nullc(CONFIG.EasyBox3Lib.logOnlyWarningsAndErrors, false))
             logs.push(new Output('error', str, ['unknown', -1, -1]));
-        throw `[ERROR] ${nullc(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str}`;
+        throw `[THROW] ${nullc(CONFIG.EasyBox3Lib.enableAutoTranslation, false) ? translationError(str) : str}`;
     }
 }
 /**
@@ -1716,7 +1782,7 @@ async function setData(storageKey, key, value) {
     var task = { type: "set", storageKey, key, value }, dataStorage = await getDataStorage(storageKey);
     storageQueue.set(`set-${storageKey}:${key}`, task);
     var data = await dataStorage.get(key) || {};
-    if(CONFIG.EasyBox3Lib.enableSQLCache) dataStorage.data.set(key, {
+    if (CONFIG.EasyBox3Lib.enableSQLCache) dataStorage.data.set(key, {
         key, value, updateTime: Date.now(), createTime: data.createTime || Date.now(), version: data.version || ""
     });
     startStorageQueue();
@@ -1760,7 +1826,7 @@ async function removeData(storageKey, key) {
     /**@type {StorageTask} */
     var task = { type: "remove", storageKey, key, value }, dataStorage = await getDataStorage(storageKey);
     storageQueue.set(`remove-${storageKey}:${key}`, task);
-    if(CONFIG.EasyBox3Lib.enableSQLCache) 
+    if (CONFIG.EasyBox3Lib.enableSQLCache)
         dataStorage.data.delete(key);
     startStorageQueue();
 }
@@ -1908,7 +1974,7 @@ function addEventHandler(eventName, handler) {
  * @param {object} data 监听器使用的参数
  */
 async function triggerEvent(eventName, data) {
-    if (nullc(CONFIG.EasyBox3Lib.debug, false)) 
+    if (DEBUGMODE)
         output('log', '触发事件', eventName);
     for (let event of events[eventName])
         await event.run(data);
@@ -1958,7 +2024,7 @@ function onTick(handler, tpc, performanceImpact = 1, enforcement = false) {
  */
 function preprocess(callbackfn, priority) {
     preprocessFunctions.push({ callbackfn, priority });
-    if (CONFIG.EasyBox3Lib.debug)
+    if (DEBUGMODE)
         output('log', '[LOG][PREPROCESS]', '注册预处理函数成功');
 }
 /**
@@ -1986,7 +2052,7 @@ async function start() {
         try {
             await func.callbackfn();
         } catch (error) {
-            output('error', '预处理函数发生错误', error);
+            throwError('预处理函数发生错误', error);
         }
     }
     output('log', '预处理函数执行完成');
@@ -1999,13 +2065,13 @@ async function start() {
         tick = (tick + 1) % nullc(CONFIG.EasyBox3Lib.onTickCycleLength, 16);
         if (tick <= 0) {
             ++cycleNumber;
-            if (nullc(CONFIG.EasyBox3Lib.debug, false)) 
+            if (DEBUGMODE)
                 output('log', '开始新的onTick周期', cycleNumber);
         }
     });
     output('log', '开始处理玩家', '玩家数量：', players.size)
     for (let [userKey, entity] of players) {
-        if (nullc(CONFIG.EasyBox3Lib.debug, false)) 
+        if (DEBUGMODE)
             output('log', '处理玩家', userKey);
         await triggerEvent('onPlayerJoin', { entity });
     }
@@ -2038,9 +2104,13 @@ function changeVelocity(velocity, time = TIME.SECOND) {
  * @returns {boolean}
  */
 function registerItem(item) {
-    if (itemRegistry.has(item.id))
+    if (itemRegistry.has(item.id)) {
+        output('error', '[ERROR][ITEM]', decodeURI(item.id), '注册失败');
         return false;
-    itemRegistry.set(item.id, copyObject(item));
+    }
+    itemRegistry.set(item.id, item);
+    if (DEBUGMODE)
+        output('log', '[LOG][ITEM]', decodeURI(item.id), '注册成功');
     return true;
 }
 /**
@@ -2160,7 +2230,7 @@ const EasyBox3Lib = {
     throwError,
     translationError,
     TIME,
-    version: [0, 1, 2]
+    version: [0, 1, 3]
 };
 Object.defineProperty(EasyBox3Lib, 'started', {
     get: () => started,
