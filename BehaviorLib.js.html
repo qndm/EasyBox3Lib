@@ -6,7 +6,7 @@
  * 依赖EasyBox3Lib 0.1.4
  * @author qndm
  * @module BehaviorLib
- * @version 0.0.3
+ * @version 0.0.4
  * @license MIT
  */
 /**
@@ -14,6 +14,7 @@
  * @async
  * @callback CallBehaviorCallback
  * @param {string} behaviorId 要调用的行为id
+ * @param {any} data 传入行动的数据
  * @returns {any} 行为返回结果
  */
 /**
@@ -21,7 +22,7 @@
  * @async
  * @callback BehaviorInitCallback
  * @param {object} self 行为自身
- * @param {any} data 行为数据
+ * @param {any} data 行为数据。若不是`CallBehaviorCallback`中则为`null`
  * @param {CallBehaviorCallback} callBehavior 调用其他行为
  * @returns {any} 行为返回结果
  */
@@ -36,6 +37,7 @@
  * @typedef BehaviorTargetBehavior
  * @property {string} id 行为/行为组id
  * @property {number} priority 行为优先级
+ * @property {boolean} disabled 是否禁用行为
  */
 /**
  * EasyBox3Lib
@@ -54,7 +56,7 @@ const EBL = global.EasyBox3Lib,
      * 当前版本
      * @type {number[]} 
      */
-    VERSION = [0, 0, 3];
+    VERSION = [0, 0, 4];
 
 /**
  * @type {Map&lt;string, Behavior>}
@@ -110,8 +112,24 @@ class BehaviorTarget {
     }
     async _runBehaviorTick() {
         for (const behavior of this.behaviors) {
-            await behaviorRegistry.get(behavior.id).init(this.self, this.data, this.callBehavior);
+            if(behavior.disabled)
+                continue;
+            await behaviorRegistry.get(behavior.id).init(this.self, null, this.callBehavior);
         }
+    }
+    /**
+     * 查找行为在行为列表里的位置  
+     * 如果不存在，返回`-1`
+     * @param {string} behavior 行为id
+     * @private
+     * @returns {number} 行为在行为列表里的位置
+     */
+    _getBehaviorIndex(behavior){
+        for(const i in this.behaviors){
+            if(this.behaviors[i].id === behavior)
+                return i;
+        }
+        return -1;
     }
     /**
      * 添加行为
@@ -121,8 +139,36 @@ class BehaviorTarget {
     addBehavior(behavior, priority = behavior.priority) {
         if (this.hasBehavior(behavior))
             EBL.throwError("[BEHAVIOR_TARGET] 添加行为失败：行为已存在");
-        this.behaviors.push({ id: behavior, priority });
+        this.behaviors.push({ id: behavior, priority, disabled: false });
         this.behaviors.sort(a, b => b.priority - a.priority);
+    }
+    /**
+     * 移除行为
+     * @param {string} behavior 行为id
+     */
+    removeBehavior(behavior){
+        if(!this.hasBehavior(behavior))
+            EBL.throwError('[BEHAVIOR]', behavior, '行为不存在');
+        this.behaviors.splice(this._getBehaviorIndex(behavior), 1);
+    }
+    /**
+     * 对该对象启用行为
+     * @param {string} behavior 行为id
+     */
+    enableBehavior(behavior){
+        if(!this.hasBehavior(behavior))
+            EBL.throwError('[BEHAVIOR]', behavior, '行为不存在');
+        this.behaviors[this._getBehaviorIndex(behavior)].disabled = false;
+    }
+    /**
+     * 对该对象禁用行为  
+     * 禁用后，该对象将不会执行该行为
+     * @param {string} behavior 行为id
+     */
+    disabledBehavior(behavior){
+        if(!this.hasBehavior(behavior))
+            EBL.throwError('[BEHAVIOR]', behavior, '行为不存在');
+        this.behaviors[this._getBehaviorIndex(behavior)].disabled = true;
     }
     /**
      * 检查是否有某种行为
@@ -136,10 +182,11 @@ class BehaviorTarget {
      * 调用其他行为的函数
      * @async
      * @param {string} behaviorId 要调用的行为id
+     * @param {any} data 传入行为的数据
      * @returns {any} 行为返回结果
      */
-    async callBehavior(behaviorId) {
-        await behaviorRegistry.get(behaviorId).init(this.self, this.data, this.callBehavior);
+    async callBehavior(behaviorId, data) {
+        await behaviorRegistry.get(behaviorId).init(this.self, data, this.callBehavior);
     }
     /**
      * 为该对象的行为创建onTick
