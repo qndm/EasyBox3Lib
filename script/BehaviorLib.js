@@ -4,7 +4,7 @@
  * 依赖EasyBox3Lib 0.1.4
  * @author qndm
  * @module BehaviorLib
- * @version 0.0.1
+ * @version 0.0.2
  * @license MIT
  */
 /**
@@ -52,7 +52,7 @@ const EBL = global.EasyBox3Lib,
      * 当前版本
      * @type {number[]} 
      */
-    VERSION = [0, 0, 1];
+    VERSION = [0, 0, 2];
 
 /**
  * @type {Map<string, Behavior>}
