@@ -160,5 +160,17 @@ module.exports = {
          * @default false
          */
         enableAutoTranslation: false
+    },
+    BehaviorLib: {
+        /**
+         * 默认tpc
+         * @default 2
+         */
+        defaultTpc: 2,
+        /**
+         * 默认性能影响
+         * @default 1
+         */
+        defaultPerformanceImpact: 1
     }
 };

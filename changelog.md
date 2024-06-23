@@ -1,5 +1,11 @@
 # 版本 & 更新日志
 ## Beta
+### 0.1.4
+【重要】新增 `BehaviorLib` 用于控制对象行为  
+修复预处理函数排序bug  
+修复onTick排序bug  
+【重要】修复`copyObject`bug
+
 ### 0.1.3
 【重要】修复物品系统bug  
 修复`throwError`无法正确找到报错位置的bug  
