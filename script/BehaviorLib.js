@@ -181,5 +181,5 @@ const BehaviorLib = {
  */
 global.BehaviorLib = BehaviorLib;
 
-EBL.output("log", "BehaviorLib", VERSION.join('.'))
+console.log("BehaviorLib", VERSION.join('.'));
 module.exports = BehaviorLib;
