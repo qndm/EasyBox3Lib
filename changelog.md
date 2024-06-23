@@ -1,6 +1,12 @@
 # 版本 & 更新日志
+若未强调是什么库，一律视为`EasyBox3Lib`
 ## Beta
-### 0.1.4
+### BehaviorLib 0.0.2
+移除行为组  
+支持行为调用行为  
+补全`JsDoc`
+
+### EasyBox3Lib 0.1.4 & BehaviorLib 0.0.1
 【重要】新增 `BehaviorLib` 用于控制对象行为  
 修复预处理函数排序bug  
 修复onTick排序bug  

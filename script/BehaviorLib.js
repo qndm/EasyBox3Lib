@@ -7,12 +7,20 @@
  * @version 0.0.1
  * @license MIT
  */
-
+/**
+ * 调用其他行为的函数
+ * @async
+ * @callback CallBehaviorCallback
+ * @param {string} behaviorId 要调用的行为id
+ * @returns {any} 行为返回结果
+ */
 /**
  * 行为函数
+ * @async
  * @callback BehaviorInitCallback
  * @param {object} self 行为自身
  * @param {any} data 行为数据
+ * @param {CallBehaviorCallback} callBehavior 调用其他行为
  * @returns {any} 行为返回结果
  */
 /**
@@ -79,33 +87,11 @@ function nullc(a, b) {
  * @param {object} defaultData 行为默认数据
  */
 function Behavior(id, init, defaultPriority = 1, defaultData = {}) {
-    /**是否是行为组 @type {boolean} */
-    this.isBehaviorGroup = false;
     /**@type {string} */
     this.id = id;
     /**@type {BehaviorInitCallback} */
     this.init = init;
     /**@type {object} */
-    this.defaultData = defaultData;
-    /**@type {number} */
-    this.defaultPriority = defaultPriority;
-}
-/**
- * 定义一种行为组  
- * 使用上和`Behavior`相同，只是多个`Behavior`的封装
- * @param {string} id 该行为组的id，不可重复
- * @param {string[]} behaviors 该行为组中包含的行为，填写id，越靠前越先执行
- * @param {number} defaultPriority 行为组默认优先级，越高越先执行
- * @param {BehaviorGroupData} defaultData 默认行为组数据
- */
-function BehaviorGroup(id, behaviors, defaultPriority = 1, defaultData = {}) {
-    /**是否是行为组 @type {boolean} */
-    this.isBehaviorGroup = true;
-    /**@type {string} */
-    this.id = id;
-    /**@type {string[]} */
-    this.behaviors = behaviors;
-    /**@type {BehaviorGroupData} */
     this.defaultData = defaultData;
     /**@type {number} */
     this.defaultPriority = defaultPriority;
@@ -123,6 +109,11 @@ class BehaviorTarget {
         this.onTickEvent = undefined;
         this.data = {};
     }
+    async _runBehaviorTick() {
+        for (const behavior of this.behaviors) {
+            await behaviorRegistry.get(behavior.id).init(this.self, this.data, this.callBehavior);
+        }
+    }
     /**
      * 添加行为
      * @param {string} behavior 行为id
@@ -131,7 +122,7 @@ class BehaviorTarget {
     addBehavior(behavior, priority = behavior.priority, data = this.data) {
         if (this.hasBehavior(behavior))
             EBL.throwError("[BEHAVIOR_TARGET] 添加行为失败：行为已存在");
-        this.behaviors.push({id: behavior, priority, data});
+        this.behaviors.push({ id: behavior, priority, data });
         this.behaviors.sort(a, b => b.priority - a.priority);
     }
     /**
@@ -142,14 +133,24 @@ class BehaviorTarget {
     hasBehavior(id) {
         return this.behaviors.some(behavior => behavior.id == id);
     }
-    async runBehaviorTick(){
-        for(const behavior of this.behaviors){
-            await behaviorRegistry.get(behavior.id).init(this.self, this.data);
-        }
+    /**
+     * 调用其他行为的函数
+     * @async
+     * @param {string} behaviorId 要调用的行为id
+     * @returns {any} 行为返回结果
+     */
+    async callBehavior(behaviorId) {
+        await behaviorRegistry.get(behaviorId).init(this.self, this.data, this.callBehavior);
     }
-    createOnTickEvent(tpc = nullc(CONFIG.BehaviorLib.defaultTpc, 2), performanceImpact = nullc(CONFIG.BehaviorLib.defaultPerformanceImpact, 1)){
+    /**
+     * 为该对象的行为创建onTick
+     * @param {number} tpc 每循环执行次数
+     * @param {number} performanceImpact 性能影响程度
+     * @returns {EasyBox3Lib.onTickEventToken} 事件令牌
+     */
+    createOnTickEvent(tpc = nullc(CONFIG.BehaviorLib.defaultTpc, 2), performanceImpact = nullc(CONFIG.BehaviorLib.defaultPerformanceImpact, 1)) {
         this.onTickEvent = EBL.onTick(async () => {
-            await this.runBehaviorTick();
+            await this._runBehaviorTick();
         }, tpc, performanceImpact);
         return this.onTickEvent;
     }
@@ -160,7 +161,7 @@ class BehaviorTarget {
  * @param {Behavior} behavior 要注册的行为
  */
 function registerBehavior(behavior) {
-    if (!behavior instanceof Behavior && !behavior instanceof BehaviorGroup) {
+    if (!(behavior instanceof Behavior)) {
         EBL.throwError("[BEHAVIOR] 注册失败：未知行为类型");
     }
     if (behaviorRegistry.has(behavior.id)) {
@@ -171,7 +172,7 @@ function registerBehavior(behavior) {
 // ----- BehaviorLib End   -----
 const BehaviorLib = {
     Behavior,
-    BehaviorGroup,
+    BehaviorTarget,
     registerBehavior,
     version: VERSION
 };
