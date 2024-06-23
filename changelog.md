@@ -2,6 +2,9 @@
 若未强调是什么库，一律视为`EasyBox3Lib`
 ## Beta
 ### BehaviorLib 0.0.2
+移除无用的东西
+
+### BehaviorLib 0.0.2
 移除行为组  
 支持行为调用行为  
 补全`JsDoc`
