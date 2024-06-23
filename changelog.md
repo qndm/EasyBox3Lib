@@ -1,7 +1,7 @@
 # 版本 & 更新日志
 若未强调是什么库，一律视为`EasyBox3Lib`
 ## Beta
-### BehaviorLib 0.0.2
+### BehaviorLib 0.0.3
 移除无用的东西
 
 ### BehaviorLib 0.0.2
