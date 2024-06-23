@@ -1,6 +1,7 @@
 /**
  * BehaviorLib 库  
- * 用于控制实体/非实体行为的库
+ * 用于控制实体/非实体行为的库  
+ * 依赖EasyBox3Lib 0.1.4
  * @author qndm
  * @module BehaviorLib
  * @version 0.0.1
@@ -38,7 +39,7 @@ const EBL = global.EasyBox3Lib,
      * 建议EasyBox3Lib版本 
      * @type {number[]} 
      */
-    EBL_VERSION = [0, 1, 3],
+    EBL_VERSION = [0, 1, 4],
     /**
      * 当前版本
      * @type {number[]} 
