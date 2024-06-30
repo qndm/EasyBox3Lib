@@ -1,17 +1,17 @@
 <!DOCTYPE html><html lang="en" style="font-size:16px"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Source: EasyBox3Lib.js</title><!--[if lt IE 9]>
       <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]--><script src="scripts/third-party/hljs.js" defer="defer"></script><script src="scripts/third-party/hljs-line-num.js" defer="defer"></script><script src="scripts/third-party/popper.js" defer="defer"></script><script src="scripts/third-party/tippy.js" defer="defer"></script><script src="scripts/third-party/tocbot.min.js"></script><script>var baseURL="/",locationPathname="";baseURL=(locationPathname=document.location.pathname).substr(0,locationPathname.lastIndexOf("/")+1)</script><link rel="stylesheet" href="styles/clean-jsdoc-theme.min.css"><svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none"><defs><symbol id="copy-icon" viewbox="0 0 488.3 488.3"><g><path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/><path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/></g></symbol><symbol id="search-icon" viewBox="0 0 512 512"><g><g><path d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z"/></g></g><g><g><path d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z"/></g></g></symbol><symbol id="font-size-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol><symbol id="add-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol><symbol id="minus-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M5 11h14v2H5z"/></symbol><symbol id="dark-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol><symbol id="light-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol><symbol id="reset-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.537 19.567A9.961 9.961 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.136-.67 4.116-1.81 5.74L17 12h3a8 8 0 1 0-2.46 5.772l.997 1.795z"/></symbol><symbol id="down-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"></path></symbol><symbol id="codepen-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M16.5 13.202L13 15.535v3.596L19.197 15 16.5 13.202zM14.697 12L12 10.202 9.303 12 12 13.798 14.697 12zM20 10.869L18.303 12 20 13.131V10.87zM19.197 9L13 4.869v3.596l3.5 2.333L19.197 9zM7.5 10.798L11 8.465V4.869L4.803 9 7.5 10.798zM4.803 15L11 19.131v-3.596l-3.5-2.333L4.803 15zM4 13.131L5.697 12 4 10.869v2.262zM2 9a1 1 0 0 1 .445-.832l9-6a1 1 0 0 1 1.11 0l9 6A1 1 0 0 1 22 9v6a1 1 0 0 1-.445.832l-9 6a1 1 0 0 1-1.11 0l-9-6A1 1 0 0 1 2 15V9z"/></symbol><symbol id="close-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></symbol><symbol id="menu-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol></defs></svg></head><body data-theme="fallback-light"><div class="sidebar-container"><div class="sidebar" id="sidebar"><div class="sidebar-items-container"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-namespaces"><div>Namespaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div></div></div></div></div><div class="navbar-container" id="VuAckcnZhf"><nav class="navbar"><div class="navbar-left-items"></div><div class="navbar-right-items"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div><nav></nav></nav></div><div class="toc-container"><div class="toc-content"><span class="bold">On this page</span><div id="eed4d2a0bfd64539bb9df78095dec881"></div></div></div><div class="body-wrapper"><div class="main-content"><div class="main-wrapper"><section id="source-page" class="source-page"><header><h1 id="title" class="has-anchor">EasyBox3Lib.js</h1></header><article><pre class="prettyprint source lang-js"><code>/**
+    <![endif]--><script src="scripts/third-party/hljs.js" defer="defer"></script><script src="scripts/third-party/hljs-line-num.js" defer="defer"></script><script src="scripts/third-party/popper.js" defer="defer"></script><script src="scripts/third-party/tippy.js" defer="defer"></script><script src="scripts/third-party/tocbot.min.js"></script><script>var baseURL="/",locationPathname="";baseURL=(locationPathname=document.location.pathname).substr(0,locationPathname.lastIndexOf("/")+1)</script><link rel="stylesheet" href="styles/clean-jsdoc-theme.min.css"><svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none"><defs><symbol id="copy-icon" viewbox="0 0 488.3 488.3"><g><path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/><path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/></g></symbol><symbol id="search-icon" viewBox="0 0 512 512"><g><g><path d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z"/></g></g><g><g><path d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z"/></g></g></symbol><symbol id="font-size-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol><symbol id="add-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol><symbol id="minus-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M5 11h14v2H5z"/></symbol><symbol id="dark-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol><symbol id="light-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol><symbol id="reset-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.537 19.567A9.961 9.961 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.136-.67 4.116-1.81 5.74L17 12h3a8 8 0 1 0-2.46 5.772l.997 1.795z"/></symbol><symbol id="down-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"></path></symbol><symbol id="codepen-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M16.5 13.202L13 15.535v3.596L19.197 15 16.5 13.202zM14.697 12L12 10.202 9.303 12 12 13.798 14.697 12zM20 10.869L18.303 12 20 13.131V10.87zM19.197 9L13 4.869v3.596l3.5 2.333L19.197 9zM7.5 10.798L11 8.465V4.869L4.803 9 7.5 10.798zM4.803 15L11 19.131v-3.596l-3.5-2.333L4.803 15zM4 13.131L5.697 12 4 10.869v2.262zM2 9a1 1 0 0 1 .445-.832l9-6a1 1 0 0 1 1.11 0l9 6A1 1 0 0 1 22 9v6a1 1 0 0 1-.445.832l-9 6a1 1 0 0 1-1.11 0l-9-6A1 1 0 0 1 2 15V9z"/></symbol><symbol id="close-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></symbol><symbol id="menu-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol></defs></svg></head><body data-theme="fallback-light"><div class="sidebar-container"><div class="sidebar" id="sidebar"><div class="sidebar-items-container"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-namespaces"><div>Namespaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div></div></div></div></div><div class="navbar-container" id="VuAckcnZhf"><nav class="navbar"><div class="navbar-left-items"></div><div class="navbar-right-items"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div><nav></nav></nav></div><div class="toc-container"><div class="toc-content"><span class="bold">On this page</span><div id="eed4d2a0bfd64539bb9df78095dec881"></div></div></div><div class="body-wrapper"><div class="main-content"><div class="main-wrapper"><section id="source-page" class="source-page"><header><h1 id="title" class="has-anchor">EasyBox3Lib.js</h1></header><article><pre class="prettyprint source lang-js"><code>/**
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.1.4
+ * @version 0.1.5
  * @author qndm Nomen
  * @license MIT
  */
 /**
  * 配置文件
  */
-const CONFIG = require('./config.js');
+const CONFIG = require('./EasyBox3Lib.config.js');
 
 if (global.EasyBox3Lib) {
     throw '请勿重复加载 EasyBox3Lib';
@@ -29,8 +29,6 @@ if (!CONFIG) {
         })
     }
 }
-const DEBUGMODE = nullc(CONFIG.EasyBox3Lib.debug, false);
-const BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL', 'throwError']);
 /**
  * 空值合并
  * @param {*} a 
@@ -42,6 +40,9 @@ function nullc(a, b) {
         return b;
     else return a;
 }
+const DEBUGMODE = nullc(CONFIG.EasyBox3Lib.debug, false);
+const BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL', 'throwError']);
+
 /**
  * 事件回调函数
  * @callback EventCallBack
@@ -161,6 +162,7 @@ function nullc(a, b) {
  * @async
  * @param {Box3Entity} entity 使用物品的玩家
  * @param {Thing} thing 使用的物品
+ * @param {boolean} onlyUpdate 是否只是为了更新穿戴状态而触发（`updateWear`方法）
  */
 const
     /**
@@ -206,7 +208,7 @@ const
         SKIP: 'skip',
         FREE: 'free'
     },
-    TRANSLATION_REGEXPS = [['too much recursion', '太多递归'], [/Permission denied to access property "(\w+)"/ig, '尝试访问无权访问的对象：$1'], [/Invalid code point (\w+)/ig, '无效码位：$1'], ['Invalid array length', '无效的数组长度'], ['Division by zero', '除以0'], ['Exponent must be positive', '指数必须为正数'], ['Invalid time value', '非法时间值'], [/(\w+\(\)) argument must be between (\d+) and (\d+)/ig, '$1 的参数必须在 $2 和 $3 之间'], [/(\w+\(\)) (\w+) argument must be between (\d+) and (\d+)/ig, '$1 的 $2 参数必须在 $3 和 $4 之间'], ['Invalid count value', '无效的计数参数'], [/The number (\d.+) cannot be converted to a BigInt because it is not an integer/ig, '数字 $1 不能被转换成 BigInt 类型，因为它不是整数'], [/"(\w+)" is not defined/ig, '$1 未定义'], [/Cannot access '(\w+)' before initialization/ig, '初始化前无法访问 $1'], [/'(\w+)', '(\w+)', and '(\w+)' properties may not be accessed on strict mode functions or the arguments objects for calls to them/ig, '$1、$2、$3 属性不能在严格模式函数或调用它们的参数对象上访问'], [/(\w+) literals are not allowed in strict mode./ig, '严格模式下不允许使用$1字面量。'], ['Illegal \'use strict\' directive in function with non-simple parameter list', '带有非简单参数列表的函数中的非法 "use strict" 指令'], ['Unexpected reserved word', '意外的保留字'], [/(\S+) loop variable declaration may not have an initializer./ig, '$1语句的变量声明不能有初始化表达式。'], ['Delete of an unqualified identifier in strict mode.', '在严格模式下，无法对标识符调用 "delete"。'], ['Function statements require a function name', '函数声明需要提供函数名称'], ['await is only valid in async functions and the top level bodies of modules', 'await 仅在异步函数和模块的顶层主体中有效'], [/Unexpected token '(\S+)'/ig, '意外标记 $1（不能在不使用括号的情况下混用 "||" 和 "??" 操作）'], ['Illegal continue statement: no surrounding iteration statement', '非法 continue 语句：周围没有迭代语句（"continue" 语句只能在封闭迭代语句内使用）'], ['Invalid or unexpected token', '无效或意外的标识符'], ['Invalid left-hand side in assignment', '赋值中的左值无效'], ['Invalid regular expression flags', '正则表达式修饰符无效'], [/Cannot convert (\d.+) to a BigInt/ig, '不能将 $1 转换成 BigInt 类型'], ['Unexpected identifier', '意外标识符'], [/(\w+) is not iterable/ig, '$1 是不可迭代的'], [/(\w+) has no properties/ig, '$1 没有属性'], [/Cannot read properties of (\w+) (reading '(\w+)')/ig, '不能从 $1 中读取属性 $2'], [/(\w+) is not a constructor/ig, '$1 不是构造器'], [/(\w+) is not a function/ig, '$1 不是函数'], [/Property description must be an object: (\w+)/ig, '属性描述必须是一个对象：$1'], [/Cannot assign to read only property '(\w+)' of object '(\S+)'/ig, '无法为对象\'$2\'的只读属性\'$1\'赋值'], [/Cannot create property '(\w+)' on string '(\S+)'/ig, '无法在字符串 \'$2\' 上创建属性 $1'], ['Cannot mix BigInt and other types, use explicit conversions', '不能混合 BigInt 和其他类型，应该使用显式转换'], ['Warning', '警告'], ['Reference', '引用'], ['Type', '类型'], ['Syntax', '语法'], ['Range', '范围'], ['Internal', '内部'], ['Error', '错误'], ['Uncaught', '未捕获的'], [/(at\b)/g, '在'], ['Octal', '八进制'], [/Unexpected/ig, '意外的'], [/Invalid/ig, '无效的'], [/token/ig, '标识符']];
+    TRANSLATION_REGEXPS = [['too much recursion', '太多递归'], [/Permission denied to access property "(\w+)"/ig, '尝试访问无权访问的对象：$1'], [/Invalid code point (\w+)/ig, '无效码位：$1'], ['Invalid array length', '无效的数组长度'], ['Division by zero', '除以0'], ['Exponent must be positive', '指数必须为正数'], ['Invalid time value', '非法时间值'], [/(\w+\(\)) argument must be between (\d+) and (\d+)/ig, '$1 的参数必须在 $2 和 $3 之间'], [/(\w+\(\)) (\w+) argument must be between (\d+) and (\d+)/ig, '$1 的 $2 参数必须在 $3 和 $4 之间'], ['Invalid count value', '无效的计数参数'], [/The number (\d.+) cannot be converted to a BigInt because it is not an integer/ig, '数字 $1 不能被转换成 BigInt 类型，因为它不是整数'], [/(\w+) is not defined/ig, '$1 未定义'], [/Cannot access '(\w+)' before initialization/ig, '初始化前无法访问 $1'], [/'(\w+)', '(\w+)', and '(\w+)' properties may not be accessed on strict mode functions or the arguments objects for calls to them/ig, '$1、$2、$3 属性不能在严格模式函数或调用它们的参数对象上访问'], [/(\w+) literals are not allowed in strict mode./ig, '严格模式下不允许使用$1字面量。'], ['Illegal \'use strict\' directive in function with non-simple parameter list', '带有非简单参数列表的函数中的非法 "use strict" 指令'], ['Unexpected reserved word', '意外的保留字'], [/(\S+) loop variable declaration may not have an initializer./ig, '$1语句的变量声明不能有初始化表达式。'], ['Delete of an unqualified identifier in strict mode.', '在严格模式下，无法对标识符调用 "delete"。'], ['Function statements require a function name', '函数声明需要提供函数名称'], ['await is only valid in async functions and the top level bodies of modules', 'await 仅在异步函数和模块的顶层主体中有效'], [/Unexpected token '(\S+)'/ig, '意外标记 $1（不能在不使用括号的情况下混用 "||" 和 "??" 操作）'], ['Illegal continue statement: no surrounding iteration statement', '非法 continue 语句：周围没有迭代语句（"continue" 语句只能在封闭迭代语句内使用）'], ['Invalid or unexpected token', '无效或意外的标识符'], ['Invalid left-hand side in assignment', '赋值中的左值无效'], ['Invalid regular expression flags', '正则表达式修饰符无效'], [/Cannot convert (\d.+) to a BigInt/ig, '不能将 $1 转换成 BigInt 类型'], ['Unexpected identifier', '意外标识符'], [/(\w+) is not iterable/ig, '$1 是不可迭代的'], [/(\w+) has no properties/ig, '$1 没有属性'], [/Cannot read properties of (\w+) (reading '(\w+)')/ig, '不能从 $1 中读取属性 $2'], [/(\w+) is not a constructor/ig, '$1 不是构造器'], [/(\w+) is not a function/ig, '$1 不是函数'], [/Property description must be an object: (\w+)/ig, '属性描述必须是一个对象：$1'], [/Cannot assign to read only property '(\w+)' of object '(\S+)'/ig, '无法为对象\'$2\'的只读属性\'$1\'赋值'], [/Cannot create property '(\w+)' on string '(\S+)'/ig, '无法在字符串 \'$2\' 上创建属性 $1'], ['Cannot mix BigInt and other types, use explicit conversions', '不能混合 BigInt 和其他类型，应该使用显式转换'], ['Warning', '警告'], ['Reference', '引用'], ['Type', '类型'], ['Syntax', '语法'], ['Range', '范围'], ['Internal', '内部'], ['Error', '错误'], ['Uncaught', '未捕获的'], [/(at\b)/g, '在'], ['Octal', '八进制'], [/Unexpected/ig, '意外的'], [/Invalid/ig, '无效的'], [/token/ig, '标识符']];
 
 var
     /**
@@ -270,12 +272,20 @@ var
      */
     storageQueue = new Map(),
     /**@type {boolean} */
-    storageQueueStarted = false;
+    storageQueueStarted = false,
+    /**
+     * 注册函数类别索引
+     * @type {Map&lt;any, Function>}
+     */
+    registryClassIndex = new Map();
 /**
  * 日志信息
  * @private
  */
 class Output {
+    type = "log";
+    data = "";
+    location = [];
     /**
      * 定义一条日志信息
      * @param {string} type 类型
@@ -305,20 +315,51 @@ class Output {
  */
 class StorageQueryList {
     /**
+     * 数据
+     * @type {ReturnValue[]}
+     */
+    data = [];
+    /**
+     * 页数
+     * @type {number}
+     */
+    page = 0;
+    cursor = 0;
+    length = 0;
+    /**
+     * 分页大小
+     * @type {number}
+     */
+    pageSize = 100;
+    constraintTarget = null;
+    ascending = false;
+    max = null;
+    min = null;
+    /**
      * 键值对查询列表，用于批量获取键值对，通过 `DataStorage.list` 方法返回。
      * 列表根据配置项被划分为一个或多个分页，每个分页最多包含 `ListPageOptions` | `pageSize` 个键值对。
      * @param {ReturnValue[]} data 数据
-     * @param {number} cursor 
+     * @param {number} cursor 起始位置
      * @param {number} pageSize 分页大小
      */
-    constructor(data, cursor, pageSize = 100) {
+    constructor(data, cursor, pageSize = 100, constraintTarget = null, ascending = false, max = null, min = null) {
         this.data = data;
         /**当前页码 @type {number}*/
         this.page = 0;
         this.cursor = cursor;
         this.length = data.length;
-        /**分页大小 @type {number}*/
         this.pageSize = pageSize;
+        this.constraintTarget = constraintTarget;
+        this.ascending = ascending;
+        this.max = max;
+        this.min = min;
+        if(constraintTarget){
+            this.data.sort((a, b) => (a[constraintTarget] - b[constraintTarget]) * (this.ascending - 0.5))
+            if(this.max !== null)
+                this.data = this.data.filter(a => a[constraintTarget] &lt;= this.max);
+            if(this.min !== null)
+                this.data = this.data.filter(a => a[constraintTarget] >= this.min);
+        }
     }
     get isLastPage() {
         return this.length - 1 &lt;= (this.page + 1) * this.pageSize + this.cursor;
@@ -343,25 +384,42 @@ class StorageQueryList {
  */
 class DataStorage {
     /**
+     * 数据储存空间名称 
+     * @type {string} 
+     */
+    key = "";
+    /**
+     * 数据储存空间缓存
+     * @type {Map&lt;string, ResultValue> | undefined}
+     * @private
+     */
+    _data = undefined;
+    /**
+     * 实际数据储存空间
+     * @type {GameDataStorage | undefined}
+     * @private
+     */
+    #gameDataStorage = undefined;
+    /**
+     * 是否已被完全缓存
+     * @type {boolean}
+     * @private
+     */
+    #fullCached = false;
+    /**
      * 定义一个DataStorage
      * @param {string} key 空间名称（只读）
      * @param {GameDataStorage} gameDataStorage 对应的`GameDataStorage`
      */
     constructor(key, gameDataStorage) {
-        /**数据储存空间名称 @type {string} */
-        this.key;
         Object.defineProperty(this, 'key', {
             value: key,
             writable: false,
         });
         if (nullc(CONFIG.EasyBox3Lib.enableSQLCache, false))
-            /**@type {Map&lt;string, ResultValue>}*/
-            this.data = new Map();
+            this._data = new Map();
         if (nullc(CONFIG.EasyBox3Lib.inArena, false))
-            /**
-             * @type {GameDataStorage}
-             */
-            this.gameDataStorage = gameDataStorage;
+            this.#gameDataStorage = gameDataStorage;
     }
     /**
      * 获取指定键对应的值  
@@ -373,24 +431,24 @@ class DataStorage {
      */
     async get(key) {
         output('log', '获取数据', this.key, ':', key);
-        if (nullc(CONFIG.EasyBox3Lib.enableSQLCache, false) &amp;&amp; this.data.has(key)) {
-            return copyObject(this.data.get(key));
+        if (nullc(CONFIG.EasyBox3Lib.enableSQLCache, false) &amp;&amp; this._data.has(key)) {
+            return copyObject(this._data.get(key));
         } else {
             if (!nullc(CONFIG.EasyBox3Lib.inArena, false)) {
                 result = await tryExecuteSQL(async () => {
                     return await executeSQLCode(`SELECT * FROM "${encodeURIComponent(this.key)}" WHERE "key" == '${key}'`, '获取数据失败')[0]
                 });
                 if (result instanceof Array &amp;&amp; result.length > 0) {
-                    this.data.set(key, result);
-                    return copyObject(this.data[key]);
+                    this._data.set(key, result);
+                    return copyObject(this._data[key]);
                 } else
                     return;
             }
-            if(DEBUGMODE)
+            if (DEBUGMODE)
                 output('log', '使用Pro数据库');
-            let result = await this.gameDataStorage.get(key);
-            this.data.set(key, result);
-            if(DEBUGMODE)
+            let result = await this.#gameDataStorage.get(key);
+            this._data.set(key, result);
+            if (DEBUGMODE)
                 output('log', this.key, '读取完成，key：', key)
             return result;
         }
@@ -405,11 +463,11 @@ class DataStorage {
         output('log', '设置数据', this.key, ':', key, '=', value);
         if (nullc(CONFIG.EasyBox3Lib.inArena, false)) {
             await tryExecuteSQL(async () => {
-                var data = await tryExecuteSQL(async () => await this.get(key), '获取数据失败') || {errorInfo: '无数据'};
-                this.data.set(key, {
+                var data = await tryExecuteSQL(async () => await this.get(key), '获取数据失败') || { errorInfo: '无数据' };
+                this._data.set(key, {
                     metadata: {}, key, value, updateTime: Date.now(), createTime: data.createTime || Date.now(), version: data.version || ""
                 });
-                await this.gameDataStorage.set(key, value);
+                await this.#gameDataStorage.set(key, value);
             }, '设置数据失败');
             return;
         } else {
@@ -430,8 +488,8 @@ class DataStorage {
                 await tryExecuteSQL(async () => await executeSQLCode(`INSERT INTO "${encodeURIComponent(this.key)}" ("key", "value", "createTime", "updateTime", "version") VALUES ('${sqlAntiInjection(data.key)}', '${sqlAntiInjection(data.value)}', ${data.createTime}, ${data.updateTime}, '${sqlAntiInjection(data.version)}')`), '插入数据失败');
             }
         }
-        output('log', this.key, ':', key, ':', this.data[key].value, '->', data.value);
-        this.data.set(key, data);
+        output('log', this.key, ':', key, ':', this._data[key].value, '->', data.value);
+        this._data.set(key, data);
     }
     /**
      * 使用传入的方法更新键值对
@@ -441,25 +499,31 @@ class DataStorage {
      */
     async update(key, handler) {
         if (nullc(CONFIG.EasyBox3Lib.inArena, false)) {
-            await this.gameDataStorage.update(key, handler);
+            await this.#gameDataStorage.update(key, handler);
             return;
         }
         var value = await handler(await this.get(key));
         await this.set(key, value);
     }
     /**
-     * 批量获取键值对
-     * 注意：该方法不会创建缓存和读取缓存，所以比`get`更慢
+     * 批量获取键值对  
+     * ~~注意：该方法不会创建缓存和读取缓存，所以比`get`更慢~~
+     * 目前在完全缓存的情况下可以在此使用缓存，需要更改配置文件
      * @param {ListPageOptions} options 批量获取键值对的配置项
      * @returns {QueryList | ReturnValue[]}
      */
     async list(options) {
         output('log', '获取数据', this.key, ':', options.cursor, '-', options.cursor + (options.pageSize || 100));
         if (!nullc(CONFIG.EasyBox3Lib.inArena, false)) {
-            return await tryExecuteSQL(async () => await this.gameDataStorage.list(options), '获取数据失败');
+            if(this.#fullCached &amp;&amp; nullc(CONFIG.EasyBox3Lib.enableStorageListCache, false)){
+                let data = [];
+                this._data.forEach((value) => data.push(value));
+                return new StorageQueryList(data, options.cursor, options.pageSize, options.constraintTarget, options.ascending, options.max, options.min);
+            }
+            return await tryExecuteSQL(async () => await this.#gameDataStorage.list(options), '获取数据失败');
         } else {
             let data = await tryExecuteSQL(async () => await executeSQLCode(`SELECT * FROM "${this.key}"`), '获取数据失败');
-            return new StorageQueryList(data, options.cursor, options.pageSize);
+            return new StorageQueryList(data, options.cursor, options.pageSize, options.constraintTarget, options.ascending, options.max, options.min);
         }
     }
     /**
@@ -468,16 +532,15 @@ class DataStorage {
      */
     async remove(key) {
         output('log', '删除数据', this.key, ':', key);
-        this.data.delete(key);
+        this._data.delete(key);
         if (!nullc(CONFIG.EasyBox3Lib.inArena, false))
             await tryExecuteSQL(async () => await executeSQLCode(`DELETE FROM ${this.key} WHERE "key" == '${key}'`), '删除数据失败');
         else
-            await this.gameDataStorage.remove(key);
+            await this.#gameDataStorage.remove(key);
     }
     /**
      * 删除表格  
      * 警告：删除之后无法恢复，请谨慎使用！！！
-     * 
      */
     async drop() {
         if (nullc(CONFIG.EasyBox3Lib.inArena, false))
@@ -485,9 +548,23 @@ class DataStorage {
         else {
             output('warn', '删除表', this.key);
             if (CONFIG.EasyBox3Lib.enableSQLCache)
-                delete this.data;
+                delete this._data;
             await tryExecuteSQL(async () => await executeSQLCode(`DROP TABLE ${this.key}`));
         }
+    }
+    /**
+     * 创建数据储存空间缓存  
+     * 会缓存全部数据  
+     * 对于有大量数据的数据库来说，不建议这么做，因为会消耗大量内存
+     */
+    async createCache() {
+        var page = await tryExecuteSQL(async () => await this.list({ cursor: 0 }));
+        do {
+            let currentPage = page.getCurrentPage();
+            currentPage.forEach(data => this._data.set(data.key, data));
+            page.nextPage();
+        } while (page.isLastPage);
+        this.#fullCached = true;
     }
 }
 /**
@@ -495,24 +572,52 @@ class DataStorage {
  */
 class Menu {
     /**
+     * 菜单的标题，同时也作为父菜单选项的标题
+     * @type {string} 
+     */
+    title = "";
+    /**
+     * 菜单的标题，同时也作为父菜单选项的标题 
+     * @type {string[]} 
+     */
+    content = "";
+    /**
+     * 该菜单的选项 
+     * @type {Menu[]}
+     */
+    options = [];
+    /**
+     * 该菜单的父菜单。如果没有，为`undefined` 
+     * @type {Menu | undefined} 
+     */
+    previousLevelMenu = undefined;
+    /**
+     * 事件监听器 
+     */
+    handler = {
+        /**
+         * 当该页被打开时执行的操作 
+         * @type {dialogCallBack[]}
+         */
+        onOpen: [],
+        /**
+         * 当该菜单被关闭时执行的操作 
+         * @type {dialogCallBack[]}
+         */
+        onClose: []
+    };
+    /**
      * 创建一个`Menu`
      * @param {string} title 菜单的标题，同时也作为父菜单选项的标题
      * @param {...string} content 菜单正文内容，可以输入多个值，显示时用`\n`分隔
      */
     constructor(title, ...content) {
-        /**菜单的标题，同时也作为父菜单选项的标题 @type {string} */
         this.title = title;
-        /**菜单的标题，同时也作为父菜单选项的标题 @type {string[]} */
         this.content = content.join('\n');
-        /**该菜单的选项 @type {Menu[]}*/
         this.options = [];
-        /**该菜单的父菜单。如果没有，为`undefined` @type {Menu | undefined} */
         this.previousLevelMenu = undefined;
-        /**事件监听器 */
         this.handler = {
-            /**当该页被打开时执行的操作 @type {dialogCallBack[]}*/
             onOpen: [],
-            /**当该菜单被关闭时执行的操作 @type {dialogCallBack[]}*/
             onClose: []
         };
     }
@@ -580,6 +685,36 @@ class Menu {
 }
 class Pages {
     /**
+     * 页标题 
+     * @type {string} 
+     */
+    title = "";
+    /**
+     * 每页内容 
+     * @type {string[]} 
+     */
+    contents = "";
+    /**
+     * 当前页码 
+     * @type {number} 
+     */
+    page = 0;
+    /**
+     * 事件监听器 
+     */
+    handler = {
+        /**
+         * 当该页被打开时执行的操作 
+         * @type {dialogCallBack[]}
+         */
+        onOpen: [],
+        /**
+         * 当该菜单被关闭时执行的操作 
+         * @type {dialogCallBack[]}
+         */
+        onClose: []
+    };
+    /**
      * 创建一个`Pages`  
      * 用于一段需要分页的文字  
      * ps: 知道为什么叫`Pages`而不是`Page`吗？因为不止一个页！
@@ -587,17 +722,11 @@ class Pages {
      * @param  {...string} contents 页的内容，每一项就是一页
      */
     constructor(title, ...contents) {
-        /**页标题 @type {string} */
         this.title = title;
-        /**每页内容 @type {string[]} */
         this.contents = contents;
-        /**当前页码 @type {number} */
         this.page = 0;
-        /**事件监听器 */
         this.handler = {
-            /**当该页被打开时执行的操作 @type {dialogCallBack[]}*/
             onOpen: [],
-            /**当该菜单被关闭时执行的操作 @type {dialogCallBack[]}*/
             onClose: []
         };
     }
@@ -673,9 +802,18 @@ class Pages {
  */
 class EventHandlerToken {
     /**
+     * 事件监听器
+     * @type {onTickEventCallBack}
+     */
+    handler = () => { };
+    /**
+     * 事件状态
+     * @type {string}
+     */
+    statu = STATUS.FREE;
+    /**
      * 创建一个事件令牌
      * @param {onTickEventCallBack} handler 监听器
-     * @private
      */
     constructor(handler) {
         this.handler = handler;
@@ -704,6 +842,21 @@ class EventHandlerToken {
  */
 class OnTickHandlerToken extends EventHandlerToken {
     /**
+     * 每周期运行多少次，最大为`config.EasyBox3Lib.onTickCycleLength`，最小为`1`
+     * @type {number}
+     */
+    tpc = 1;
+    /**
+     * 性能影响程度
+     * @type {number}
+     */
+    enforcement = 1;
+    /**
+     * 是否强制运行，如果为true，则会在每个tick都运行
+     * @type {boolean}
+     */
+    enforcement = false;
+    /**
      * 定义一个`onTick`监听器事件
      * @param {onTickEventCallBack} handler 监听器
      * @param {number} tpc 每周期运行多少次，最大为`config.EasyBox3Lib.onTickCycleLength`，最小为`1`
@@ -728,13 +881,22 @@ class OnTickHandlerToken extends EventHandlerToken {
 }
 class EntityGroup {
     /**
+     * 实体组内的实体
+     * @type {Box3Entity[]}
+     */
+    entities = [];
+    /**
+     * 实体组中心位置
+     * @type {Box3Vector3}
+     */
+    position = new Box3Vector3(0, 0, 0);
+    /**
      * 定义一个实体组  
      * 更改`entities`中每个实体的`indexInEntityGroup`为该实体在实体组内的编号
      * @param {Box3Entity[]} entities 实体组内的实体
      * @param {Box3Vector3} position 实体组中心位置
      */
     constructor(entities, position) {
-        this.count = 0;
         this.entities = entities;
         if (position)
             this.position = position;
@@ -748,7 +910,6 @@ class EntityGroup {
             output('warn', '实体组未指定中心位置，自动设为', this.position.toString());
         }
         for (let entity of this.entities) {
-            entity.indexInEntityGroup = this.count++;
             this.adjustmentEntityPosition(entity);
         }
     }
@@ -773,6 +934,7 @@ class EntityGroup {
         entity.meshOffset.copy(entity.offset);
         delete entity.offset;
         this.entities.splice(index, 1);
+        this.entities.forEach((entity, index) => entity.indexInEntityGroup = index);
     }
     /**
      * 实体组动画
@@ -795,7 +957,72 @@ class EntityGroup {
 
 class Item {
     /**
-     * 定义一种物品
+     * 该物品的id
+     * @type {string} 
+     */
+    id = "";
+    /**
+     * 该物品的显示名称
+     * @type {string}
+     */
+    name = "";
+    /**
+     * 该物品的最大堆叠数量 
+     * @type {number}
+     */
+    maxStackSize = Infinity;
+    /**
+     * 该物品的模型  
+     * 如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
+     * @type {string}
+     */
+    mesh = "";
+    /**
+     * 该物品的默认数据
+     * @type {object}
+     */
+    data = {};
+    /**
+     * 该物品的标签
+     * @type {string[]}
+     */
+    tags = [];
+    /**
+     * 该物品的静态数据
+     * @type {object}
+     */
+    staticData = {};
+    /**
+     * 该物品的穿戴配件
+     * @type {Box3Wearable | boolean}
+     */
+    wearable = false;
+    /**
+     * 该物品打开对话框时，物品的默认对话框正文内容
+     */
+    content = undefined;
+    /**
+     * 当物品被使用时，调用的函数
+     * @type {ThingUseCallback[]}
+     */
+    _onUse = [];
+    /**
+     * 当物品被穿戴时，调用的函数
+     * @type {ThingUseCallback[]}
+     */
+    _onWear = [];
+    /**
+     * 当物品被卸下时，调用的函数
+     * @type {ThingUseCallback[]}
+     */
+    _onDiswear = [];
+    /**
+     * 当物品被更新穿戴状态时，调用的函数
+     * @type {ThingUseCallback[]}
+     */
+    __onUpdateWear = [];
+    /**
+     * 定义一**种**物品
      * @param {string} id 该物品的id
      * @param {string} name 该物品的显示名称，默认和id相同
      * @param {string} mesh 该物品的模型。如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
@@ -807,69 +1034,22 @@ class Item {
      * @param {string | ThingDialogCallback} content 该物品打开对话框时，物品的默认对话框正文内容
      */
     constructor(id, name = id, maxStackSize = Infinity, tags = [], data = {}, staticData = {}, wearable = undefined, mesh = '', content = undefined) {
-        /**
-         * 该物品的id
-         * @type {string} 
-         */
         this.id = encodeURI(id);
-        /**
-         * 该物品的显示名称
-         * @type {string}
-         */
         this.name = name;
-        /**
-         * 该物品的最大堆叠数量 
-         * @type {string}
-         */
         this.maxStackSize = Math.max(Object.keys(data).length ? 1 : maxStackSize, 1);
-        /**
-         * 该物品的标签
-         * @type {string}
-         */
         this.tags = tags.map(tag => encodeURI(tag));
-        /**
-         * 该物品的默认数据
-         * @type {string}
-         */
         this.data = data;
-        /**
-         * 该物品的静态数据
-         * @type {string}
-         */
         this.staticData = staticData;
-        /**
-         * 该物品的穿戴配件
-         * @type {Box3Wearable}
-         */
         this.wearable = wearable;
-        /**
-         * 该物品的模型  
-         * 如果这里未指定且`wearable`类型为`Box3Wearable`，那么会自动读取`wearable.mesh`作为`mesh`
-         * @type {string}
-         */
         this.mesh = mesh;
         if (!this.mesh &amp;&amp; typeof this.wearable == "object" &amp;&amp; this.mesh) {
             this.mesh = this.wearable.mesh;
         }
-        /**
-         * 该物品打开对话框时，物品的默认对话框正文内容
-         */
         this.content = content;
-        /**
-         * 当物品被使用时，调用的函数
-         * @type {ThingUseCallback[]}
-         */
         this._onUse = [];
-        /**
-         * 当物品被穿戴时，调用的函数
-         * @type {ThingUseCallback[]}
-         */
         this._onWear = [];
-        /**
-         * 当物品被卸下时，调用的函数
-         * @type {ThingUseCallback[]}
-         */
         this._onDiswear = [];
+        this.__onUpdateWear = [];
     }
     /**
      * 当物品被使用时，调用的函数
@@ -898,11 +1078,46 @@ class Item {
         this._onDiswear.push(callback);
         return this;
     }
+    /**
+     * 当物品被更新穿戴状态时，调用的函数  
+     * 不仅会在`Thing.updateWear`调用时触发，也会在`onWear`、`onDiswear`调用时触发
+     * @param {ThingUseCallback} callback 监听器回调函数
+     * @returns {Item} 自身
+     */
+    onUpdateWear(callback) {
+        this.__onUpdateWear.push(callback);
+        return this;
+    }
 }
 /**
  * 一个（或一组）物品
  */
 class Thing {
+    /**
+     * 物品id 
+     * @type {string} 
+    */
+    id = "";
+    /**
+     * 物品堆叠数量，如果有数据将不能再堆叠
+     * @type {number} 
+     */
+    stackSize = 1;
+    /**
+     * **该物品**显示名称 
+     * @type {string} 
+     */
+    name = "";
+    /**
+     * 物品数据
+     * @type {object}
+     */
+    data = {};
+    /**
+     * 该物品是否处于穿戴状态
+     * @type {boolean}
+     */
+    _wearing = false;
     /**
      * 定义一个（或一组）物品
      * @param {string} id 物品的id。应该是已经注册的物品id。如果`data`不为空对象时，最大为`1`
@@ -916,15 +1131,10 @@ class Thing {
             throwError('[THING] 未注册的物品：', id, '编码：', encodeURI(id));
         }
         var item = itemRegistry.get(encodeURI(id));
-        /**物品id @type {string} */
         this.id = encodeURI(id);
-        /**最大堆叠数量 @type {number} */
         this.stackSize = Math.min(stackSize, item.maxStackSize);
-        /**物品显示名称 @type {string} */
         this.name = item.name;
-        /**物品数据，如果有数据将不能再堆叠 */
         this.data = copyObject(item.data);
-        /**该物品是否处于穿戴状态 @type {boolean} */
         this._wearing = false;
         Thing.setData(this, copyObject(data));
         Object.seal(this.data);
@@ -936,6 +1146,10 @@ class Thing {
     get item() {
         return itemRegistry.get(this.id);
     }
+    /**
+     * 该物品的静态数据
+     * @returns {object} 
+     */
     get staticData() {
         return this.item.staticData;
     }
@@ -987,15 +1201,16 @@ class Thing {
      * 更新后的实体会显示穿戴部件
      * @param {Box3Entity} entity 要更新的实体
      */
-    updateWear(entity) {
+    async updateWear(entity) {
         if (!this.wearable)
-            throwError('该物品不可穿戴：', this.id);
+            output("warn", '该物品不可穿戴：', decodeURI(this.id));
         if (this.wearable === true)
             return;
         if (this.wearing)
             entity.player.addWearable(this.wearable);
         else
             entity.player.removeWearable(this.wearable);//qndm: 笑死，现在才知道removeWearable填的是穿戴部件而不是编号
+        await this.item.__onUpdateWear.forEach(async callback => await callback(entity, this, true));
     }
     /**
      * 测试该物品是否满足选择器的条件
@@ -1062,11 +1277,16 @@ class Thing {
     }
     /**
      * 从一个`object`中生成一个`Thing`  
-     * 这个`object`必须包含`id`、`stackingNumber`、`data`属性
+     * 这个`object`必须包含`id`、`stackingNumber`、`data`属性  
+     * 可以用此方法复制物品
      * @param {object} source 源对象
-     * @returns {Thing}
+     * @returns {Thing | null | undefined}
      */
     static from(source) {
+        if (source === null)
+            return null;
+        if (source === undefined)
+            return;
         return new Thing(decodeURI(source.id), source.stackingNumber, copyObject(source.data));
     }
     /**
@@ -1146,20 +1366,20 @@ class Thing {
      * 使用/穿戴/卸下物品  
      * 需要自行使用`takeOut`取出`ThingStorage`（如果有）的物品
      * @param {Box3Entity} entity 使用物品的玩家
-     * @returns {any} `onUse`/`onWear`/`onDiswear`函数返回的值
+     * @returns {void}
      */
     async use(entity) {
         if (!this.wearable) {
-            return await this.item._onUse.forEach(async callback => await callback(entity, this));
+            await this.item._onUse.forEach(async callback => await callback(entity, this, false));
         }
         if (this.wearing) {
             this.wearing = false;
             this.updateWear(entity);
-            return await this.item._onDiswear.forEach(async callback => await callback(entity, this));
+            await this.item._onDiswear.forEach(async callback => await callback(entity, this, false));
         } else {
             this.wearing = true;
             this.updateWear(entity);
-            return await this.item._onWear.forEach(async callback => await callback(entity, this));
+            await this.item._onWear.forEach(async callback => await callback(entity, this, false));
         }
     }
 }
@@ -1170,19 +1390,35 @@ class Thing {
  */
 class ThingStorage {
     /**
+     * 储存容量，决定了该储存空间能储存多少组物品
+     * @type {number}
+     */
+    size = 1;
+    /**
+     * 堆叠数量倍率。默认为1
+     * @type {number}
+     */
+    stackSizeMultiplier = 1;
+    /**
+     * 黑名单，在黑名单内的物品不能放入该储存空间
+     * @type {ItemSelectorString[]}
+     */
+    blacklist = [];
+    /**
+     * 物品实际储存空间
+     * @type {Tartan[]} 
+     */
+    thingStorage = [];
+    /**
      * 定义一个物品储存空间
      * @param {number} size 储存容量，决定了该储存空间能储存多少组物品
      * @param {number} stackSizeMultiplier 堆叠数量倍率。默认为1
      * @param {ItemSelectorString[]} blacklist 黑名单，在黑名单内的物品不能放入该储存空间
      */
     constructor(size, stackSizeMultiplier = 1, blacklist = []) {
-        /**储存容量，决定了该储存空间能储存多少组物品 @type {number} */
         this.size = size;
-        /**堆叠数量倍率。默认为1 @type {number} */
         this.stackSizeMultiplier = stackSizeMultiplier;
-        /**黑名单，在黑名单内的物品不能放入该储存空间 @type {ItemSelectorString[]} */
         this.blacklist = blacklist;
-        /**@type {Tartan[]} */
         this.thingStorage = new Array(size).fill(null);
     }
     /**
@@ -1268,7 +1504,7 @@ class ThingStorage {
             return null;
         }
         /**@type {?Thing} */
-        var thing = copyObject(this.thingStorage[index]);
+        var thing = Thing.from(this.thingStorage[index]);
         if (thing === null)
             return null;
         var x = Math.min(quantity, this.thingStorage[index].stackSize);
@@ -1542,7 +1778,8 @@ function resizePlayer(entity, size) {
  */
 function createEntity(mesh, position, collides, gravity, meshScale = nullc(CONFIG.EasyBox3Lib.defaultMeshScale, new Box3Vector3(1 / 16, 1 / 16, 1 / 16)), meshOrientation = nullc(CONFIG.EasyBox3Lib.defaultMeshOrientation, new Box3Quaternion(0, 0, 0, 1))) {
     if (world.entityQuota() >= 1) {
-        output('log', '创建实体', mesh, position, collides, gravity);
+        if (DEBUGMODE)
+            output('log', '创建实体', mesh, position, collides, gravity);
         if (world.entityQuota() &lt;= nullc(CONFIG.EasyBox3Lib.numberOfEntitiesRemainingToBeCreatedForSecurity, 500))
             output('warn', '实体创建超出安全上限', `剩余可创建实体数量：${world.entityQuota()} `);
         return world.createEntity({
@@ -1787,7 +2024,7 @@ async function setData(storageKey, key, value) {
     var task = { type: "set", storageKey, key, value }, dataStorage = await getDataStorage(storageKey);
     var data = await dataStorage.get(key) || { errorInfo: '无数据' };
     if (CONFIG.EasyBox3Lib.enableSQLCache) {
-        dataStorage.data.set(key, {
+        dataStorage._data.set(key, {
             key, value, updateTime: Date.now(), createTime: data.createTime || Date.now(), version: data.version || "", metadata: {}
         });
     }
@@ -1834,7 +2071,7 @@ async function removeData(storageKey, key) {
     var task = { type: "remove", storageKey, key, value }, dataStorage = await getDataStorage(storageKey);
     storageQueue.set(`r-${storageKey}:${key}`, task);
     if (CONFIG.EasyBox3Lib.enableSQLCache)
-        dataStorage.data.delete(key);
+        dataStorage._data.delete(key);
     startStorageQueue();
 }
 /**
@@ -2157,7 +2394,9 @@ function startStorageQueue() {
             }
         });
         storageQueue.delete(taskId);
-        output("log", 'Storage Queue完成任务', taskId, '还剩', storageQueue.size, '个任务');
+        if (DEBUGMODE)
+            output("log", 'Storage Queue完成任务', taskId, '还剩', storageQueue.size, '个任务');
+        await sleep(CONFIG.EasyBox3Lib.storageQueueCooldown);
     });
     output("log", '已启动Storage Queue');
 }
@@ -2185,6 +2424,26 @@ function translationError(msg) {
         message = message.replaceAll(...tr);
     }
     return message;
+}
+/**
+ * 万用注册函数
+ * @param {any} any 你要注册的东西
+ */
+function register(any) {
+    registryClassIndex.forEach((fn, type) => {
+        if (any instanceof type) {
+            fn(any);
+            if (DEBUGMODE)
+                output("log", '向', type.name, '注册', JSON.stringify(any));
+        }
+    });
+}
+/**
+ * 注册注册函数类别索引  
+ * 满足`any instanceof type`时调用`fn(any)`
+ */
+function registerRegistryClassIndex(type, fn) {
+    registryClassIndex.set(type, fn);
 }
 const EasyBox3Lib = {
     copyObject,
@@ -2239,8 +2498,10 @@ const EasyBox3Lib = {
     ThingStorage,
     throwError,
     translationError,
+    register,
+    registerRegistryClassIndex,
     TIME,
-    version: [0, 1, 4]
+    version: [0, 1, 5]
 };
 Object.defineProperty(EasyBox3Lib, 'started', {
     get: () => started,
@@ -2261,10 +2522,11 @@ if (CONFIG.EasyBox3Lib.enableOnPlayerJoin) {
         output("log", '进入玩家', entity.player.name);
     });
 }
+registerRegistryClassIndex(Item, registerItem);
 /**
  * EasyBox3Lib的全局对象
  * @global
  */
 global.EasyBox3Lib = EasyBox3Lib;
 console.log('EasyBox3Lib', EasyBox3Lib.version.join('.'));
-module.exports = EasyBox3Lib;</code></pre></article></section></div></div></div><div class="search-container" id="PkfLWpAbet" style="display:none"><div class="wrapper" id="iCxFxjkHbP"><button class="icon-button search-close-button" id="VjLlGakifb" aria-label="close search"><svg><use xlink:href="#close-icon"></use></svg></button><div class="search-box-c"><svg><use xlink:href="#search-icon"></use></svg> <input type="text" id="vpcKVYIppa" class="search-input" placeholder="Search..." autofocus></div><div class="search-result-c" id="fWwVHRuDuN"><span class="search-result-c-text">Type anything to view search result</span></div></div></div><div class="mobile-menu-icon-container"><button class="icon-button" id="mobile-menu" data-isopen="false" aria-label="menu"><svg><use xlink:href="#menu-icon"></use></svg></button></div><div id="mobile-sidebar" class="mobile-sidebar-container"><div class="mobile-sidebar-wrapper"><div class="mobile-nav-links"></div><div class="mobile-sidebar-items-c"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-namespaces"><div>Namespaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div></div></div><div class="mobile-navbar-actions"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div></div></div><script type="text/javascript" src="scripts/core.min.js"></script><script src="scripts/search.min.js" defer="defer"></script><script src="scripts/third-party/fuse.js" defer="defer"></script><script type="text/javascript">var tocbotInstance=tocbot.init({tocSelector:"#eed4d2a0bfd64539bb9df78095dec881",contentSelector:".main-content",headingSelector:"h1, h2, h3",hasInnerContainers:!0,scrollContainer:".main-content",headingsOffset:130,onClick:bringLinkToView})</script></body></html>
+module.exports = EasyBox3Lib;</code></pre></article></section></div></div></div><div class="search-container" id="PkfLWpAbet" style="display:none"><div class="wrapper" id="iCxFxjkHbP"><button class="icon-button search-close-button" id="VjLlGakifb" aria-label="close search"><svg><use xlink:href="#close-icon"></use></svg></button><div class="search-box-c"><svg><use xlink:href="#search-icon"></use></svg> <input type="text" id="vpcKVYIppa" class="search-input" placeholder="Search..." autofocus></div><div class="search-result-c" id="fWwVHRuDuN"><span class="search-result-c-text">Type anything to view search result</span></div></div></div><div class="mobile-menu-icon-container"><button class="icon-button" id="mobile-menu" data-isopen="false" aria-label="menu"><svg><use xlink:href="#menu-icon"></use></svg></button></div><div id="mobile-sidebar" class="mobile-sidebar-container"><div class="mobile-sidebar-wrapper"><div class="mobile-nav-links"></div><div class="mobile-sidebar-items-c"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-namespaces"><div>Namespaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div></div></div><div class="mobile-navbar-actions"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div></div></div><script type="text/javascript" src="scripts/core.min.js"></script><script src="scripts/search.min.js" defer="defer"></script><script src="scripts/third-party/fuse.js" defer="defer"></script><script type="text/javascript">var tocbotInstance=tocbot.init({tocSelector:"#eed4d2a0bfd64539bb9df78095dec881",contentSelector:".main-content",headingSelector:"h1, h2, h3",hasInnerContainers:!0,scrollContainer:".main-content",headingsOffset:130,onClick:bringLinkToView})</script></body></html>
