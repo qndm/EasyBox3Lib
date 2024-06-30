@@ -1,6 +1,24 @@
 # 版本 & 更新日志
 若未强调是什么库，一律视为`EasyBox3Lib`
 ## Beta
+### EasyBox3Lib 0.1.5 & BehaviorLib 0.0.5
+新增 `Thing.onUpdateWear`事件，用于更方便地更新物品穿戴状态  
+【重要】将配置文件重命名为`EasyBox3Lib.config.js`，以保证兼容性  
+优化日志输出内容  
+新增`register`（万用注册函数）、registerRegistryClassIndex，用于更方便的注册，目前已支持：
+- `Item`
+- `Behavior`
+
+新增`Storage Queue`冷却，通过`config.EasyBox3Lib.storageQueueCooldown`来配置冷却时间  
+对JsDoc中部分有问题的地方进行修正  
+对所有类成员进行预定义  
+【测试】支持在`DataStorage.list`方法上启用缓存
+- 需要为整个`DataStorage`创建缓存
+- 需要将`config.EasyBox3Lib.enableStorageListCache`设置为`true`
+
+新增`DataStorage.createCache`方法  
+`DataStorage.list`（`StorageQueryList`）支持`constraintTarget`、`ascending`、`max`、`min`
+
 ### BehaviorLib 0.0.4
 行为调用行为支持传入数据  
 行为对象支持启用/禁用行为  
@@ -63,7 +81,7 @@
   - `createGameLoop` -> `startGameLoop`，同时`createGameLoop`有了新的用途
 
 新增`translationError`方法  
-- 可以更改`enableAutoTranslation`的值为`true`来开启报错自动翻译
+- 可以更改`config.EasyBox3Lib.enableAutoTranslation`的值为`true`来开启报错自动翻译
 
 ### 0.0.10
 为`Item`的成员添加了`JsDoc`  

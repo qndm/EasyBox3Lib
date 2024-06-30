@@ -1,10 +1,10 @@
 /**
  * BehaviorLib 库  
  * 用于控制实体/非实体行为的库  
- * 依赖EasyBox3Lib 0.1.4
+ * 依赖EasyBox3Lib 0.1.5
  * @author qndm
  * @module BehaviorLib
- * @version 0.0.4
+ * @version 0.0.5
  * @license MIT
  */
 /**
@@ -44,17 +44,17 @@ const EBL = global.EasyBox3Lib,
     /**
      * 配置文件
      */
-    CONFIG = require('./config.js'),
+    CONFIG = require('./EasyBox3Lib.config.js'),
     /**
      * 建议EasyBox3Lib版本 
      * @type {number[]} 
      */
-    EBL_VERSION = [0, 1, 4],
+    EBL_VERSION = [0, 1, 5],
     /**
      * 当前版本
      * @type {number[]} 
      */
-    VERSION = [0, 0, 4];
+    VERSION = [0, 0, 5];
 
 /**
  * @type {Map<string, Behavior>}
@@ -88,29 +88,53 @@ function nullc(a, b) {
  * @param {number} defaultPriority 行为默认优先级，越高越先执行
  */
 function Behavior(id, init, defaultPriority = 1) {
-    /**@type {string} */
+    /**
+     * 该行为的id，不可重复
+     * @type {string} 
+     */
     this.id = id;
-    /**@type {BehaviorInitCallback} */
+    /**
+     * 行为主函数
+     * @type {BehaviorInitCallback} 
+     */
     this.init = init;
-    /**@type {number} */
+    /**
+     * 行为默认优先级，越高越先执行
+     * @type {number} 
+     */
     this.defaultPriority = defaultPriority;
 }
 /**
  * 行为目标对象
  */
 class BehaviorTarget {
+    /**
+     * 行为目标自身
+     * @type {any}
+     */
+    self = undefined;
+    /**
+     * 行为目标所具有的行为
+     * @type {BehaviorTargetBehavior[]}
+     */
+    behaviors = [];
+    /**
+     * @type {EasyBox3Lib.onTickEventToken | undefined} 
+     */
+    onTickEvent = undefined;
+    /**
+     * 行为对象数据
+     */
+    data = {};
     constructor(self) {
-        /**@type {any} */
         this.self = self;
-        /**@type {BehaviorTargetBehavior[]} */
         this.behaviors = [];
-        /**@type {EasyBox3Lib.onTickEventToken} */
         this.onTickEvent = undefined;
         this.data = {};
     }
     async _runBehaviorTick() {
         for (const behavior of this.behaviors) {
-            if(behavior.disabled)
+            if (behavior.disabled)
                 continue;
             await behaviorRegistry.get(behavior.id).init(this.self, null, this.callBehavior);
         }
@@ -122,9 +146,9 @@ class BehaviorTarget {
      * @private
      * @returns {number} 行为在行为列表里的位置
      */
-    _getBehaviorIndex(behavior){
-        for(const i in this.behaviors){
-            if(this.behaviors[i].id === behavior)
+    _getBehaviorIndex(behavior) {
+        for (const i in this.behaviors) {
+            if (this.behaviors[i].id === behavior)
                 return i;
         }
         return -1;
@@ -144,8 +168,8 @@ class BehaviorTarget {
      * 移除行为
      * @param {string} behavior 行为id
      */
-    removeBehavior(behavior){
-        if(!this.hasBehavior(behavior))
+    removeBehavior(behavior) {
+        if (!this.hasBehavior(behavior))
             EBL.throwError('[BEHAVIOR]', behavior, '行为不存在');
         this.behaviors.splice(this._getBehaviorIndex(behavior), 1);
     }
@@ -153,8 +177,8 @@ class BehaviorTarget {
      * 对该对象启用行为
      * @param {string} behavior 行为id
      */
-    enableBehavior(behavior){
-        if(!this.hasBehavior(behavior))
+    enableBehavior(behavior) {
+        if (!this.hasBehavior(behavior))
             EBL.throwError('[BEHAVIOR]', behavior, '行为不存在');
         this.behaviors[this._getBehaviorIndex(behavior)].disabled = false;
     }
@@ -163,8 +187,8 @@ class BehaviorTarget {
      * 禁用后，该对象将不会执行该行为
      * @param {string} behavior 行为id
      */
-    disabledBehavior(behavior){
-        if(!this.hasBehavior(behavior))
+    disabledBehavior(behavior) {
+        if (!this.hasBehavior(behavior))
             EBL.throwError('[BEHAVIOR]', behavior, '行为不存在');
         this.behaviors[this._getBehaviorIndex(behavior)].disabled = true;
     }
@@ -214,6 +238,7 @@ function registerBehavior(behavior) {
     behaviorRegistry.set(behavior.id, behavior);
 }
 // ----- BehaviorLib End   -----
+EBL.registerRegistryClassIndex(Behavior, registerBehavior)
 const BehaviorLib = {
     Behavior,
     BehaviorTarget,

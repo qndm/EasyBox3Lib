@@ -159,7 +159,18 @@ module.exports = {
          * 如果为`true`，那么output和throwError的报错内容将会自动翻译成中文（日志仍为原文）
          * @default false
          */
-        enableAutoTranslation: false
+        enableAutoTranslation: false,
+        /**
+         * Storage队列冷却时间  
+         * 在完成一次写入后，要等多久才会进行下一次写入，单位为ms
+         * @default 0
+         */
+        storageQueueCooldown: 0,
+        /**
+         * 在`DataStorage.list`方法上启用缓存  
+         * 测试中，可能存在不稳定性，因为这会使用EasyBox3Lib自己写的`StorageQueryList`
+         */
+        enableStorageListCache: false
     },
     BehaviorLib: {
         /**
