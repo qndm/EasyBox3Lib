@@ -6,7 +6,7 @@
 
 ## 使用
 ### 安装`EasyBox3Lib.js`、`config.js`
-1. 添加主文件：复制[/script/EasyBox3Lib.js](./script/EasyBox3Lib.js)中的全部内容，并粘贴在地图内的一个**空的**脚本文件内，如`EasyBox3Lib.js`。  
+1. 添加主文件：复制[/script/EasyBox3Lib.js](/script/EasyBox3Lib.js)中的全部内容，并粘贴在地图内的一个**空的**脚本文件内，如`EasyBox3Lib.js`。  
 2. 添加配置文件，创建一个新的脚本文件，命名为`EasyBox3Lib.config.js`（**不要命名为`EasyBox3Lib.config`或者`EasyBox3Lib.config.js.js`，这样无法读取**），并将[/script/EasyBox3Lib.config.js](./script/EasyBox3Lib.config.js)复制到`EasyBox3Lib.config.js`中
 3. 在`index.js`的开头加上以下代码（**`EasyBox3Lib.js`改成脚本文件的名称**）：
 ```javascript
@@ -43,3 +43,11 @@ const $ = 扩展库;// “$”可以改为其他内容，只要不冲突，你�
 [开发规范](./developmentSpecification.md)
 ## 版本 & 更新日志
 [Changelog](./changelog.md)
+## 无法打开开发文档
+可以看JsDoc（打开库文件，把鼠标移在方法/类定义处）  
+你要是连Github上的文件都打不开，请尝试修改DNS、hosts，或使用加速器
+
+## 关于链接404问题
+如果你通过Github Page生成的页面（`qndm.github.io`）打开此README文件，大部分的链接都会404  
+请访问 <https://github.com/qndm/EasyBox3Lib> 查看README文件  
+暂时没有什么好的解决方法:\)

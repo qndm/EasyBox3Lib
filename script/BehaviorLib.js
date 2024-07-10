@@ -1,10 +1,21 @@
+// ==UserScript==
+const gameConfig = {
+    type: "BehaviorLib",
+    title: "BehaviorLib",
+    doc: `EasyBox3Lib的附属库，用于控制对象行为，需要安装EasyBox3Lib。EasyBox3Lib的安装见帮助链接`,
+    help: "https://qndm.github.io/EasyBox3Lib",
+    file: true,
+    isClient: false
+}
+// ==UserScript==
+
 /**
  * BehaviorLib 库  
  * 用于控制实体/非实体行为的库  
- * 依赖EasyBox3Lib 0.1.5
+ * 依赖EasyBox3Lib 0.1.6
  * @author qndm
  * @module BehaviorLib
- * @version 0.0.5
+ * @version 0.0.6
  * @license MIT
  */
 /**
@@ -49,12 +60,12 @@ const EBL = global.EasyBox3Lib,
      * 建议EasyBox3Lib版本 
      * @type {number[]} 
      */
-    EBL_VERSION = [0, 1, 5],
+    EBL_VERSION = [0, 1, 6],
     /**
      * 当前版本
      * @type {number[]} 
      */
-    VERSION = [0, 0, 5];
+    VERSION = [0, 0, 6];
 
 /**
  * @type {Map<string, Behavior>}
@@ -160,7 +171,7 @@ class BehaviorTarget {
      */
     addBehavior(behavior, priority = behavior.priority) {
         if (this.hasBehavior(behavior))
-            EBL.throwError("[BEHAVIOR_TARGET] 添加行为失败：行为已存在");
+            EBL.thr("[BEHAVIOR_TARGET] 添加行为失败：行为已存在");
         this.behaviors.push({ id: behavior, priority, disabled: false });
         this.behaviors.sort(a, b => b.priority - a.priority);
     }
@@ -170,7 +181,7 @@ class BehaviorTarget {
      */
     removeBehavior(behavior) {
         if (!this.hasBehavior(behavior))
-            EBL.throwError('[BEHAVIOR]', behavior, '行为不存在');
+            EBL.thr('[BEHAVIOR]', behavior, '行为不存在');
         this.behaviors.splice(this._getBehaviorIndex(behavior), 1);
     }
     /**
@@ -179,7 +190,7 @@ class BehaviorTarget {
      */
     enableBehavior(behavior) {
         if (!this.hasBehavior(behavior))
-            EBL.throwError('[BEHAVIOR]', behavior, '行为不存在');
+            EBL.thr('[BEHAVIOR]', behavior, '行为不存在');
         this.behaviors[this._getBehaviorIndex(behavior)].disabled = false;
     }
     /**
@@ -189,7 +200,7 @@ class BehaviorTarget {
      */
     disabledBehavior(behavior) {
         if (!this.hasBehavior(behavior))
-            EBL.throwError('[BEHAVIOR]', behavior, '行为不存在');
+            EBL.thr('[BEHAVIOR]', behavior, '行为不存在');
         this.behaviors[this._getBehaviorIndex(behavior)].disabled = true;
     }
     /**
@@ -217,7 +228,7 @@ class BehaviorTarget {
      * @returns {EasyBox3Lib.onTickEventToken} 事件令牌
      */
     createOnTickEvent(tpc = nullc(CONFIG.BehaviorLib.defaultTpc, 2), performanceImpact = nullc(CONFIG.BehaviorLib.defaultPerformanceImpact, 1)) {
-        this.onTickEvent = EBL.onTick(async () => {
+        this.onTickEvent = EBL.ot(async () => {
             await this._runBehaviorTick();
         }, tpc, performanceImpact);
         return this.onTickEvent;
@@ -230,19 +241,22 @@ class BehaviorTarget {
  */
 function registerBehavior(behavior) {
     if (!(behavior instanceof Behavior)) {
-        EBL.throwError("[BEHAVIOR] 注册失败：未知行为类型");
+        EBL.thr("[BEHAVIOR] 注册失败：未知行为类型");
     }
     if (behaviorRegistry.has(behavior.id)) {
-        EBL.throwError("[BEHAVIOR] 注册失败：行为 " + behavior.id + " 已注册类型");
+        EBL.thr("[BEHAVIOR] 注册失败：行为 " + behavior.id + " 已注册类型");
     }
     behaviorRegistry.set(behavior.id, behavior);
 }
 // ----- BehaviorLib End   -----
-EBL.registerRegistryClassIndex(Behavior, registerBehavior)
+EBL.regIndex(Behavior, registerBehavior)
 const BehaviorLib = {
     Behavior,
+    B: Behavior,
     BehaviorTarget,
+    BT: BehaviorTarget,
     registerBehavior,
+    regB: registerBehavior,
     version: VERSION
 };
 /**

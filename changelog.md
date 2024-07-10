@@ -1,6 +1,14 @@
 # 版本 & 更新日志
 若未强调是什么库，一律视为`EasyBox3Lib`
 ## Beta
+### EasyBox3Lib 0.1.6 & BehaviorLib 0.0.6
+优化代码  
+更新JsDoc  
+添加示例  
+为大部分方法添加缩写  
+新增`spiltWord`方法  
+实体组不再使用`new EntityGroup()`来创建，而是`createEntityGroup`方法
+
 ### EasyBox3Lib 0.1.5 & BehaviorLib 0.0.5
 新增 `Thing.onUpdateWear`事件，用于更方便地更新物品穿戴状态  
 【重要】将配置文件重命名为`EasyBox3Lib.config.js`，以保证兼容性  

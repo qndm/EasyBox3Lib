@@ -1,8 +1,19 @@
+// ==UserScript==
+const gameConfig = {
+    type: "EasyBox3Lib",
+    title: "EasyBox3Lib",
+    doc: `一个提供了很多实用功能的库。目前已实现：storage缓存&写入队列、物品系统、基于对话框的菜单和翻页、自定义事件等功能。通过安装配置文件来调整其功能。`,
+    help: "https://qndm.github.io/EasyBox3Lib",
+    file: true,
+    isClient: false
+}
+// ==UserScript==
+
 /**
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.1.5
+ * @version 0.1.6
  * @author qndm Nomen
  * @license MIT
  */
@@ -38,8 +49,9 @@ function nullc(a, b) {
         return b;
     else return a;
 }
-const DEBUGMODE = nullc(CONFIG.EasyBox3Lib.debug, false);
-const BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL', 'throwError']);
+const DEBUGMODE = nullc(CONFIG.EasyBox3Lib.debug, false),
+    BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL', 'throwError']),
+    ENABLE_ABBREVIATIONS = nullc(CONFIG.EasyBox3Lib.enableAbbreviations, true);
 
 /**
  * 事件回调函数
@@ -351,11 +363,11 @@ class StorageQueryList {
         this.ascending = ascending;
         this.max = max;
         this.min = min;
-        if(constraintTarget){
+        if (constraintTarget) {
             this.data.sort((a, b) => (a[constraintTarget] - b[constraintTarget]) * (this.ascending - 0.5))
-            if(this.max !== null)
+            if (this.max !== null)
                 this.data = this.data.filter(a => a[constraintTarget] <= this.max);
-            if(this.min !== null)
+            if (this.min !== null)
                 this.data = this.data.filter(a => a[constraintTarget] >= this.min);
         }
     }
@@ -513,7 +525,7 @@ class DataStorage {
     async list(options) {
         output('log', '获取数据', this.key, ':', options.cursor, '-', options.cursor + (options.pageSize || 100));
         if (!nullc(CONFIG.EasyBox3Lib.inArena, false)) {
-            if(this.#fullCached && nullc(CONFIG.EasyBox3Lib.enableStorageListCache, false)){
+            if (this.#fullCached && nullc(CONFIG.EasyBox3Lib.enableStorageListCache, false)) {
                 let data = [];
                 this._data.forEach((value) => data.push(value));
                 return new StorageQueryList(data, options.cursor, options.pageSize, options.constraintTarget, options.ascending, options.max, options.min);
@@ -1926,7 +1938,8 @@ function toChineseDate(date) {
     return chineseDate;
 }
 /**
- * 执行一段SQL命令
+ * 执行一段SQL命令  
+ * 仅在旧岛中使用
  * @async
  * @param {string} code 
  * @returns {any}
@@ -1981,6 +1994,10 @@ async function tryExecuteSQL(func, msg = '') {
  * @async
  * @param {string} key 指定空间的名称，长度不超过50个字符
  * @returns {DataStorage}
+ * @example
+ * (async () => {
+ *     await EasyBox3Lib.storage.getDataStorage('test');
+ * })();
  */
 async function getDataStorage(key) {
     if (dataStorages.get(key)) {
@@ -1990,7 +2007,7 @@ async function getDataStorage(key) {
     output('log', '连接数据存储空间', key);
     var gameDataStorage;
     if (nullc(CONFIG.EasyBox3Lib.inArena, false))
-        gameDataStorage = await tryExecuteSQL(async () => await storage.getDataStorage(key), '数据存储空间连接失败');
+        gameDataStorage = await tryExecuteSQL(() => storage.getDataStorage(key), '数据存储空间连接失败');
     else
         await tryExecuteSQL(async () => await executeSQLCode(`CREATE TABLE IF NOT EXISTS "${key}"("key" TEXT PRIMARY KEY, "value" TEXT NOT NULL, "version" TEXT NOT NULL, "updateTime" INTEGER NOT NULL, "createTime" INTEGER NOT NULL)`), '数据存储空间连接失败');
     dataStorages.set(key, new DataStorage(key, gameDataStorage))
@@ -2001,6 +2018,9 @@ async function getDataStorage(key) {
  * 比`getDataStorage`更快，但不能创建数据存储空间
  * @param {string} storageKey 指定数据存储空间名称
  * @returns {DataStorage}
+ * @example
+ * await EasyBox3Lib.storage.getDataStorage('test');
+ * var playerStorage = EasyBox3Lib.storage.getDataStorageInCache('test');
  */
 function getDataStorageInCache(storageKey) {
     if (!dataStorages.has(storageKey)) {
@@ -2010,12 +2030,18 @@ function getDataStorageInCache(storageKey) {
 }
 /**
  * 设置一个键值对  
- * 与`DataStorage.set`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中  
+ * 与`DataStorage.set`方法不同，该方法调用后不会立即写入数据，而是移动到`Storage Queue`中  
  * 建议添加 `await`
  * @async
- * @param {string} storageKey 指定空间的名称
+ * @param {string} storageKey 指定空间的名称，不需要提前获取空间
  * @param {string} key 需要设置的键
  * @param {string} value 需要设置的值
+ * @example
+ * await EasyBox3Lib.storage.setData('test', entity.player.userKey, {
+ *     money: entity.player.money,
+ *     experience: entity.player.experience,
+ *     itemList: entity.player.itemList.toString(),
+ * });
  */
 async function setData(storageKey, key, value) {
     /**@type {StorageTask} */
@@ -2032,9 +2058,11 @@ async function setData(storageKey, key, value) {
 /**
  * 查找一个键值对
  * @async
- * @param {string} storageKey 指定空间的名称
+ * @param {string} storageKey 指定空间的名称，不需要提前获取空间
  * @param {string} key 指定的键
  * @returns {ReturnValue}
+ * @example
+ * var data = await EasyBox3Lib.storage.getData('test', entity.player.userKey);
  */
 async function getData(storageKey, key) {
     var dataStorage = await getDataStorage(storageKey), result;
@@ -2047,10 +2075,13 @@ async function getData(storageKey, key) {
 }
 /**
  * 批量获取键值对  
- * 注意：该方法不会创建缓存和读取缓存，所以该方法比`get`更慢
- * @param {string} storageKey 指定空间的名称
+ * ~~注意：该方法不会创建缓存和读取缓存，所以比`get`更慢~~
+ * 目前在完全缓存的情况下可以在此使用缓存，需要更改配置文件
+ * @param {string} storageKey 指定空间的名称，不需要提前获取空间
  * @param {ListPageOptions} options 批量获取键值对的配置项
  * @returns {QueryList}
+ * @example
+ * var datas = await EasyBox3Lib.storage.listData('test', {cursor: 0});
  */
 async function listData(storageKey, options) {
     var dataStorage = await getDataStorage(storageKey);
@@ -2061,8 +2092,10 @@ async function listData(storageKey, options) {
  * 与`DataStorage.remove`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中  
  * 建议添加 `await`
  * @async
- * @param {string} storageKey 指定空间的名称
+ * @param {string} storageKey 指定空间的名称，不需要提前获取空间
  * @param {string} key 指定的键
+ * @example
+ * await EasyBox3Lib.storage.removeData('test', entity.player.userKey);
  */
 async function removeData(storageKey, key) {
     /**@type {StorageTask} */
@@ -2074,22 +2107,34 @@ async function removeData(storageKey, key) {
 }
 /**
  * 删除指定数据存储空间  
- * 警告：删除之后无法恢复，请谨慎使用！！！
+ * 警告：删除之后无法恢复，请谨慎使用！！！  
+ * 不支持Arena，只支持旧岛
  * @async
- * @param {string} storageKey 指定数据存储空间
+ * @param {string} storageKey 指定数据存储空间，不需要提前获取空间
+ * @example
+ * await EasyBox3Lib.storage.dropDataStorage('player');
  */
 async function dropDataStorage(storageKey) {
     await getDataStorage(storageKey).drop();
 }
 /**
  * 创建游戏循环  
- * 需要手动运行
+ * 需要手动调用`runGameLoop`运行
  * @param {string} name 循环名称
  * @param {EventCallBack} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数
+ * @example
+ * EasyBox3Lib.createGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
  */
 function createGameLoop(name, callbackfn) {
     if (gameLoops.has(name)) {
         output('error', name, '循环已存在');
+        return;
+    }
+    if (callbackfn === undefined) {
+        output('error', name, '循环为空');
         return;
     }
     output('log', '创建游戏循环', name);
@@ -2097,20 +2142,45 @@ function createGameLoop(name, callbackfn) {
 }
 /**
  * 创建并运行游戏循环  
+ * 如果循环已存在，则直接运行循环
+ * @async
  * @param {string} name 循环名称
  * @param {EventCallBack | undefined} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数。如果为空且循环存在，则继续循环
+ * @example
+ * EasyBox3Lib.startGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * @example
+ * EasyBox3Lib.createGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * EasyBox3Lib.startGameLoop('test1');
  */
 async function startGameLoop(name, callbackfn = undefined) {
-    if (gameLoops[name] && callbackfn === undefined) {
+    if (gameLoops[name]) {
         await runGameLoop(name);
+        return;
+    }
+    if (callbackfn === undefined) {
+        output('error', name, '循环为空');
         return;
     }
     createGameLoop(name, callbackfn);
     await runGameLoop(name);
 }
 /**
- * 停止游戏循环
+ * 停止游戏循环  
+ * 该游戏循环可能不会立即停止，而是在当前循环运行完后真正停止
  * @param {string} name 循环名称
+ * @example
+ * EasyBox3Lib.startGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * EasyBox3Lib.stopGameLoop('test1');
+ * //这个例子可能不是很好，因为设计的时候就没想过这么用，比这个复杂多了，参见Storage Queue的实现
  */
 function stopGameLoop(name) {
     output('log', '停止游戏循环', name);
@@ -2119,6 +2189,12 @@ function stopGameLoop(name) {
 /**
  * 运行游戏循环
  * @param {string} name 循环名称
+ * @example
+ * EasyBox3Lib.createGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * EasyBox3Lib.runGameLoop('test1');
  */
 async function runGameLoop(name) {
     if (!gameLoops.has(name)) {
@@ -2135,7 +2211,8 @@ async function runGameLoop(name) {
     gameLoop.statu = 'running';
     while (true) {
         gameLoop = gameLoops.get(name);
-        output("log", '[LOG][GAMELOOP]', name, gameLoop.statu);
+        if(DEBUGMODE)
+            output("log", '[LOG][GAMELOOP]', name, gameLoop.statu);
         if (!gameLoops.has(name) || gameLoop.statu != 'running')
             break;
         await gameLoop.init(++gameLoop.times);
@@ -2150,6 +2227,13 @@ async function runGameLoop(name) {
  * 删除游戏循环，之后不能再对该循环进行操作  
  * 如果循环正在运行中，那么循环结束后才会删除
  * @param {string} name 循环名称
+ * @example
+ * EasyBox3Lib.createGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * EasyBox3Lib.deleteGameLoop('test1');//刚创建还没运行就删除（）
+ * //这个例子可能不是很好，因为设计的时候就没想过这么用，比这个复杂多了，参见Storage Queue的实现
  */
 function deleteGameLoop(name) {
     if (['$StorageQueue'].includes(name))
@@ -2177,11 +2261,19 @@ function registerEvent(name) {
         output('warn', name, '事件已存在');
 }
 /**
- * 添加事件监听器
+ * 添加事件监听器  
+ * 不可使用此方法注册`onTick`事件
  * @example
- * registerEvent('testEvent');
- * addEventHandler('testEvent', () => {
+ * EasyBox3Lib.registerEvent('testEvent');
+ * EasyBox3Lib.addEventHandler('testEvent', () => {
  *     output("log", '触发事件');
+ * });
+ * @example
+ * EasyBox3Lib.addEventHandler('onStart', () => {
+ *     EasyBox3Lib.output('地图启动成功');
+ * });
+ * EasyBox3Lib.addEventHandler('onPlayerJoin', ({ entity }) => {
+ *     world.say('欢迎', entity.player.name, '加入地图！');
  * });
  * @param {string} eventName 事件名称
  * @param {EventCallBack} handler 事件监听器
@@ -2201,17 +2293,17 @@ function addEventHandler(eventName, handler) {
  * 触发一个事件
  * @async
  * @example
- * registerEvent('testEvent');
- * addEventHandler('testEvent', () => {
- *     output("log", '触发事件');
+ * EasyBox3Lib.registerEvent('testEvent');
+ * EasyBox3Lib.addEventHandler('testEvent', () => {
+ *     EasyBox3Lib.output("log", '触发事件');
  * });
- * triggerEvent('testEvent');
+ * EasyBox3Lib.triggerEvent('testEvent');
  * @example
- * registerEvent('testEvent');
- * addEventHandler('testEvent', ({ data }) => {
- *     output("log", '触发事件 data =', data);
+ * EasyBox3Lib.registerEvent('testEvent');
+ * EasyBox3Lib.addEventHandler('testEvent', ({ data }) => {
+ *     EasyBox3Lib.output("log", '触发事件 data =', data);
  * });
- * triggerEvent('testEvent', { data: 114514 });
+ * EasyBox3Lib.triggerEvent('testEvent', { data: 114514 });
  * @param {string} eventName 事件名称
  * @param {object} data 监听器使用的参数
  */
@@ -2235,8 +2327,8 @@ function removeEvent(eventName) {
  * 注册一个`onTick`事件，类似于`Box3`中的`onTick`事件，但有一些优化  
  * 需要在预处理时注册
  * @example
- * onTick(({ tick }) => {
- *     output("log", 'tick', tick);
+ * EasyBox3Lib.onTick(({ tick }) => {
+ *     EasyBox3Lib.output("log", 'tick', tick);
  * }, 16);
  * @param {onTickEventCallBack} handler 要执行的函数
  * @param {number} tpc 每个循环的执行次数（times per cycles）
@@ -2254,14 +2346,14 @@ function onTick(handler, tpc, performanceImpact = 1, enforcement = false) {
  * @param {preprocessCallback} callbackfn 要执行的函数
  * @param {number} priority 优先级，值越大越先执行
  * @example
- * preprocess(() => {
- *     output("log", '这是一个预处理函数，会第一个执行');
+ * EasyBox3Lib.preprocess(() => {
+ *     EasyBox3Lib.output("log", '这是一个预处理函数，会第一个执行');
  * }, 2);
- * preprocess(() => {
- *     output("log", '这是一个预处理函数，会第二个执行');
+ * EasyBox3Lib.preprocess(() => {
+ *     EasyBox3Lib.output("log", '这是一个预处理函数，会第二个执行');
  * }, 1);
- * preprocess(() => {
- *     output("log", '优先级甚至可以是负数和小数！');
+ * EasyBox3Lib.preprocess(() => {
+ *     EasyBox3Lib.output("log", '优先级甚至可以是负数和小数！');
  * }, -114.514);
  */
 function preprocess(callbackfn, priority) {
@@ -2270,7 +2362,8 @@ function preprocess(callbackfn, priority) {
         output('log', '[LOG][PREPROCESS]', '注册预处理函数成功');
 }
 /**
- * 规划onTick事件
+ * 规划onTick事件  
+ * 一般不需要自行调用
  */
 async function planningOnTickEvents() {
     output('log', '开始规划onTick……');
@@ -2287,6 +2380,16 @@ async function planningOnTickEvents() {
 }
 /**
  * 启动地图（执行预处理函数）
+ * @example
+ * EasyBox3Lib.start();
+ * @example
+ * EasyBox3Lib.addEventHandler('onStart', () => {
+ *     EasyBox3Lib.output('地图启动成功');
+ * });
+ * EasyBox3Lib.addEventHandler('onPlayerJoin', ({ entity }) => {
+ *     world.say('欢迎', entity.player.name, '加入地图！');
+ * });
+ * EasyBox3Lib.start();
  */
 async function start() {
     preprocessFunctions.sort((a, b) => b.priority - a.priority);
@@ -2401,6 +2504,8 @@ function startStorageQueue() {
 /**
  * 停止Storage Queue  
  * `setData`和`removeData`仍会将任务放到队列中，但不会再次处理，除非运行`startStorageQueue`
+ * @example
+ * EasyBox3Lib.stopStorageQueue();
  */
 function stopStorageQueue() {
     if (!storageQueueStarted) {
@@ -2426,6 +2531,12 @@ function translationError(msg) {
 /**
  * 万用注册函数
  * @param {any} any 你要注册的东西
+ * @example
+ * EasyBox3Lib.register(new EasyBox3Lib.Item('豆奶', '豆奶', 16, ['食物'], undefined, { recovery: 6 }));
+ * @example
+ * EasyBox3Lib.register(new BehaviorLib.Behavior("findAttackTarget", (self, data) => {
+ *     self.attackTarget = world.querySelectorAll(data.selector).filter(data.filter)[0];
+ * }, 1));
  */
 function register(any) {
     registryClassIndex.forEach((fn, type) => {
@@ -2439,30 +2550,98 @@ function register(any) {
 /**
  * 注册注册函数类别索引  
  * 满足`any instanceof type`时调用`fn(any)`
+ * @param {(any: any) => any} fn
+ * @example
+ * EasyBox3Lib.registerRegistryClassIndex(EasyBox3Lib.Item, registerItem);
  */
 function registerRegistryClassIndex(type, fn) {
     registryClassIndex.set(type, fn);
 }
+/**
+ * 根据大小写和符号，拆分单词
+ * @param {string} word
+ * @return {string[]}
+ */
+function spiltWord(word) {
+    function getType(char) {
+        if (char >= 'A' && char <= 'Z')
+            return 0;
+        if (char >= 'a' && char <= 'z')
+            return 1;
+        if (char >= '0' && char <= '9')
+            return 2;
+        else
+            return 3;
+    }
+    var result = [], now = '', nowType = -1;//nowType -1=>空 0=>大写字母 1=>小写字母 2=>数字 3=>符号
+    for (let char of word) {
+        let type = getType(char);
+        if (type != nowType && nowType != 0 && type != 1) {
+            if (now !== '') {
+                result.push(now);
+                now = '';
+            }
+        }
+        if (char === '3' && result[result.length - 1] === 'Box') {
+            result[result.length - 1] += char;
+            nowType = -1;
+            continue;
+        }
+        now += char;
+        nowType = type;
+    }
+    result.push(now);
+    return result;
+}
+/**
+ * 创建一个实体组  
+ * 更改`entities`中每个实体的`indexInEntityGroup`属性为该实体在实体组内的编号
+ * @param {Box3Entity[]} entities 实体组内的实体
+ * @param {Box3Vector3} position 实体组中心位置.
+ * @return {EntityGroup}
+ */
+function createEntityGroup(entities, position) {
+    return new EntityGroup(entities, position);
+}
 const EasyBox3Lib = {
     copyObject,
+    copy: copyObject,
     getEntity,
+    gete: getEntity,
     getEntities,
+    getes: getEntities,
     getPlayer,
+    getp: getPlayer,
     getAllLogs,
+    getlog: getAllLogs,
     output,
+    o: output,
     isAdmin,
+    isa: isAdmin,
     resizePlayer,
+    resp: resizePlayer,
     setAdminStatus,
+    setas: setAdminStatus,
     createEntity,
+    ce: createEntity,
     textDialog,
+    td: textDialog,
     selectDialog,
+    sd: selectDialog,
     inputDialog,
+    id: inputDialog,
     shuffleTheList,
+    sl: shuffleTheList,
     toChineseDate,
+    tcd: toChineseDate,
     random,
+    ran: random,
     Menu,
+    M: Menu,
     Pages,
+    P: Pages,
     getTheCodeExecutionLocation,
+    getl: getTheCodeExecutionLocation,
     storage: {
         executeSQLCode,
         getDataStorage,
@@ -2476,30 +2655,65 @@ const EasyBox3Lib = {
         startStorageQueue,
         stopStorageQueue
     },
+    s: {
+        eSQL: executeSQLCode,
+        getds: getDataStorage,
+        getdsc: getDataStorageInCache,
+        setd: setData,
+        getd: getData,
+        ld: listData,
+        remd: removeData,
+        dds: dropDataStorage,
+        tSQL: tryExecuteSQL,
+        startSQ: startStorageQueue,
+        stopSQ: stopStorageQueue
+    },
     createGameLoop,
     startGameLoop,
     deleteGameLoop,
     stopGameLoop,
     runGameLoop,
+    cGL: createGameLoop,
+    startGL: startGameLoop,
+    dGL: deleteGameLoop,
+    stopGL: stopGameLoop,
+    rGL: runGameLoop,
     onTick,
+    ot: onTick,
     preprocess,
+    pre: preprocess,
     start,
     addEventHandler,
+    addEH: addEventHandler,
     triggerEvent,
+    triE: triggerEvent,
     registerEvent,
+    regE: registerEvent,
     removeEvent,
-    EntityGroup,
+    remE: removeEvent,
+    createEntityGroup,
+    cEG: createEntityGroup,
     changeVelocity,
+    changeV: changeVelocity,
     registerItem,
+    regI: registerItem,
     Item,
+    I: Item,
     Thing,
+    T: Thing,
     ThingStorage,
+    TS: ThingStorage,
     throwError,
+    thr: throwError,
     translationError,
+    te: translationError,
     register,
+    reg: register,
     registerRegistryClassIndex,
+    regIndex: registerRegistryClassIndex,
+    spiltWord,
     TIME,
-    version: [0, 1, 5]
+    version: [0, 1, 6]
 };
 Object.defineProperty(EasyBox3Lib, 'started', {
     get: () => started,
@@ -2511,7 +2725,7 @@ if (nullc(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
     Object.assign(global, EasyBox3Lib);
     output('log', '已成功暴露到全局');
 }
-if (CONFIG.EasyBox3Lib.enableOnPlayerJoin) {
+if (nullc(CONFIG.EasyBox3Lib.enableOnPlayerJoin, false)) {
     world.onPlayerJoin(({ entity }) => {
         if (started)
             triggerEvent('onPlayerJoin', { entity });
