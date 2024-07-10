@@ -1,10 +1,21 @@
 <!DOCTYPE html><html lang="en" style="font-size:16px"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Source: EasyBox3Lib.js</title><!--[if lt IE 9]>
       <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]--><script src="scripts/third-party/hljs.js" defer="defer"></script><script src="scripts/third-party/hljs-line-num.js" defer="defer"></script><script src="scripts/third-party/popper.js" defer="defer"></script><script src="scripts/third-party/tippy.js" defer="defer"></script><script src="scripts/third-party/tocbot.min.js"></script><script>var baseURL="/",locationPathname="";baseURL=(locationPathname=document.location.pathname).substr(0,locationPathname.lastIndexOf("/")+1)</script><link rel="stylesheet" href="styles/clean-jsdoc-theme.min.css"><svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none"><defs><symbol id="copy-icon" viewbox="0 0 488.3 488.3"><g><path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/><path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/></g></symbol><symbol id="search-icon" viewBox="0 0 512 512"><g><g><path d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z"/></g></g><g><g><path d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z"/></g></g></symbol><symbol id="font-size-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol><symbol id="add-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol><symbol id="minus-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M5 11h14v2H5z"/></symbol><symbol id="dark-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol><symbol id="light-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol><symbol id="reset-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.537 19.567A9.961 9.961 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.136-.67 4.116-1.81 5.74L17 12h3a8 8 0 1 0-2.46 5.772l.997 1.795z"/></symbol><symbol id="down-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"></path></symbol><symbol id="codepen-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M16.5 13.202L13 15.535v3.596L19.197 15 16.5 13.202zM14.697 12L12 10.202 9.303 12 12 13.798 14.697 12zM20 10.869L18.303 12 20 13.131V10.87zM19.197 9L13 4.869v3.596l3.5 2.333L19.197 9zM7.5 10.798L11 8.465V4.869L4.803 9 7.5 10.798zM4.803 15L11 19.131v-3.596l-3.5-2.333L4.803 15zM4 13.131L5.697 12 4 10.869v2.262zM2 9a1 1 0 0 1 .445-.832l9-6a1 1 0 0 1 1.11 0l9 6A1 1 0 0 1 22 9v6a1 1 0 0 1-.445.832l-9 6a1 1 0 0 1-1.11 0l-9-6A1 1 0 0 1 2 15V9z"/></symbol><symbol id="close-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></symbol><symbol id="menu-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol></defs></svg></head><body data-theme="fallback-light"><div class="sidebar-container"><div class="sidebar" id="sidebar"><div class="sidebar-items-container"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-namespaces"><div>Namespaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div></div></div></div></div><div class="navbar-container" id="VuAckcnZhf"><nav class="navbar"><div class="navbar-left-items"></div><div class="navbar-right-items"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div><nav></nav></nav></div><div class="toc-container"><div class="toc-content"><span class="bold">On this page</span><div id="eed4d2a0bfd64539bb9df78095dec881"></div></div></div><div class="body-wrapper"><div class="main-content"><div class="main-wrapper"><section id="source-page" class="source-page"><header><h1 id="title" class="has-anchor">EasyBox3Lib.js</h1></header><article><pre class="prettyprint source lang-js"><code>/**
+    <![endif]--><script src="scripts/third-party/hljs.js" defer="defer"></script><script src="scripts/third-party/hljs-line-num.js" defer="defer"></script><script src="scripts/third-party/popper.js" defer="defer"></script><script src="scripts/third-party/tippy.js" defer="defer"></script><script src="scripts/third-party/tocbot.min.js"></script><script>var baseURL="/",locationPathname="";baseURL=(locationPathname=document.location.pathname).substr(0,locationPathname.lastIndexOf("/")+1)</script><link rel="stylesheet" href="styles/clean-jsdoc-theme.min.css"><svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none"><defs><symbol id="copy-icon" viewbox="0 0 488.3 488.3"><g><path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/><path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/></g></symbol><symbol id="search-icon" viewBox="0 0 512 512"><g><g><path d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z"/></g></g><g><g><path d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z"/></g></g></symbol><symbol id="font-size-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol><symbol id="add-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol><symbol id="minus-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M5 11h14v2H5z"/></symbol><symbol id="dark-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol><symbol id="light-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol><symbol id="reset-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.537 19.567A9.961 9.961 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.136-.67 4.116-1.81 5.74L17 12h3a8 8 0 1 0-2.46 5.772l.997 1.795z"/></symbol><symbol id="down-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"></path></symbol><symbol id="codepen-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M16.5 13.202L13 15.535v3.596L19.197 15 16.5 13.202zM14.697 12L12 10.202 9.303 12 12 13.798 14.697 12zM20 10.869L18.303 12 20 13.131V10.87zM19.197 9L13 4.869v3.596l3.5 2.333L19.197 9zM7.5 10.798L11 8.465V4.869L4.803 9 7.5 10.798zM4.803 15L11 19.131v-3.596l-3.5-2.333L4.803 15zM4 13.131L5.697 12 4 10.869v2.262zM2 9a1 1 0 0 1 .445-.832l9-6a1 1 0 0 1 1.11 0l9 6A1 1 0 0 1 22 9v6a1 1 0 0 1-.445.832l-9 6a1 1 0 0 1-1.11 0l-9-6A1 1 0 0 1 2 15V9z"/></symbol><symbol id="close-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></symbol><symbol id="menu-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol></defs></svg></head><body data-theme="fallback-light"><div class="sidebar-container"><div class="sidebar" id="sidebar"><div class="sidebar-items-container"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-namespaces"><div>Namespaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div></div></div></div></div><div class="navbar-container" id="VuAckcnZhf"><nav class="navbar"><div class="navbar-left-items"></div><div class="navbar-right-items"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div><nav></nav></nav></div><div class="toc-container"><div class="toc-content"><span class="bold">On this page</span><div id="eed4d2a0bfd64539bb9df78095dec881"></div></div></div><div class="body-wrapper"><div class="main-content"><div class="main-wrapper"><section id="source-page" class="source-page"><header><h1 id="title" class="has-anchor">EasyBox3Lib.js</h1></header><article><pre class="prettyprint source lang-js"><code>// ==UserScript==
+const gameConfig = {
+    type: "EasyBox3Lib",
+    title: "EasyBox3Lib",
+    doc: `一个提供了很多实用功能的库。目前已实现：storage缓存&amp;写入队列、物品系统、基于对话框的菜单和翻页、自定义事件等功能。通过安装配置文件来调整其功能。`,
+    help: "https://qndm.github.io/EasyBox3Lib",
+    file: true,
+    isClient: false
+}
+// ==UserScript==
+
+/**
  * EasyBox3Lib库  
  * 一个适用于大部分地图的通用代码库
  * @module EasyBox3Lib
- * @version 0.1.5
+ * @version 0.1.6
  * @author qndm Nomen
  * @license MIT
  */
@@ -40,8 +51,9 @@ function nullc(a, b) {
         return b;
     else return a;
 }
-const DEBUGMODE = nullc(CONFIG.EasyBox3Lib.debug, false);
-const BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL', 'throwError']);
+const DEBUGMODE = nullc(CONFIG.EasyBox3Lib.debug, false),
+    BLACKLIST = nullc(CONFIG.EasyBox3Lib.getFunctionNameBlackList, ['eval', 'getTheCodeExecutionLocation', 'output', 'executeSQLCode', 'tryExecuteSQL', 'throwError']),
+    ENABLE_ABBREVIATIONS = nullc(CONFIG.EasyBox3Lib.enableAbbreviations, true);
 
 /**
  * 事件回调函数
@@ -353,11 +365,11 @@ class StorageQueryList {
         this.ascending = ascending;
         this.max = max;
         this.min = min;
-        if(constraintTarget){
+        if (constraintTarget) {
             this.data.sort((a, b) => (a[constraintTarget] - b[constraintTarget]) * (this.ascending - 0.5))
-            if(this.max !== null)
+            if (this.max !== null)
                 this.data = this.data.filter(a => a[constraintTarget] &lt;= this.max);
-            if(this.min !== null)
+            if (this.min !== null)
                 this.data = this.data.filter(a => a[constraintTarget] >= this.min);
         }
     }
@@ -515,7 +527,7 @@ class DataStorage {
     async list(options) {
         output('log', '获取数据', this.key, ':', options.cursor, '-', options.cursor + (options.pageSize || 100));
         if (!nullc(CONFIG.EasyBox3Lib.inArena, false)) {
-            if(this.#fullCached &amp;&amp; nullc(CONFIG.EasyBox3Lib.enableStorageListCache, false)){
+            if (this.#fullCached &amp;&amp; nullc(CONFIG.EasyBox3Lib.enableStorageListCache, false)) {
                 let data = [];
                 this._data.forEach((value) => data.push(value));
                 return new StorageQueryList(data, options.cursor, options.pageSize, options.constraintTarget, options.ascending, options.max, options.min);
@@ -1928,7 +1940,8 @@ function toChineseDate(date) {
     return chineseDate;
 }
 /**
- * 执行一段SQL命令
+ * 执行一段SQL命令  
+ * 仅在旧岛中使用
  * @async
  * @param {string} code 
  * @returns {any}
@@ -1983,6 +1996,10 @@ async function tryExecuteSQL(func, msg = '') {
  * @async
  * @param {string} key 指定空间的名称，长度不超过50个字符
  * @returns {DataStorage}
+ * @example
+ * (async () => {
+ *     await EasyBox3Lib.storage.getDataStorage('test');
+ * })();
  */
 async function getDataStorage(key) {
     if (dataStorages.get(key)) {
@@ -1992,7 +2009,7 @@ async function getDataStorage(key) {
     output('log', '连接数据存储空间', key);
     var gameDataStorage;
     if (nullc(CONFIG.EasyBox3Lib.inArena, false))
-        gameDataStorage = await tryExecuteSQL(async () => await storage.getDataStorage(key), '数据存储空间连接失败');
+        gameDataStorage = await tryExecuteSQL(() => storage.getDataStorage(key), '数据存储空间连接失败');
     else
         await tryExecuteSQL(async () => await executeSQLCode(`CREATE TABLE IF NOT EXISTS "${key}"("key" TEXT PRIMARY KEY, "value" TEXT NOT NULL, "version" TEXT NOT NULL, "updateTime" INTEGER NOT NULL, "createTime" INTEGER NOT NULL)`), '数据存储空间连接失败');
     dataStorages.set(key, new DataStorage(key, gameDataStorage))
@@ -2003,6 +2020,9 @@ async function getDataStorage(key) {
  * 比`getDataStorage`更快，但不能创建数据存储空间
  * @param {string} storageKey 指定数据存储空间名称
  * @returns {DataStorage}
+ * @example
+ * await EasyBox3Lib.storage.getDataStorage('test');
+ * var playerStorage = EasyBox3Lib.storage.getDataStorageInCache('test');
  */
 function getDataStorageInCache(storageKey) {
     if (!dataStorages.has(storageKey)) {
@@ -2012,12 +2032,18 @@ function getDataStorageInCache(storageKey) {
 }
 /**
  * 设置一个键值对  
- * 与`DataStorage.set`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中  
+ * 与`DataStorage.set`方法不同，该方法调用后不会立即写入数据，而是移动到`Storage Queue`中  
  * 建议添加 `await`
  * @async
- * @param {string} storageKey 指定空间的名称
+ * @param {string} storageKey 指定空间的名称，不需要提前获取空间
  * @param {string} key 需要设置的键
  * @param {string} value 需要设置的值
+ * @example
+ * await EasyBox3Lib.storage.setData('test', entity.player.userKey, {
+ *     money: entity.player.money,
+ *     experience: entity.player.experience,
+ *     itemList: entity.player.itemList.toString(),
+ * });
  */
 async function setData(storageKey, key, value) {
     /**@type {StorageTask} */
@@ -2034,9 +2060,11 @@ async function setData(storageKey, key, value) {
 /**
  * 查找一个键值对
  * @async
- * @param {string} storageKey 指定空间的名称
+ * @param {string} storageKey 指定空间的名称，不需要提前获取空间
  * @param {string} key 指定的键
  * @returns {ReturnValue}
+ * @example
+ * var data = await EasyBox3Lib.storage.getData('test', entity.player.userKey);
  */
 async function getData(storageKey, key) {
     var dataStorage = await getDataStorage(storageKey), result;
@@ -2049,10 +2077,13 @@ async function getData(storageKey, key) {
 }
 /**
  * 批量获取键值对  
- * 注意：该方法不会创建缓存和读取缓存，所以该方法比`get`更慢
- * @param {string} storageKey 指定空间的名称
+ * ~~注意：该方法不会创建缓存和读取缓存，所以比`get`更慢~~
+ * 目前在完全缓存的情况下可以在此使用缓存，需要更改配置文件
+ * @param {string} storageKey 指定空间的名称，不需要提前获取空间
  * @param {ListPageOptions} options 批量获取键值对的配置项
  * @returns {QueryList}
+ * @example
+ * var datas = await EasyBox3Lib.storage.listData('test', {cursor: 0});
  */
 async function listData(storageKey, options) {
     var dataStorage = await getDataStorage(storageKey);
@@ -2063,8 +2094,10 @@ async function listData(storageKey, options) {
  * 与`DataStorage.remove`方法不同，该方法调用后不会立即写入数据，而是移动到Storage Queue中  
  * 建议添加 `await`
  * @async
- * @param {string} storageKey 指定空间的名称
+ * @param {string} storageKey 指定空间的名称，不需要提前获取空间
  * @param {string} key 指定的键
+ * @example
+ * await EasyBox3Lib.storage.removeData('test', entity.player.userKey);
  */
 async function removeData(storageKey, key) {
     /**@type {StorageTask} */
@@ -2076,22 +2109,34 @@ async function removeData(storageKey, key) {
 }
 /**
  * 删除指定数据存储空间  
- * 警告：删除之后无法恢复，请谨慎使用！！！
+ * 警告：删除之后无法恢复，请谨慎使用！！！  
+ * 不支持Arena，只支持旧岛
  * @async
- * @param {string} storageKey 指定数据存储空间
+ * @param {string} storageKey 指定数据存储空间，不需要提前获取空间
+ * @example
+ * await EasyBox3Lib.storage.dropDataStorage('player');
  */
 async function dropDataStorage(storageKey) {
     await getDataStorage(storageKey).drop();
 }
 /**
  * 创建游戏循环  
- * 需要手动运行
+ * 需要手动调用`runGameLoop`运行
  * @param {string} name 循环名称
  * @param {EventCallBack} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数
+ * @example
+ * EasyBox3Lib.createGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
  */
 function createGameLoop(name, callbackfn) {
     if (gameLoops.has(name)) {
         output('error', name, '循环已存在');
+        return;
+    }
+    if (callbackfn === undefined) {
+        output('error', name, '循环为空');
         return;
     }
     output('log', '创建游戏循环', name);
@@ -2099,20 +2144,45 @@ function createGameLoop(name, callbackfn) {
 }
 /**
  * 创建并运行游戏循环  
+ * 如果循环已存在，则直接运行循环
+ * @async
  * @param {string} name 循环名称
  * @param {EventCallBack | undefined} callbackfn 要执行的函数。提供一个参数：time，代表循环执行的次数。如果为空且循环存在，则继续循环
+ * @example
+ * EasyBox3Lib.startGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * @example
+ * EasyBox3Lib.createGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * EasyBox3Lib.startGameLoop('test1');
  */
 async function startGameLoop(name, callbackfn = undefined) {
-    if (gameLoops[name] &amp;&amp; callbackfn === undefined) {
+    if (gameLoops[name]) {
         await runGameLoop(name);
+        return;
+    }
+    if (callbackfn === undefined) {
+        output('error', name, '循环为空');
         return;
     }
     createGameLoop(name, callbackfn);
     await runGameLoop(name);
 }
 /**
- * 停止游戏循环
+ * 停止游戏循环  
+ * 该游戏循环可能不会立即停止，而是在当前循环运行完后真正停止
  * @param {string} name 循环名称
+ * @example
+ * EasyBox3Lib.startGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * EasyBox3Lib.stopGameLoop('test1');
+ * //这个例子可能不是很好，因为设计的时候就没想过这么用，比这个复杂多了，参见Storage Queue的实现
  */
 function stopGameLoop(name) {
     output('log', '停止游戏循环', name);
@@ -2121,6 +2191,12 @@ function stopGameLoop(name) {
 /**
  * 运行游戏循环
  * @param {string} name 循环名称
+ * @example
+ * EasyBox3Lib.createGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * EasyBox3Lib.runGameLoop('test1');
  */
 async function runGameLoop(name) {
     if (!gameLoops.has(name)) {
@@ -2137,7 +2213,8 @@ async function runGameLoop(name) {
     gameLoop.statu = 'running';
     while (true) {
         gameLoop = gameLoops.get(name);
-        output("log", '[LOG][GAMELOOP]', name, gameLoop.statu);
+        if(DEBUGMODE)
+            output("log", '[LOG][GAMELOOP]', name, gameLoop.statu);
         if (!gameLoops.has(name) || gameLoop.statu != 'running')
             break;
         await gameLoop.init(++gameLoop.times);
@@ -2152,6 +2229,13 @@ async function runGameLoop(name) {
  * 删除游戏循环，之后不能再对该循环进行操作  
  * 如果循环正在运行中，那么循环结束后才会删除
  * @param {string} name 循环名称
+ * @example
+ * EasyBox3Lib.createGameLoop('test1', async (time) => {
+ *     await world.nextChat();
+ *     EasyBox3Lib.output('log', '第', time, '次收到消息');
+ * });
+ * EasyBox3Lib.deleteGameLoop('test1');//刚创建还没运行就删除（）
+ * //这个例子可能不是很好，因为设计的时候就没想过这么用，比这个复杂多了，参见Storage Queue的实现
  */
 function deleteGameLoop(name) {
     if (['$StorageQueue'].includes(name))
@@ -2179,11 +2263,19 @@ function registerEvent(name) {
         output('warn', name, '事件已存在');
 }
 /**
- * 添加事件监听器
+ * 添加事件监听器  
+ * 不可使用此方法注册`onTick`事件
  * @example
- * registerEvent('testEvent');
- * addEventHandler('testEvent', () => {
+ * EasyBox3Lib.registerEvent('testEvent');
+ * EasyBox3Lib.addEventHandler('testEvent', () => {
  *     output("log", '触发事件');
+ * });
+ * @example
+ * EasyBox3Lib.addEventHandler('onStart', () => {
+ *     EasyBox3Lib.output('地图启动成功');
+ * });
+ * EasyBox3Lib.addEventHandler('onPlayerJoin', ({ entity }) => {
+ *     world.say('欢迎', entity.player.name, '加入地图！');
  * });
  * @param {string} eventName 事件名称
  * @param {EventCallBack} handler 事件监听器
@@ -2203,17 +2295,17 @@ function addEventHandler(eventName, handler) {
  * 触发一个事件
  * @async
  * @example
- * registerEvent('testEvent');
- * addEventHandler('testEvent', () => {
- *     output("log", '触发事件');
+ * EasyBox3Lib.registerEvent('testEvent');
+ * EasyBox3Lib.addEventHandler('testEvent', () => {
+ *     EasyBox3Lib.output("log", '触发事件');
  * });
- * triggerEvent('testEvent');
+ * EasyBox3Lib.triggerEvent('testEvent');
  * @example
- * registerEvent('testEvent');
- * addEventHandler('testEvent', ({ data }) => {
- *     output("log", '触发事件 data =', data);
+ * EasyBox3Lib.registerEvent('testEvent');
+ * EasyBox3Lib.addEventHandler('testEvent', ({ data }) => {
+ *     EasyBox3Lib.output("log", '触发事件 data =', data);
  * });
- * triggerEvent('testEvent', { data: 114514 });
+ * EasyBox3Lib.triggerEvent('testEvent', { data: 114514 });
  * @param {string} eventName 事件名称
  * @param {object} data 监听器使用的参数
  */
@@ -2237,8 +2329,8 @@ function removeEvent(eventName) {
  * 注册一个`onTick`事件，类似于`Box3`中的`onTick`事件，但有一些优化  
  * 需要在预处理时注册
  * @example
- * onTick(({ tick }) => {
- *     output("log", 'tick', tick);
+ * EasyBox3Lib.onTick(({ tick }) => {
+ *     EasyBox3Lib.output("log", 'tick', tick);
  * }, 16);
  * @param {onTickEventCallBack} handler 要执行的函数
  * @param {number} tpc 每个循环的执行次数（times per cycles）
@@ -2256,14 +2348,14 @@ function onTick(handler, tpc, performanceImpact = 1, enforcement = false) {
  * @param {preprocessCallback} callbackfn 要执行的函数
  * @param {number} priority 优先级，值越大越先执行
  * @example
- * preprocess(() => {
- *     output("log", '这是一个预处理函数，会第一个执行');
+ * EasyBox3Lib.preprocess(() => {
+ *     EasyBox3Lib.output("log", '这是一个预处理函数，会第一个执行');
  * }, 2);
- * preprocess(() => {
- *     output("log", '这是一个预处理函数，会第二个执行');
+ * EasyBox3Lib.preprocess(() => {
+ *     EasyBox3Lib.output("log", '这是一个预处理函数，会第二个执行');
  * }, 1);
- * preprocess(() => {
- *     output("log", '优先级甚至可以是负数和小数！');
+ * EasyBox3Lib.preprocess(() => {
+ *     EasyBox3Lib.output("log", '优先级甚至可以是负数和小数！');
  * }, -114.514);
  */
 function preprocess(callbackfn, priority) {
@@ -2272,7 +2364,8 @@ function preprocess(callbackfn, priority) {
         output('log', '[LOG][PREPROCESS]', '注册预处理函数成功');
 }
 /**
- * 规划onTick事件
+ * 规划onTick事件  
+ * 一般不需要自行调用
  */
 async function planningOnTickEvents() {
     output('log', '开始规划onTick……');
@@ -2289,6 +2382,16 @@ async function planningOnTickEvents() {
 }
 /**
  * 启动地图（执行预处理函数）
+ * @example
+ * EasyBox3Lib.start();
+ * @example
+ * EasyBox3Lib.addEventHandler('onStart', () => {
+ *     EasyBox3Lib.output('地图启动成功');
+ * });
+ * EasyBox3Lib.addEventHandler('onPlayerJoin', ({ entity }) => {
+ *     world.say('欢迎', entity.player.name, '加入地图！');
+ * });
+ * EasyBox3Lib.start();
  */
 async function start() {
     preprocessFunctions.sort((a, b) => b.priority - a.priority);
@@ -2403,6 +2506,8 @@ function startStorageQueue() {
 /**
  * 停止Storage Queue  
  * `setData`和`removeData`仍会将任务放到队列中，但不会再次处理，除非运行`startStorageQueue`
+ * @example
+ * EasyBox3Lib.stopStorageQueue();
  */
 function stopStorageQueue() {
     if (!storageQueueStarted) {
@@ -2428,6 +2533,12 @@ function translationError(msg) {
 /**
  * 万用注册函数
  * @param {any} any 你要注册的东西
+ * @example
+ * EasyBox3Lib.register(new EasyBox3Lib.Item('豆奶', '豆奶', 16, ['食物'], undefined, { recovery: 6 }));
+ * @example
+ * EasyBox3Lib.register(new BehaviorLib.Behavior("findAttackTarget", (self, data) => {
+ *     self.attackTarget = world.querySelectorAll(data.selector).filter(data.filter)[0];
+ * }, 1));
  */
 function register(any) {
     registryClassIndex.forEach((fn, type) => {
@@ -2441,30 +2552,98 @@ function register(any) {
 /**
  * 注册注册函数类别索引  
  * 满足`any instanceof type`时调用`fn(any)`
+ * @param {Function} fn
+ * @example
+ * EasyBox3Lib.registerRegistryClassIndex(EasyBox3Lib.Item, registerItem);
  */
 function registerRegistryClassIndex(type, fn) {
     registryClassIndex.set(type, fn);
 }
+/**
+ * 根据大小写和符号，拆分单词
+ * @param {string} word
+ * @return {string[]}
+ */
+function spiltWord(word) {
+    function getType(char) {
+        if (char >= 'A' &amp;&amp; char &lt;= 'Z')
+            return 0;
+        if (char >= 'a' &amp;&amp; char &lt;= 'z')
+            return 1;
+        if (char >= '0' &amp;&amp; char &lt;= '9')
+            return 2;
+        else
+            return 3;
+    }
+    var result = [], now = '', nowType = -1;//nowType -1=>空 0=>大写字母 1=>小写字母 2=>数字 3=>符号
+    for (let char of word) {
+        let type = getType(char);
+        if (type != nowType &amp;&amp; nowType != 0 &amp;&amp; type != 1) {
+            if (now !== '') {
+                result.push(now);
+                now = '';
+            }
+        }
+        if (char === '3' &amp;&amp; result[result.length - 1] === 'Box') {
+            result[result.length - 1] += char;
+            nowType = -1;
+            continue;
+        }
+        now += char;
+        nowType = type;
+    }
+    result.push(now);
+    return result;
+}
+/**
+ * 创建一个实体组  
+ * 更改`entities`中每个实体的`indexInEntityGroup`属性为该实体在实体组内的编号
+ * @param {Box3Entity[]} entities 实体组内的实体
+ * @param {Box3Vector3} position 实体组中心位置.
+ * @return {EntityGroup}
+ */
+function createEntityGroup(entities, position) {
+    return new EntityGroup(entities, position);
+}
 const EasyBox3Lib = {
     copyObject,
+    copy: copyObject,
     getEntity,
+    gete: getEntity,
     getEntities,
+    getes: getEntities,
     getPlayer,
+    getp: getPlayer,
     getAllLogs,
+    getlog: getAllLogs,
     output,
+    o: output,
     isAdmin,
+    isa: isAdmin,
     resizePlayer,
+    resp: resizePlayer,
     setAdminStatus,
+    setas: setAdminStatus,
     createEntity,
+    ce: createEntity,
     textDialog,
+    td: textDialog,
     selectDialog,
+    sd: selectDialog,
     inputDialog,
+    id: inputDialog,
     shuffleTheList,
+    sl: shuffleTheList,
     toChineseDate,
+    tcd: toChineseDate,
     random,
+    ran: random,
     Menu,
+    M: Menu,
     Pages,
+    P: Pages,
     getTheCodeExecutionLocation,
+    getl: getTheCodeExecutionLocation,
     storage: {
         executeSQLCode,
         getDataStorage,
@@ -2478,30 +2657,65 @@ const EasyBox3Lib = {
         startStorageQueue,
         stopStorageQueue
     },
+    s: {
+        eSQL: executeSQLCode,
+        getds: getDataStorage,
+        getdsc: getDataStorageInCache,
+        setd: setData,
+        getd: getData,
+        ld: listData,
+        remd: removeData,
+        dds: dropDataStorage,
+        tSQL: tryExecuteSQL,
+        startSQ: startStorageQueue,
+        stopSQ: stopStorageQueue
+    },
     createGameLoop,
     startGameLoop,
     deleteGameLoop,
     stopGameLoop,
     runGameLoop,
+    cGL: createGameLoop,
+    startGL: startGameLoop,
+    dGL: deleteGameLoop,
+    stopGL: stopGameLoop,
+    rGL: runGameLoop,
     onTick,
+    ot: onTick,
     preprocess,
+    pre: preprocess,
     start,
     addEventHandler,
+    addEH: addEventHandler,
     triggerEvent,
+    triE: triggerEvent,
     registerEvent,
+    regE: registerEvent,
     removeEvent,
-    EntityGroup,
+    remE: removeEvent,
+    createEntityGroup,
+    cEG: createEntityGroup,
     changeVelocity,
+    changeV: changeVelocity,
     registerItem,
+    regI: registerItem,
     Item,
+    I: Item,
     Thing,
+    T: Thing,
     ThingStorage,
+    TS: ThingStorage,
     throwError,
+    thr: throwError,
     translationError,
+    te: translationError,
     register,
+    reg: register,
     registerRegistryClassIndex,
+    regIndex: registerRegistryClassIndex,
+    spiltWord,
     TIME,
-    version: [0, 1, 5]
+    version: [0, 1, 6]
 };
 Object.defineProperty(EasyBox3Lib, 'started', {
     get: () => started,
@@ -2513,7 +2727,7 @@ if (nullc(CONFIG.EasyBox3Lib.exposureToGlobal, false)) {
     Object.assign(global, EasyBox3Lib);
     output('log', '已成功暴露到全局');
 }
-if (CONFIG.EasyBox3Lib.enableOnPlayerJoin) {
+if (nullc(CONFIG.EasyBox3Lib.enableOnPlayerJoin, false)) {
     world.onPlayerJoin(({ entity }) => {
         if (started)
             triggerEvent('onPlayerJoin', { entity });
