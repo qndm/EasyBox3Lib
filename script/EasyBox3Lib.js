@@ -2550,7 +2550,7 @@ function register(any) {
 /**
  * 注册注册函数类别索引  
  * 满足`any instanceof type`时调用`fn(any)`
- * @param {(any: any) => any} fn
+ * @param {Function} fn
  * @example
  * EasyBox3Lib.registerRegistryClassIndex(EasyBox3Lib.Item, registerItem);
  */
