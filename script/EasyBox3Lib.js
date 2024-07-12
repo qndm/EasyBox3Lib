@@ -2211,7 +2211,7 @@ async function runGameLoop(name) {
     gameLoop.statu = 'running';
     while (true) {
         gameLoop = gameLoops.get(name);
-        if(DEBUGMODE)
+        if (DEBUGMODE)
             output("log", '[LOG][GAMELOOP]', name, gameLoop.statu);
         if (!gameLoops.has(name) || gameLoop.statu != 'running')
             break;

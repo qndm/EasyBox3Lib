@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": false,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true
+    },
+    "include": [
+        "script/*",
+        "types/*"
+    ],
+    "baseUrl": "./",
+    "paths": {
+        "./script/EasyBox3Lib.js": [
+            "types/Box3.d.ts",
+            "types/Box3-Pro.d.ts"
+        ],
+        "./script/BehaviorLib.js": [
+            "types/Box3.d.ts",
+            "types/Box3-Pro.d.ts"
+        ],
+        "./script/S-C-Link_server.js": [
+            "types/Box3-Pro.d.ts"
+        ],
+        "./script/S-C-Link_client.js": [
+            "types/Box3-Pro-client.d.ts"
+        ]
+    }
+}

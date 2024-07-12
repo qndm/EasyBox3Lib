@@ -1,6 +1,9 @@
 # 版本 & 更新日志
 若未强调是什么库，一律视为`EasyBox3Lib`
 ## Beta
+### S-C-Link 0.0.1
+支持创建/移除节点
+
 ### EasyBox3Lib 0.1.6 & BehaviorLib 0.0.6
 优化代码  
 更新JsDoc  
