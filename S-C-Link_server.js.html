@@ -1,0 +1,520 @@
+<!DOCTYPE html><html lang="en" style="font-size:16px"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Source: S-C-Link_server.js</title><!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]--><script src="scripts/third-party/hljs.js" defer="defer"></script><script src="scripts/third-party/hljs-line-num.js" defer="defer"></script><script src="scripts/third-party/popper.js" defer="defer"></script><script src="scripts/third-party/tippy.js" defer="defer"></script><script src="scripts/third-party/tocbot.min.js"></script><script>var baseURL="/",locationPathname="";baseURL=(locationPathname=document.location.pathname).substr(0,locationPathname.lastIndexOf("/")+1)</script><link rel="stylesheet" href="styles/clean-jsdoc-theme.min.css"><svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none"><defs><symbol id="copy-icon" viewbox="0 0 488.3 488.3"><g><path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/><path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/></g></symbol><symbol id="search-icon" viewBox="0 0 512 512"><g><g><path d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z"/></g></g><g><g><path d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z"/></g></g></symbol><symbol id="font-size-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol><symbol id="add-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol><symbol id="minus-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M5 11h14v2H5z"/></symbol><symbol id="dark-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol><symbol id="light-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol><symbol id="reset-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.537 19.567A9.961 9.961 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.136-.67 4.116-1.81 5.74L17 12h3a8 8 0 1 0-2.46 5.772l.997 1.795z"/></symbol><symbol id="down-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"></path></symbol><symbol id="codepen-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M16.5 13.202L13 15.535v3.596L19.197 15 16.5 13.202zM14.697 12L12 10.202 9.303 12 12 13.798 14.697 12zM20 10.869L18.303 12 20 13.131V10.87zM19.197 9L13 4.869v3.596l3.5 2.333L19.197 9zM7.5 10.798L11 8.465V4.869L4.803 9 7.5 10.798zM4.803 15L11 19.131v-3.596l-3.5-2.333L4.803 15zM4 13.131L5.697 12 4 10.869v2.262zM2 9a1 1 0 0 1 .445-.832l9-6a1 1 0 0 1 1.11 0l9 6A1 1 0 0 1 22 9v6a1 1 0 0 1-.445.832l-9 6a1 1 0 0 1-1.11 0l-9-6A1 1 0 0 1 2 15V9z"/></symbol><symbol id="close-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></symbol><symbol id="menu-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol></defs></svg></head><body data-theme="fallback-light"><div class="sidebar-container"><div class="sidebar" id="sidebar"><div class="sidebar-items-container"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client.html">S-C-Link_client</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server.html">S-C-Link_server</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client.html">S-C-Link_client</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server.html">S-C-Link_server</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector3.html">Vector3</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBColor.html">RGBColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBAColor.html">RGBAColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-NodeControllers.html">NodeControllers</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-NodeBlueprint.html">NodeBlueprint</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector3.html">Vector3</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBColor.html">RGBColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBAColor.html">RGBAColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-NodeControllers.html">NodeControllers</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-NodeBlueprint.html">NodeBlueprint</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-namespaces"><div>Namespaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#SCLink">SCLink</a></div><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#SCLink">SCLink</a></div></div></div></div></div><div class="navbar-container" id="VuAckcnZhf"><nav class="navbar"><div class="navbar-left-items"></div><div class="navbar-right-items"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div><nav></nav></nav></div><div class="toc-container"><div class="toc-content"><span class="bold">On this page</span><div id="eed4d2a0bfd64539bb9df78095dec881"></div></div></div><div class="body-wrapper"><div class="main-content"><div class="main-wrapper"><section id="source-page" class="source-page"><header><h1 id="title" class="has-anchor">S-C-Link_server.js</h1></header><article><pre class="prettyprint source lang-js"><code>// ==UserScript==
+const gameConfig = {
+    type: "S-C-Link_server",
+    title: "S-C-Link 服务端",
+    doc: `EasyBox3Lib的附属库，用于通过服务端渲染客户端内容，需要安装EasyBox3Lib。EasyBox3Lib的安装见帮助链接`,
+    help: "https://qndm.github.io/EasyBox3Lib",
+    file: true,
+    isClient: false
+}
+// ==UserScript==
+
+/**
+ * S-C-Link 库（服务端）  
+ * 用于通过服务端渲染客户端内容的库  
+ * 依赖EasyBox3Lib 0.1.6  
+ * （为什么使用`Game`开头的API？因为GUI是新岛专属（））
+ * @author qndm
+ * @module S-C-Link_server
+ * @version 0.0.1
+ * @license MIT
+ */
+/**
+ * 事件回调函数
+ * @callback EventCallBack
+ * @param {NodeBlueprint} target 目标节点
+ * @param {GameEntity} entity 对应玩家
+ * @returns {void}
+ */
+/**
+ * 打包后的节点
+ * @typedef PackedNode
+ * @property {"renderMessage" | "removeMessage"} protocols 客户端事件协议，打包节点所需的协议只有`"renderMessage"`和`"removeMessage"`
+ * @property {number} id 节点序号
+ * @property {?string} name 节点名称，只在`"renderMessage"`协议下使用
+ * @property {?object} data 节点自定义数量，只在`"renderMessage"`协议下使用
+ * @property {?NodeStyle} style 节点样式，只在`"renderMessage"`协议下使用
+ * @property {?string} content 节点内容，只在`"renderMessage"`协议下使用
+ * @property {?number} pointerEventBehavior 界面元素对指针事件的行为方式，只在`"renderMessage"`协议下使用
+ * @property {?string} autoResize 节点自动调整尺寸的方式，只在`"renderMessage"`协议下使用
+ * @property {?boolean} visible 节点的可见性，只在`"renderMessage"`协议下使用
+ * @property {?string} placeholder 节点占位文本内容，只在`"renderMessage"`协议下使用
+ * @property {?Coord2} size 节点大小，只在`"renderMessage"`协议下使用
+ * @property {?Coord2} position 节点位置，只在`"renderMessage"`协议下使用
+ * @property {?Vector2} anchor 节点锚点，只在`"renderMessage"`协议下使用
+ * @property {?number} parent 父节点id
+ * @property {?PackedNode[]} childern 子节点，只在`"renderMessage"`协议下使用
+ * @property {?NodeType} type 节点类型，只在`"renderMessage"`协议下使用
+ */
+/**
+ * 节点样式
+ * @typedef NodeStyle
+ * @property {string | number} textXAlignment 若节点为文本，则为节点的水平对齐方式
+ * @property {string | number} textYAlignment 若节点为文本，则为节点的垂直对齐方式
+ * @property {GameRGBColor} textColor 若节点为文本，则为文字颜色 
+ * @property {GameRGBAColor} backgroundColor 节点背景颜色
+ * @property {GameRGBAColor} placeholderColor 若节点是输入框，表示占位文本背景颜色
+ * @property {number | null} zIndex 节点的层级，用于确定节点的渲染顺序。
+ * @property {number} textFontSize 若节点为文本，则为文字字号 
+ * @property {number} imageOpacity 若节点是图片，表示图片不透明度，范围0~1
+ */
+/**
+ * 打包后的数据，用于发送给客户端  
+ * 要求有`protocols`属性指定协议
+ * @typedef {PackedNode} PackedData
+ */
+const EBL = global.EasyBox3Lib,
+    /**
+     * 配置文件
+     */
+    CONFIG = require('./EasyBox3Lib.config.js'),
+    /**
+     * 建议EasyBox3Lib版本 
+     * @type {number[]} 
+     */
+    EBL_VERSION = [0, 1, 6],
+    /**
+     * 当前版本
+     * @type {number[]} 
+     */
+    VERSION = [0, 0, 1];
+
+
+// ----- S-C-Link_server Start -----
+/**
+ * 节点类型
+ * @enum {string}
+ */
+const NodeType = {
+    BOX: 'box',
+    TEXT: 'text',
+    IMAGE: 'image',
+    INPUT: 'input',
+    ROOT: 'root'
+}
+/**
+ * 事件类型
+ * @enum {string}
+ */
+const EventName = {
+    onPress: "onPress",
+    onRelease: "onRelease",
+    onFocus: "onFocus",
+    onBlur: "onBlur",
+    onLockChange: "onLockChange",
+    onLockError: "onLockError",
+}
+/**
+ * 二维向量  
+ * 大部分和三维向量相同
+ */
+class Vector2 {
+    x = 0;
+    y = 0;
+    /**
+     * 定义一个二维向量
+     * @param {number} x 二维向量`x`的值（水平方向）
+     * @param {number} y 二维向量`y`的值（竖直方向）
+     */
+    constructor(x = 0, y = 0) {
+        this.x = x;
+        this.y = y;
+    }
+    set(x, y) {
+        this.x = x;
+        this.y = y;
+        return this;
+    }
+    clone() {
+        return new Vector2(this.x, this.y);
+    }
+    copy(v) {
+        this.x = v.x;
+        this.y = v.y;
+        return this;
+    }
+    add(v) {
+        return new Vector2(this.x + v.x, this.y / v.y);
+    }
+    sub(v) {
+        return new Vector2(this.x - v.x, this.y - v.y);
+    }
+    mul(v) {
+        return new Vector2(this.x * v.x, this.y * v.y);
+    }
+    div(v) {
+        return new Vector2(this.x / v.x, this.y / v.y);
+    }
+    addEq(v) {
+        this.x += v.x;
+        this.y += v.y;
+        return this;
+    }
+    subEq(v) {
+        this.x -= v.x;
+        this.y -= v.y;
+        return this;
+    }
+    mulEq(v) {
+        this.x *= v.x;
+        this.y *= v.y;
+        return this;
+    }
+    divEq(v) {
+        this.x /= v.x;
+        this.y /= v.y;
+        return this;
+    }
+    pow(n) {
+        return new Vector2(Math.pow(this.x, n), Math.pow(this.y, n));
+    }
+    distance(v) {
+        return Math.sqrt(Math.pow(v.x - this.x, 2) + Math.pow(v.y - this.y, 2));
+    }
+    mag() {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+    min(v) {
+        return new Vector2(Math.min(this.x, v.x), Math.min(this.y, v.y));
+    }
+    max(v) {
+        return new Vector2(Math.max(this.x, v.x), Math.max(this.y, v.y));
+    }
+    /**
+     * 归一化函数
+     * @returns {Vector2}
+     */
+    normalize() {
+        let max = Math.max(this.x, this.y);
+        return new Vector2(this.x / max, this.y / max);
+    }
+    scale(n) {
+        return new Vector2(this.x * n, this.y * n);
+    }
+    toString() {
+        return JSON.stringify(this);
+    }
+    towards(v) {
+        return new Vector2(v.x - this.x, v.y - this.y);
+    }
+    equals(v, tolerance = 0.0001) {
+        return Math.abs(v.x - this.x) &lt;= tolerance &amp;&amp; Math.abs(v.y - this.y) &lt;= tolerance;
+    }
+    lerp(v) {
+        return this.add(v).scale(0.5);
+    }
+}
+/**
+ * 图像映射中区域的坐标  
+ * 值为`offset`（绝对坐标）和`scale`（占父元素空间的百分比）之和
+ */
+class Coord2 {
+    offset = new Vector2(0, 0);
+    scale = new Vector2(0, 0);
+    constructor(offset = new Vector2(0, 0), scale = new Vector2(0, 0)) {
+        this.offset = offset;
+        this.scale = scale;
+    }
+    /**
+     * 设置`offset.x`的值
+     * @param {number} value
+     */
+    set x(value) {
+        this.offset.x = value;
+    }
+    /**
+     * 设置`offset.y`的值
+     * @param {number} value
+     */
+    set y(value) {
+        this.offset.y = value;
+    }
+    set(offset, scale) {
+        this.offset = offset;
+        this.scale = scale;
+    }
+    copy(c) {
+        this.offset = c.offset.clone();
+        this.scale = c.scale.clone();
+    }
+    clone() {
+        return new Coord2(this.offset.clone(), this.scale.clone());
+    }
+}
+/**
+ * 一个节点设计图
+ */
+class NodeBlueprint {
+    /**
+     * 节点的名称，可重复  
+     * 对应`UiNode.name`
+     * @type {string}
+     */
+    name = '';
+    /**
+     * 节点的类型
+     * @type {NodeType}
+     */
+    type = NodeType.BOX;
+    /**
+     * 节点的锚点
+     * @type {Vector2}
+     */
+    anchor = new Vector2();
+    /**
+     * 节点的位置
+     * @type {Coord2}
+     */
+    position = new Coord2();
+    /**
+     * 节点的大小
+     * @type {Coord2}
+     */
+    size = new Coord2();
+    /**
+     * 节点的子节点
+     * @type {NodeBlueprint[]}
+     */
+    children = [];
+    /**
+     * 节点的样式
+     * @type {NodeStyle}
+     */
+    style = {
+        /**
+         * 若节点为文本，则为节点的水平对齐方式
+         * `-1` 等同于 `Left`，表示左对齐  
+         * `0` 等同于 `Center`，表示居中  
+         * `1` 等同于 `Right`，表示右对齐 
+         * 若不是文本，保留该属性，但不生效  
+         * 若为其他的值，则以居中渲染
+         * @type {string | number}
+         */
+        textXAlignment: 0,
+        /**
+         * 若节点为文本，则为节点的垂直对齐方式
+         * `-1` 等同于 `Top`，表示左对齐  
+         * `0` 等同于 `Center`，表示居中  
+         * `1` 等同于 `Bottom`，表示右对齐 
+         * 若不是文本，保留该属性，但不生效  
+         * 若为其他的值，则以居中渲染
+         * @type {string | number}
+         */
+        textYAlignment: 0,
+        /**
+         * 若节点为文本，则为文字颜色  
+         * 若不是文本，保留该属性，但不生效
+         * @type {GameRGBColor}
+         */
+        textColor: new GameRGBColor(1, 1, 1),
+        /**
+         * 节点背景颜色
+         * @type {GameRGBAColor}
+         */
+        backgroundColor: new GameRGBAColor(1, 1, 1, 1),
+        /**
+         * 若节点是输入框，表示占位文本背景颜色  
+         * 若不是输入框，保留该属性，但不生效
+         * @type {GameRGBAColor}
+         */
+        placeholderColor: new GameRGBAColor(1, 1, 1, 1),
+        /**
+         * 节点的层级，用于确定节点的渲染顺序。  
+         * 若为`null`，则~~听天由命~~浏览器会自行处理
+         * @type {number}
+         */
+        zIndex: 1,
+        /**
+         * 若节点为文本，则为文字字号  
+         * 若不是文本，保留该属性，但不生效
+         * @type {number}
+         */
+        textFontSize: 12,
+        /**
+         * 若节点是图片，表示图片不透明度  
+         * 若不是输入框，保留该属性，但不生效
+         * @type {number}
+         */
+        imageOpacity: 1
+    };
+    /**
+     * 节点的内容
+     * 若不是文本/图片/输入框，保留该属性，但不生效  
+     * 对于文本，为文本内容`textContent`  
+     * 对于图片，为图片路径`image`  
+     * 对于输入框，为输入的文本内容`textContent`
+     * @type {string}
+     */
+    content = '';
+    /**
+     * 若节点是输入框，表示占位文本内容   
+     * 若不是输入框，保留该属性，但不生效
+     * @type {string}
+     */
+    placeholder = '';
+    /**
+     * 节点的自定义数据  
+     * 会传到客户端中
+     * @type {object}
+     */
+    data = {};
+    /**
+     * 节点的可见性
+     */
+    visible = true;
+    /**
+     * 节点的标签
+     * @type {string[]}
+     */
+    tags = [];
+    /**
+     * 节点自动调整尺寸的方式
+     */
+    autoResize = {
+        x: false,
+        y: false
+    }
+    /**
+     * 表示界面元素对指针事件的行为方式
+     */
+    pointerEventBehavior = {
+        /**
+         * 自身是否响应
+         * @type {boolean}
+         */
+        enable: true,
+        /**
+         * 自身后方的其他元素是否响应
+         * @type {boolean}
+         */
+        passThrough: true
+    }
+    /**
+     * 节点的事件
+     */
+    _event = {
+        onPress: [],
+        onRelease: [],
+        onFocus: [],
+        onBlur: [],
+        onLockChange: [],
+        onLockError: [],
+    };
+    /**
+     * 定义一个节点
+     * @param {NodeType} type 节点类型
+     * @param {string} name 节点名称，可重复
+     */
+    constructor(type, name) {
+        this.type = type;
+        this.name = name;
+    }
+    /**
+     * 复制自身
+     * @returns {NodeBlueprint}
+     */
+    clone() {
+        var node = new NodeBlueprint(this.type, this.name);
+        Object.assign(node, EBL.copy(this));
+        return node;
+    }
+    /**
+     * 添加事件监听器  
+     * 暂时没什么用，因为我还没做
+     * @param {EventName} eventName 事件类型
+     * @param {EventCallBack} handler 事件监听器
+     * @param {number} maxTimes 事件监听器最大监听次数，超过此次数，停止监听
+     */
+    addEventHandler(eventName, handler, maxTimes = Infinity) {
+        if (!Object.keys(this._event).includes(eventName))
+            EBL.throwError("[S-C-LINK]", "未知事件", eventName);
+        this._event[eventName].push({ handler, maxTimes, times: 0 });
+    }
+    /**
+     * 打包节点，以发送到客户端
+     * @param {GameEntity} 要发送的玩家
+     * @param {number} parentId 父节点id
+     * @param {?number} nodeId 节点id
+     * @returns {PackedNode}
+     */
+    _pack(entity, parentId = 0, nodeId = null) {
+        var id;
+        if(nodeId !== null)
+            id = -nodeId;
+        else if (entity.player.lastNodeIndex)
+            id = ++entity.player.lastNodeIndex;
+        else
+            id = 1;
+        return {
+            protocols: "renderMessage",
+            id: id,
+            name: this.name,
+            data: this.data,
+            style: this.style,
+            pointerEventBehavior: (Number(this.pointerEventBehavior.enable) &lt;&lt; 1) | Number(this.pointerEventBehavior.passThrough),
+            autoResize: (Number(this.autoResize.x) | Number(this.autoResize.y)) ? ((this.autoResize.x ? 'X' : '') + (this.autoResize.y ? 'Y' : '')) : 'NONE',
+            placeholder: this.placeholder,
+            size: this.size,
+            position: this.position,
+            anchor: this.anchor,
+            visible: this.visible,
+            parent: parentId,
+            content: this.content,
+            type: this.type
+        }
+    }
+}
+function createNode(type, name) {
+    return new NodeBlueprint(type, name);
+}
+/**
+ * 渲染节点
+ * @param {NodeBlueprint} node 要渲染的节点
+ * @param {GameEntity} entity 要进行渲染的玩家
+ * @param {number} parentId 父节点id，默认为`0`（根节点）
+ * @param {?number} id 节点id，可不填。若填写已经存在的id，则表示重新渲染已经渲染的节点。
+ * @returns {number} 打包后的节点id。此id是修改和删除该节点的唯一标识
+ */
+function renderNode(node, entity, parentId = 0, id = null) {
+    var packedNode = node._pack(entity, parentId, id);
+    sendClientEvent(packedNode, entity);
+    return packedNode.id;
+}
+/**
+ * 移除节点
+ * @param {number} id 要移除的节点序号。若填写无效数据，则在**客户端**抛出错误
+ * @param  {GameEntity} entity 要进行移除节点的玩家
+ */
+function removeNode(id, entity) {
+    sendClientEvent({ protocols: "removeMessage", id: id }, entity);
+}
+/**
+ * 发送客户端事件
+ * @param {PackedData} data 
+ * @param  {...GameEntity} entities 
+ */
+function sendClientEvent(data, ...entities) {
+    remoteChannel.sendClientEvent(entities, data);
+}
+// ----- S-C-Link_server End   -----
+const SCLink = {
+    Vector2,
+    Coord2,
+    EventName,
+    NodeType,
+    createNode,
+    renderNode,
+    removeNode
+};
+/**
+ * BehaviorLib的全局对象
+ * @global
+ */
+global.SCLink = SCLink;
+console.log("S-C-Link_server", VERSION.join('.'));
+module.exports = SCLink;
+
+//客户端只要根据服务端的数据渲染节点就好了，而服务端就要考虑的事情就很多了
+//服务端只要给客户端丢数据就好了，而客户端要考虑的事情就很多了</code></pre></article></section></div></div></div><div class="search-container" id="PkfLWpAbet" style="display:none"><div class="wrapper" id="iCxFxjkHbP"><button class="icon-button search-close-button" id="VjLlGakifb" aria-label="close search"><svg><use xlink:href="#close-icon"></use></svg></button><div class="search-box-c"><svg><use xlink:href="#search-icon"></use></svg> <input type="text" id="vpcKVYIppa" class="search-input" placeholder="Search..." autofocus></div><div class="search-result-c" id="fWwVHRuDuN"><span class="search-result-c-text">Type anything to view search result</span></div></div></div><div class="mobile-menu-icon-container"><button class="icon-button" id="mobile-menu" data-isopen="false" aria-label="menu"><svg><use xlink:href="#menu-icon"></use></svg></button></div><div id="mobile-sidebar" class="mobile-sidebar-container"><div class="mobile-sidebar-wrapper"><div class="mobile-nav-links"></div><div class="mobile-sidebar-items-c"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client.html">S-C-Link_client</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server.html">S-C-Link_server</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client.html">S-C-Link_client</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server.html">S-C-Link_server</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector3.html">Vector3</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBColor.html">RGBColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBAColor.html">RGBAColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-NodeControllers.html">NodeControllers</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-NodeBlueprint.html">NodeBlueprint</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector3.html">Vector3</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBColor.html">RGBColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBAColor.html">RGBAColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-NodeControllers.html">NodeControllers</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-NodeBlueprint.html">NodeBlueprint</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-namespaces"><div>Namespaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#SCLink">SCLink</a></div><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#SCLink">SCLink</a></div></div></div><div class="mobile-navbar-actions"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div></div></div><script type="text/javascript" src="scripts/core.min.js"></script><script src="scripts/search.min.js" defer="defer"></script><script src="scripts/third-party/fuse.js" defer="defer"></script><script type="text/javascript">var tocbotInstance=tocbot.init({tocSelector:"#eed4d2a0bfd64539bb9df78095dec881",contentSelector:".main-content",headingSelector:"h1, h2, h3",hasInnerContainers:!0,scrollContainer:".main-content",headingsOffset:130,onClick:bringLinkToView})</script></body></html>
