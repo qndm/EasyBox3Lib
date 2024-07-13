@@ -16,7 +16,7 @@ const gameConfig = {
  * （为什么使用`Game`开头的API？因为GUI是新岛专属（））
  * @author qndm
  * @module S-C-Link_server
- * @version 0.0.2
+ * @version 0.0.3
  * @license MIT
  */
 /**
@@ -112,7 +112,7 @@ const EBL = global.EasyBox3Lib,
      * 当前版本
      * @type {number[]} 
      */
-    VERSION = [0, 0, 2];
+    VERSION = [0, 0, 3];
 
 
 // ----- S-C-Link_server Start -----
@@ -584,6 +584,7 @@ remoteChannel.onServerEvent(({ entity, tick,/**@type {PackedData}*/args }) => {
  */
 function BSOD(entity, ...message){
     sendClientEvent({protocols: "bsod", message}, entity);
+    throw message.join(' ');
 }
 // ----- S-C-Link_server End   -----
 const SCLink = {
