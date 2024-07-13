@@ -7,27 +7,12 @@
         "resolveJsonModule": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "strict": true
+        "strict": true,
+        "typeRoots": ["./types"],
+        "types": ["Box3", "Box3-Pro", "Box3-Pro-client"]
     },
     "include": [
-        "script/*",
-        "types/*"
+        "script/*"
     ],
-    "baseUrl": "./",
-    "paths": {
-        "./script/EasyBox3Lib.js": [
-            "types/Box3.d.ts",
-            "types/Box3-Pro.d.ts"
-        ],
-        "./script/BehaviorLib.js": [
-            "types/Box3.d.ts",
-            "types/Box3-Pro.d.ts"
-        ],
-        "./script/S-C-Link_server.js": [
-            "types/Box3-Pro.d.ts"
-        ],
-        "./script/S-C-Link_client.js": [
-            "types/Box3-Pro-client.d.ts"
-        ]
-    }
+    "baseUrl": "./"
 }

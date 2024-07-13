@@ -16,20 +16,20 @@ const gameConfig = {
  * （为什么使用`Game`开头的API？因为GUI是新岛专属（））
  * @author qndm
  * @module S-C-Link_server
- * @version 0.0.1
+ * @version 0.0.2
  * @license MIT
  */
 /**
  * 事件回调函数
  * @callback EventCallBack
- * @param {NodeBlueprint} target 目标节点
+ * @param {PackedNode} target 目标节点
  * @param {GameEntity} entity 对应玩家
  * @returns {void}
  */
 /**
  * 打包后的节点
  * @typedef PackedNode
- * @property {"renderMessage" | "removeMessage"} protocols 客户端事件协议，打包节点所需的协议只有`"renderMessage"`和`"removeMessage"`
+ * @property {"renderMessage" | "removeMessage"} protocols 事件协议，打包节点所需的协议只有`"renderMessage"`和`"removeMessage"`
  * @property {number} id 节点序号
  * @property {?string} name 节点名称，只在`"renderMessage"`协议下使用
  * @property {?object} data 节点自定义数量，只在`"renderMessage"`协议下使用
@@ -45,6 +45,7 @@ const gameConfig = {
  * @property {?number} parent 父节点id
  * @property {?PackedNode[]} childern 子节点，只在`"renderMessage"`协议下使用
  * @property {?NodeType} type 节点类型，只在`"renderMessage"`协议下使用
+ * @property {?PackedNodeEvent} events 打包后的节点事件
  */
 /**
  * 节点样式
@@ -59,9 +60,43 @@ const gameConfig = {
  * @property {number} imageOpacity 若节点是图片，表示图片不透明度，范围0~1
  */
 /**
+ * 打包后的节点事件
+ * @typedef PackedNodeEvent
+ * @property {boolean} onPress 是否监听当节点被按下时，触发的事件
+ * @property {boolean} onRelease 是否监听当节点被松开时，触发的事件
+ * @property {boolean} onFocus 是否监听当节点为输入框，聚焦时触发的事件
+ * @property {boolean} onBlur 是否监听当节点为输入框，失去焦点时触发的事件
+ */
+/**
+ * 玩家节点事件
+ * @typedef EntityNodeEvent
+ * @property {ClientEvent[]} onPress 当节点被按下时，触发的事件
+ * @property {ClientEvent[]} onRelease 当节点被松开时，触发的事件
+ * @property {ClientEvent[]} onFocus 当节点为输入框，聚焦时触发的事件
+ * @property {ClientEvent[]} onBlur 当节点为输入框，失去焦点时触发的事件
+ */
+/**
+ * 玩家客户端事件
+ * @typedef {Map<number, EntityNodeEvent>} EntityClientEvent
+ */
+/**
+ * 客户端事件
+ * @typedef ClientEvent
+ * @property {EventCallBack} handler 事件监听回调函数
+ * @property {number} maxTimes 最大触发次数
+ * @property {number} times 当前已触发次数
+ */
+/**
+ * 当节点事件被触发时，发送到服务端的数据
+ * @typedef PackedClientEvent
+ * @property {"triggeredEvent"} protocols 事件协议，触发事件的协议为`"triggeredEvent"`
+ * @property {?PackedNode} node 节点
+ * @property {EventName} eventName 触发的事件类型
+ */
+/**
  * 打包后的数据，用于发送给客户端  
  * 要求有`protocols`属性指定协议
- * @typedef {PackedNode} PackedData
+ * @typedef {PackedNode | PackedClientEvent} PackedData
  */
 const EBL = global.EasyBox3Lib,
     /**
@@ -77,7 +112,7 @@ const EBL = global.EasyBox3Lib,
      * 当前版本
      * @type {number[]} 
      */
-    VERSION = [0, 0, 1];
+    VERSION = [0, 0, 2];
 
 
 // ----- S-C-Link_server Start -----
@@ -391,14 +426,13 @@ class NodeBlueprint {
     }
     /**
      * 节点的事件
+     * @type {EntityNodeEvent}
      */
     _event = {
         onPress: [],
         onRelease: [],
         onFocus: [],
-        onBlur: [],
-        onLockChange: [],
-        onLockError: [],
+        onBlur: []
     };
     /**
      * 定义一个节点
@@ -431,27 +465,40 @@ class NodeBlueprint {
         this._event[eventName].push({ handler, maxTimes, times: 0 });
     }
     /**
-     * 打包节点，以发送到客户端
-     * @param {GameEntity} 要发送的玩家
+     * 打包节点，以发送到客户端  
+     * 会往`entity.player`写入`_lastNodeIndex`、`_clientEvents`属性
+     * @param {GameEntity} entity 要发送的玩家
      * @param {number} parentId 父节点id
      * @param {?number} nodeId 节点id
      * @returns {PackedNode}
      */
     _pack(entity, parentId = 0, nodeId = null) {
-        var id;
-        if(nodeId !== null)
-            id = -nodeId;
-        else if (entity.player.lastNodeIndex)
-            id = ++entity.player.lastNodeIndex;
+        var id,
+            /**@type {EntityClientEvent} */
+            _clientEvents;
+        if (entity.player._clientEvents)
+            _clientEvents = entity.player._clientEvents;
         else
-            id = 1;
+            entity.player._clientEvents = _clientEvents = new Map();
+        if (nodeId !== null)
+            id = nodeId;
+        else if (entity.player._lastNodeIndex)
+            id = ++entity.player._lastNodeIndex;
+        else
+            entity.player._lastNodeIndex = id = 1;
+        _clientEvents.set(id, {
+            onPress: this._event.onPress.map(e => Object({ handler: e.handler, maxTimes: e.maxTimes, times: entity.player._clientEvents.get(id)?.onPress.times ?? 0 })),
+            onRelease: this._event.onRelease.map(e => Object({ handler: e.handler, maxTimes: e.maxTimes, times: entity.player._clientEvents.get(id)?.onRelease.times ?? 0 })),
+            onFocus: this._event.onFocus.map(e => Object({ handler: e.handler, maxTimes: e.maxTimes, times: entity.player._clientEvents.get(id)?.onFocus.times ?? 0 })),
+            onBlur: this._event.onBlur.map(e => Object({ handler: e.handler, maxTimes: e.maxTimes, times: entity.player._clientEvents.get(id)?.onBlur.times ?? 0 }))
+        });
         return {
             protocols: "renderMessage",
             id: id,
             name: this.name,
             data: this.data,
             style: this.style,
-            pointerEventBehavior: (Number(this.pointerEventBehavior.enable) << 1) | Number(this.pointerEventBehavior.passThrough),
+            pointerEventBehavior: (Number(this.pointerEventBehavior.enable) << 1) | Number(!this.pointerEventBehavior.passThrough),
             autoResize: (Number(this.autoResize.x) | Number(this.autoResize.y)) ? ((this.autoResize.x ? 'X' : '') + (this.autoResize.y ? 'Y' : '')) : 'NONE',
             placeholder: this.placeholder,
             size: this.size,
@@ -460,7 +507,13 @@ class NodeBlueprint {
             visible: this.visible,
             parent: parentId,
             content: this.content,
-            type: this.type
+            type: this.type,
+            events: {
+                onPress: this._event.onPress.filter(event => event.maxTimes > event.times).length > 0,
+                onRelease: this._event.onRelease.filter(event => event.maxTimes > event.times).length > 0,
+                onFocus: this._event.onFocus.filter(event => event.maxTimes > event.times).length > 0,
+                onBlur: this._event.onBlur.filter(event => event.maxTimes > event.times).length > 0
+            }
         }
     }
 }
@@ -496,6 +549,42 @@ function removeNode(id, entity) {
 function sendClientEvent(data, ...entities) {
     remoteChannel.sendClientEvent(entities, data);
 }
+EBL.regE('onClientLockPointer');
+EBL.regE('onClientUnlockPointer');
+remoteChannel.onServerEvent(({ entity, tick,/**@type {PackedData}*/args }) => {
+    switch (args.protocols) {
+        case "triggeredEvent":
+            switch (args.eventName) {
+                case EventName.onLockChange:
+                    EBL.triE('onClientLockPointer', { entity, tick });
+                    break;
+                case EventName.onLockError:
+                    EBL.triE('onClientUnlockPointer', { entity, tick });
+                    break;
+                default:
+                    /**
+                     * @type {EntityNodeEvent}
+                     */
+                    let events = entity.player._clientEvents.get(args.node.id);
+                    events[args.eventName].forEach(async event => {
+                        if (event.times >= event.maxTimes)
+                            return;
+                        event.handler(args.node, entity);
+                        ++event.times;
+                    });
+                    break;
+            }
+            break;
+    }
+});
+/**
+ * 对指定玩家抛出错误
+ * @param {GameEntity} entity 要抛出错误的玩家
+ * @param {...string} message 错误消息
+ */
+function BSOD(entity, ...message){
+    sendClientEvent({protocols: "bsod", message}, entity);
+}
 // ----- S-C-Link_server End   -----
 const SCLink = {
     Vector2,
@@ -504,7 +593,8 @@ const SCLink = {
     NodeType,
     createNode,
     renderNode,
-    removeNode
+    removeNode,
+    BSOD
 };
 /**
  * BehaviorLib的全局对象
@@ -516,3 +606,4 @@ module.exports = SCLink;
 
 //客户端只要根据服务端的数据渲染节点就好了，而服务端就要考虑的事情就很多了
 //服务端只要给客户端丢数据就好了，而客户端要考虑的事情就很多了
+//remoteChannel就像一根可双向通行的大管道，里面啥都有
