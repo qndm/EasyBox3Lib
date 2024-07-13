@@ -18,14 +18,26 @@ const gameConfig = {
  * （为什么使用`Game`开头的API？因为GUI是新岛专属（））
  * @author qndm
  * @module S-C-Link_client
- * @version 0.0.1
+ * @version 0.0.2
  * @license MIT
  */
 // ----- S-C-Link_client Start -----
 /**
+ * 节点样式
+ * @typedef NodeStyle
+ * @property {string | number} textXAlignment 若节点为文本，则为节点的水平对齐方式
+ * @property {string | number} textYAlignment 若节点为文本，则为节点的垂直对齐方式
+ * @property {RGBColor} textColor 若节点为文本，则为文字颜色 
+ * @property {RGBAColor} backgroundColor 节点背景颜色
+ * @property {RGBAColor} placeholderColor 若节点是输入框，表示占位文本背景颜色
+ * @property {number | null} zIndex 节点的层级，用于确定节点的渲染顺序。
+ * @property {number} textFontSize 若节点为文本，则为文字字号 
+ * @property {number} imageOpacity 若节点是图片，表示图片不透明度，范围0~1
+ */
+/**
  * 打包后的节点
  * @typedef PackedNode
- * @property {"renderMessage" | "removeMessage"} protocols 客户端事件协议，打包节点所需的协议只有`"renderMessage"`和`"removeMessage"`
+ * @property {"renderMessage" | "removeMessage"} protocols 事件协议，打包节点所需的协议只有`"renderMessage"`和`"removeMessage"`
  * @property {number} id 节点序号
  * @property {?string} name 节点名称，只在`"renderMessage"`协议下使用
  * @property {?object} data 节点自定义数量，只在`"renderMessage"`协议下使用
@@ -41,12 +53,40 @@ const gameConfig = {
  * @property {?number} parent 父节点id
  * @property {?PackedNode[]} childern 子节点，只在`"renderMessage"`协议下使用
  * @property {?NodeType} type 节点类型，只在`"renderMessage"`协议下使用
+ * @property {?PackedNodeEvent} events 打包后的节点事件
  */
 /**
- * 打包后的数据，用于发送给客户端  
+ * 打包后的数据，用于发送给服务端  
  * 要求有`protocols`属性指定协议
- * @typedef {PackedNode} PackedData
+ * @typedef {PackedNode | PackedClientEvent} PackedData
  */
+/**
+ * 打包后的节点事件
+ * @typedef PackedNodeEvent
+ * @property {boolean} onPress 是否监听当节点被按下时，触发的事件
+ * @property {boolean} onRelease 是否监听当节点被松开时，触发的事件
+ * @property {boolean} onFocus 是否监听当节点为输入框，聚焦时触发的事件
+ * @property {boolean} onBlur 是否监听当节点为输入框，失去焦点时触发的事件
+ */
+/**
+ * 当节点事件被触发时，发送到服务端的数据
+ * @typedef PackedClientEvent
+ * @property {"triggeredEvent"} protocols 事件协议，触发事件的协议为`"triggeredEvent"`
+ * @property {?PackedNode} node 节点
+ * @property {EventName} eventName 触发的事件类型
+ */
+/**
+ * 事件类型
+ * @enum {string}
+ */
+const EventName = {
+    onPress: "onPress",
+    onRelease: "onRelease",
+    onFocus: "onFocus",
+    onBlur: "onBlur",
+    onLockChange: "onLockChange",
+    onLockError: "onLockError",
+}
 /**
  * @type {Map&lt;number, NodeControllers>}
  */
@@ -568,7 +608,7 @@ class NodeControllers {
     id = -1;
     /**
      * 对应节点
-     * @type {UiNode | null}
+     * @type {UiBox | UiInput | UiText | UiImage | null}
      */
     _uiNode = null;
     /**
@@ -621,7 +661,8 @@ class NodeControllers {
         }
         this._uiNode.parent = this.parent._uiNode;
         this._uiNode.anchor.copy(packedData.anchor);
-        this._uiNode.position.copy(packedData.position);
+        this._uiNode.position.offset.copy(packedData.position.offset);
+        this._uiNode.position.scale.copy(packedData.position.scale);
         this._uiNode.backgroundColor.copy(packedData.style.backgroundColor);
         this._uiNode.backgroundOpacity = packedData.style.backgroundColor.a;
         Coord2.fromCoord2(packedData.size).setCoord2(this._uiNode.size);
@@ -711,8 +752,62 @@ class NodeControllers {
                 this._uiNode.placeholderColor.copy(packedData.style.placeholderColor);
                 this._uiNode.placeholderOpacity = packedData.style.placeholderColor.a;
                 break;
+            case "box":
+                break;
             default:
                 throwError(`未知节点类型：${packedData.type}`);
+                break;
+        }
+        try {
+            if (packedData.events.onPress) {
+                this._uiNode.events.on("pointerdown", (event) => {
+                    /**
+                     * @type {PackedClientEvent}
+                     */
+                    const packedData = { protocols: "triggeredEvent", eventName: EventName.onPress, node: this._pack() };
+                    remoteChannel.sendServerEvent(packedData);
+                });
+                //return '注册onPress';
+            } else {
+                //this._uiNode.events.removeAll("pointerdown"); //由于Client API存在bug，暂时注释此代码
+            }
+            if (packedData.events.onRelease) {
+                this._uiNode.events.on("pointerup", (event) => {
+                    /**
+                     * @type {PackedClientEvent}
+                     */
+                    const packedData = { protocols: "triggeredEvent", eventName: EventName.onRelease, node: this._pack() };
+                    remoteChannel.sendServerEvent(packedData);
+                });
+            } else {
+                //this._uiNode.events.removeAll("pointerup"); //由于Client API存在bug，暂时注释此代码
+            }
+            if (packedData.type == 'input' || packedData.type == 'text') {
+                if (packedData.events.onFocus) {
+                    this._uiNode.events.on("focus", () => {
+                        /**
+                         * @type {PackedClientEvent}
+                         */
+                        const packedData = { protocols: "triggeredEvent", eventName: EventName.onFocus, node: this._pack() };
+                        remoteChannel.sendServerEvent(packedData);
+                    });
+                } else {
+                    //this._uiNode.events.removeAll("focus"); //由于Client API存在bug，暂时注释此代码
+                }
+                if (packedData.events.onBlur) {
+                    this._uiNode.events.on("blur", () => {
+                        /**
+                         * @type {PackedClientEvent}
+                         */
+                        const packedData = { protocols: "triggeredEvent", eventName: EventName.onBlur, node: this._pack() };
+                        remoteChannel.sendServerEvent(packedData);
+                    });
+                } else {
+                    //this._uiNode.events.removeAll("blur"); //由于Client API存在bug，暂时注释此代码
+                }
+            }
+        } catch (e) {
+            throwError(e.stack);
         }
     }
     remove() {
@@ -721,6 +816,51 @@ class NodeControllers {
         this._uiNode.parent = undefined;
         this._uiNode = null;
         nodeMap.delete(this.id);
+    }
+    /**
+     * 完全重新渲染节点  
+     * 节点会被移除并被重新创建  
+     * 其子节点不会被移除，而是移动到新节点中  
+     * 可以通过此方法完成不同类型节点的转换
+     * @param {PackedNode} packedData 服务端传过来的打包的节点，要求`"renderMessage"`协议
+     */
+    reload(packedData) {
+        const childern = this._uiNode.children;
+        this._uiNode = undefined;
+        this.render(packedData);
+        childern.forEach(node => node.parent = this._uiNode);
+    }
+    /**
+     * 打包节点，供事件使用
+     * @returns {PackedNode}
+     */
+    _pack() {
+        return {
+            protocols: "packedNode",
+            id: this.id,
+            name: this.name,
+            data: this.data,
+            style: {
+                textXAlignment: this._uiNode?.textXAlignment,
+                textYAlignment: this._uiNode?.textXAlignment,
+                textColor: this._uiNode?.textColor,
+                backgroundColor: this._uiNode.backgroundColor,
+                placeholderColor: this._uiNode?.placeholderColor,
+                zIndex: this._uiNode.zIndex,
+                textFontSize: this._uiNode?.textFontSize,
+                imageOpacity: this._uiNode?.imageOpacity
+            },
+            pointerEventBehavior: this._uiNode.pointerEventBehavior,
+            autoResize: this._uiNode.autoResize,
+            placeholder: this._uiNode?.placeholder,
+            size: this._uiNode.size,
+            position: this._uiNode.position,
+            anchor: this._uiNode.anchor,
+            visible: this._uiNode.visible,
+            parent: this.parent.id,
+            content: this._uiNode?.textContent ?? this._uiNode?.image,
+            type: this.type
+        }
     }
 }
 /**
@@ -746,12 +886,14 @@ function throwError(...error) {
     errorInfo.events.once('pointerup', () => {
         errorInfo.parent = undefined;
     });
+    throw error.join(' ');
 }
 /**
  * 抛出错误的另类方式
  * @param  {...string} error 要抛出的错误
  */
 function BSOD(...error) {
+    input.unlockPointer();
     const bsod = UiBox.create();
     bsod.pointerEventBehavior = 2;
     bsod.backgroundColor.copy(RGBColor.fromHEX('1e90ff'));
@@ -774,7 +916,7 @@ function BSOD(...error) {
     const t2 = t1.clone();
     t2.position.offset.y = 300;
     t2.textFontSize = 35;
-    t2.textContent = "This map ran into a problem and needs to restart. We're just collecting \nsome error info, and then we'll restart for you";
+    t2.textContent = `This map ran into a problem and needs to restart. We're just collecting ${screenWidth &lt; 2015 ? '\n' : ''}some error info, and then we'll restart for you`;
     const t3 = t2.clone();
     t3.position.offset.y = 400;
     const t4 = t3.clone();
@@ -791,17 +933,18 @@ function BSOD(...error) {
     errorInfo.textFontSize = 14;
     errorInfo.textContent = error.join(' ');
     errorInfo.textLineHeight = 1;
-    errorInfo.size.offset.copy(new Vector2(440, 210));
+    errorInfo.size.offset.copy(new Vector2(-700, -525));
+    errorInfo.size.scale.copy(new Vector2(1, 1));
     (async () => {
         for (let i = 0; i &lt;= 100; i += 10) {
             t3.textContent = `${i}% Completed`;
             await sleep(1000);
         }
-        bsod.parent = undefined;
     })();
     bsod.events.once('pointerup', () => {
         bsod.parent = undefined;
     });
+    throw error.join(' ');
 }
 nodeMap.set(0, new NodeControllers(0));
 remoteChannel.events.on("client", (/**@type {PackedData}*/event) => {
@@ -809,7 +952,7 @@ remoteChannel.events.on("client", (/**@type {PackedData}*/event) => {
         switch (event.protocols) {
             case "renderMessage":
                 if (nodeMap.has(event.id))
-                    nodeMap.get(event.id).render(packedData);
+                    nodeMap.get(event.id).render(event);
                 else
                     nodeMap.set(event.id, new NodeControllers(event));
                 break;
@@ -819,12 +962,35 @@ remoteChannel.events.on("client", (/**@type {PackedData}*/event) => {
                 else
                     throw `id为 ${event.id} 的节点未被渲染过`;
                 break;
+            case "reloadMessage":
+                if (nodeMap.has(event.id))
+                    nodeMap.get(event.id).reload(event);
+                else
+                    throw `id为 ${event.id} 的节点未被渲染过`;
+                break;
+            case "bsod":
+                BSOD(event.message.join(' '));
+                break;
             default:
                 break;
         }
     } catch (e) {
         throwError(e.stack);
     }
+});
+input.pointerLockEvents.on("pointerlockchange", () => {
+    /**
+     * @type {PackedClientEvent}
+     */
+    const packedData = { protocols: "triggeredEvent", eventName: EventName.onLockChange };
+    remoteChannel.sendServerEvent(packedData);
+});
+input.pointerLockEvents.on("pointerlockerror", () => {
+    /**
+     * @type {PackedClientEvent}
+     */
+    const packedData = { protocols: "triggeredEvent", eventName: EventName.onLockError };
+    remoteChannel.sendServerEvent(packedData);
 });
 // ----- S-C-Link_client End   -----
 export { Vector2, Vector3, Coord2, RGBColor, RGBAColor, throwError, BSOD }</code></pre></article></section></div></div></div><div class="search-container" id="PkfLWpAbet" style="display:none"><div class="wrapper" id="iCxFxjkHbP"><button class="icon-button search-close-button" id="VjLlGakifb" aria-label="close search"><svg><use xlink:href="#close-icon"></use></svg></button><div class="search-box-c"><svg><use xlink:href="#search-icon"></use></svg> <input type="text" id="vpcKVYIppa" class="search-input" placeholder="Search..." autofocus></div><div class="search-result-c" id="fWwVHRuDuN"><span class="search-result-c-text">Type anything to view search result</span></div></div></div><div class="mobile-menu-icon-container"><button class="icon-button" id="mobile-menu" data-isopen="false" aria-label="menu"><svg><use xlink:href="#menu-icon"></use></svg></button></div><div id="mobile-sidebar" class="mobile-sidebar-container"><div class="mobile-sidebar-wrapper"><div class="mobile-nav-links"></div><div class="mobile-sidebar-items-c"><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-modules"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client.html">S-C-Link_client</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server.html">S-C-Link_server</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib.html">BehaviorLib</a></div><div class="sidebar-section-children"><a href="module-config.html">config</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client.html">S-C-Link_client</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server.html">S-C-Link_server</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-classes"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector3.html">Vector3</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBColor.html">RGBColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBAColor.html">RGBAColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-NodeControllers.html">NodeControllers</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-NodeBlueprint.html">NodeBlueprint</a></div><div class="sidebar-section-children"><a href="module-BehaviorLib-BehaviorTarget.html">BehaviorTarget</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-DataStorage.html">DataStorage</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Menu.html">Menu</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Pages.html">Pages</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-EntityGroup.html">EntityGroup</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Item.html">Item</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-Thing.html">Thing</a></div><div class="sidebar-section-children"><a href="module-EasyBox3Lib-ThingStorage.html">ThingStorage</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Vector3.html">Vector3</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBColor.html">RGBColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-RGBAColor.html">RGBAColor</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_client-NodeControllers.html">NodeControllers</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Vector2.html">Vector2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-Coord2.html">Coord2</a></div><div class="sidebar-section-children"><a href="module-S-C-Link_server-NodeBlueprint.html">NodeBlueprint</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-namespaces"><div>Namespaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="module-config.EasyBox3Lib.html">EasyBox3Lib</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="sidebar-global"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#SCLink">SCLink</a></div><div class="sidebar-section-children"><a href="global.html#BehaviorLib">BehaviorLib</a></div><div class="sidebar-section-children"><a href="global.html#EasyBox3Lib">EasyBox3Lib</a></div><div class="sidebar-section-children"><a href="global.html#SCLink">SCLink</a></div></div></div><div class="mobile-navbar-actions"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#dark-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div></div></div><script type="text/javascript" src="scripts/core.min.js"></script><script src="scripts/search.min.js" defer="defer"></script><script src="scripts/third-party/fuse.js" defer="defer"></script><script type="text/javascript">var tocbotInstance=tocbot.init({tocSelector:"#eed4d2a0bfd64539bb9df78095dec881",contentSelector:".main-content",headingSelector:"h1, h2, h3",hasInnerContainers:!0,scrollContainer:".main-content",headingsOffset:130,onClick:bringLinkToView})</script></body></html>
